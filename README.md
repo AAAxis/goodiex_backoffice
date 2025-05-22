@@ -1,16 +1,21 @@
-# order_app
+# Vue 3 + Vite
 
-A new Flutter project.
+This template should help get you started developing with Vue 3 in Vite. The template uses Vue 3 `<script setup>` SFCs, check out the [script setup docs](https://v3.vuejs.org/api/sfc-script-setup.html#sfc-script-setup) to learn more.
 
-## Getting Started
+While this project uses Vue.js, Vite supports many popular JS frameworks. [See all the supported frameworks](https://vitejs.dev/guide/#scaffolding-your-first-vite-project).
 
-This project is a starting point for a Flutter application.
+## Deploy Your Own
 
-A few resources to get you started if this is your first Flutter project:
+Deploy your own Vite project with Vercel.
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/vercel/vercel/tree/main/examples/vite&template=vite)
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+_Live Example: https://vite-vue-template.vercel.app_
+
+### Deploying From Your Terminal
+
+You can deploy your new Vite project with a single command from your terminal using [Vercel CLI](https://vercel.com/download):
+
+```shell
+$ vercel
+```

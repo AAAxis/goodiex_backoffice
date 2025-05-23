@@ -8,11 +8,9 @@
 
   <div class="hero-image">
     <div class="image-container">
-      <img src="https://polskoydm.pythonanywhere.com/static/images/designer.png" alt="Hero Image">
-  
-   
-      <div class="top-right">
-        <button class="join-button" @click="scrollToBottom">Sign Up</button>
+      <img src="/hero.jpg" alt="Hero Image">
+      <div class="centered-hero-title">
+        <h1>Foodiex - Smart Meals Delivery</h1>
       </div>
     </div>
   </div>
@@ -20,7 +18,7 @@
 <div style="padding: 1rem;" class="container">
     <!-- START THE FEATURETTES -->
 <br>
-  <h2 style="text-align:center; margin:1rem;">Favourites Near You</h2>
+  <h2 style="text-align:center; margin:1rem;">Over 60 dinner recipes to choose from every week</h2>
 
 
 
@@ -30,14 +28,30 @@
 
   </div>
   <div class="col-12">
-    <div class="row">
-      <div class="col-md-2 col-sm-4 col-xs-6 mb-4" v-for="(branch, index) in branches" :key="branch.id">
-        <div class="card">
-     <a v-if="branch.id" :href="`/${branch.id}/shop`"><img :src="branch.link" :alt="branch.title" class="card-img-top"></a>
-
-          <div class="card-body">
-            <h5 class="card-title">{{ branch.name }}</h5>
-            <p>20 min - $0 Delivery</p>
+    <!-- Mobile slider -->
+    <div class="mobile-slider">
+      <div class="slider-track">
+        <div class="slider-card" v-for="(category, index) in categories" :key="category.id">
+          <div class="card">
+            <a v-if="category.id" :href="`/${category.id}/shop`"><img :src="category.link" :alt="category.title" class="card-img-top"></a>
+            <div class="card-body">
+              <h5 class="card-title">{{ category.name }}</h5>
+              <p>0$ Free Delivery</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Desktop grid -->
+    <div class="desktop-grid">
+      <div class="row">
+        <div class="col-md-2 col-sm-4 col-xs-6 mb-4" v-for="(category, index) in categories" :key="category.id">
+          <div class="card">
+            <a v-if="category.id" :href="`/${category.id}/shop`"><img :src="category.link" :alt="category.title" class="card-img-top"></a>
+            <div class="card-body">
+              <h5 class="card-title">{{ category.name }}</h5>
+              <p>0$ Free Delivery</p>
+            </div>
           </div>
         </div>
       </div>
@@ -56,7 +70,7 @@
       </div>
       <div class="col-md-5">
          <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="https://polskoydm.pythonanywhere.com/static/images/post1.jpg" alt="First Photo">
+  background-repeat: no-repeat;" class="d-block w-100" src="/post1.jpg" alt="First Photo">
 
       </div>
     </div>
@@ -65,12 +79,12 @@
 <br>
     <div class="row featurette">
       <div class="col-md-7 order-md-2">
-        <h2 class="featurette-heading fw-normal lh-1">Billa makes it incredibly easy for you to discover   <span class="text-muted">and get what you want.</span></h2>
+        <h2 class="featurette-heading fw-normal lh-1">Foodiex makes it incredibly easy for you to discover   <span class="text-muted">and get what you want.</span></h2>
         <p class="lead">Delivered to you – quickly, reliably and affordably.</p>
       </div>
       <div class="col-md-5 order-md-1">
           <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="https://polskoydm.pythonanywhere.com/static/images/post2.jpg" alt="Second Photo">
+  background-repeat: no-repeat;" class="d-block w-100" src="/post2.jpg" alt="Second Photo">
 
       </div>
     </div>
@@ -80,12 +94,12 @@
 
     <div class="row featurette">
        <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">When you order with Billa<span class="text-muted"> you help thousands of hard-working restaurant and store owners</span></h2>
+        <h2 class="featurette-heading fw-normal lh-1">When you order with Foodiex<span class="text-muted"> you help thousands of hard-working restaurant and store owners</span></h2>
        <p class="text-muted">Getting home-delivered goods is more than your life made easy.  </p>
       </div>
        <div class="col-md-5">
               <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="https://polskoydm.pythonanywhere.com/static/images/post3.jpg" alt="Third photo">
+  background-repeat: no-repeat;" class="d-block w-100" src="/post3.jpg" alt="Third photo">
 
           </div>
     </div>
@@ -106,7 +120,7 @@ import 'firebase/compat/firestore';
 export default {
   data() {
     return {
-      branches: [] // Initialize an empty array to hold the branches data
+      categories: [] // Initialize an empty array to hold the categories data
     };
   },
   mounted() {
@@ -129,17 +143,18 @@ export default {
     // Access the Firestore database
     const db = firebase.firestore();
 
-      // Fetch branches collection
-    db.collection('merchants').get().then(querySnapshot => {
+      // Fetch categories collection
+    db.collection('categories').get().then(querySnapshot => {
       querySnapshot.forEach(doc => {
-        const branchData = doc.data();
-        // Assign the document ID to the branch data
-        branchData.id = doc.id;
-        // Push each branch document into the branches array
-        this.branches.push(branchData);
+        const categoryData = doc.data();
+        // Only add categories that are receiving orders
+        if (categoryData.receivingOrders === true) {
+          categoryData.id = doc.id;
+          this.categories.push(categoryData);
+        }
       });
     }).catch(error => {
-      console.error('Error fetching branches: ', error);
+      console.error('Error fetching categories: ', error);
     });
   }
 };
@@ -242,5 +257,58 @@ h1 {
   left: 10px;
   color: white;
   font-size: 3rem;
+}
+
+.centered-hero-title {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: 100%;
+  z-index: 2;
+}
+.centered-hero-title h1 {
+  color: #fff;
+  font-size: 2.5rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  font-weight: bold;
+  margin: 0;
+}
+
+.mobile-slider {
+  display: none;
+}
+.desktop-grid {
+  display: block;
+}
+@media (min-width: 769px) {
+  .desktop-grid > .row {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+}
+@media (max-width: 768px) {
+  .mobile-slider {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    margin-bottom: 1.5rem;
+  }
+  .slider-track {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    width: max-content;
+    padding-bottom: 0.5rem;
+  }
+  .slider-card {
+    min-width: 220px;
+    flex: 0 0 auto;
+  }
+  .desktop-grid {
+    display: none;
+  }
 }
 </style>

@@ -1,25 +1,18 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from './components/Index.vue';
 import ShoppingCart from './components/ShoppingCart.vue';
-import Payment from './components/Payment.vue';
 import AdminDashboard from './components/AdminDashboard.vue';
 import AdminAddCategory from './components/AdminAddCategory.vue';
 import AdminEditCategory from './components/AdminEditCategory.vue';
 import AdminMenuManager from './components/AdminMenuManager.vue';
 import AdminAddProduct from './components/AdminAddProduct.vue';
+import Contact from './components/Contact.vue';
 
 
 
 const routes = [
 
  
-
-  {
-    path: '/payment/:orderID',
-    name: 'Payment',
-    component: Payment,
-  },
-
 
   {
     path: '/',
@@ -65,6 +58,12 @@ const routes = [
     name: 'AdminAddProduct',
     component: AdminAddProduct,
     props: true
+  },
+
+  {
+    path: '/contact',
+    name: 'Contact',
+    component: Contact
   },
 ];
 

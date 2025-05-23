@@ -61,16 +61,16 @@
 
 
  <hr class="featurette-divider">
- <h2 style="text-align:center; margin:2rem; color:black;">Products For Bussiness</h2>
+ <h2 style="text-align:center; margin:2rem; color:black;">How it works</h2>
 <br>
     <div class="row featurette">
       <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">QUICK ONLINE SUPERMARKET<span class="text-muted"> Groceries delivered in 20 minutes </span></h2>
+        <h2 class="featurette-heading fw-normal lh-1">QUICK ONLINE SUPERMARKET<span class="text-muted"> Groceries delivered every week </span></h2>
         <p class="lead">cheeses, fruit, vegetables, snacks, nuts, and other products</p>
       </div>
       <div class="col-md-5">
-         <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post1.jpg" alt="First Photo">
+         <img style="height:25rem;   object-position: center;  object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post2.png" alt="First Photo">
 
       </div>
     </div>
@@ -79,12 +79,12 @@
 <br>
     <div class="row featurette">
       <div class="col-md-7 order-md-2">
-        <h2 class="featurette-heading fw-normal lh-1">Foodiex makes it incredibly easy for you to discover   <span class="text-muted">and get what you want.</span></h2>
-        <p class="lead">Delivered to you – quickly, reliably and affordably.</p>
+        <h2 class="featurette-heading fw-normal lh-1">Get Free Products <span class="text-muted">Enjoy a free Foodiex box.</span></h2>
+        <p class="lead"> and share experience with your family or friends.</p>
       </div>
       <div class="col-md-5 order-md-1">
-          <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post2.jpg" alt="Second Photo">
+          <img style="height:25rem;   object-position: center;  object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post1.png" alt="Second Photo">
 
       </div>
     </div>
@@ -94,12 +94,14 @@
 
     <div class="row featurette">
        <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">When you order with Foodiex<span class="text-muted"> you help thousands of hard-working restaurant and store owners</span></h2>
-       <p class="text-muted">Getting home-delivered goods is more than your life made easy.  </p>
+        <h2 class="featurette-heading fw-normal lh-1">Ambassador Program<span class="text-muted">is designed for passionate creators
+</span></h2>
+       <p class="text-muted"> Looking to share Foodiex with their audience. As an ambassador, you’ll receive a personalized code to share, and you’ll earn a reward for every box ordered!
+ </p>
       </div>
        <div class="col-md-5">
-              <img style="height:25rem;   object-position: center;  object-fit: none;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post3.jpg" alt="Third photo">
+              <img style="height:25rem;   object-position: center;  object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post3.png" alt="Third photo">
 
           </div>
     </div>

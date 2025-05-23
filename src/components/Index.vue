@@ -28,10 +28,10 @@
 
   </div>
   <div class="col-12">
-    <!-- Mobile slider -->
-    <div class="mobile-slider">
-      <div class="slider-track">
-        <div class="slider-card" v-for="(category, index) in categories" :key="category.id">
+    <!-- Mobile grid (2 columns) -->
+    <div class="mobile-grid">
+      <div class="row">
+        <div class="col-6 mb-4" v-for="(category, index) in categories" :key="category.id">
           <div class="card">
             <a v-if="category.id" :href="`/${category.id}/shop`"><img :src="category.link" :alt="category.title" class="card-img-top"></a>
             <div class="card-body">
@@ -96,7 +96,7 @@
        <div class="col-md-7">
         <h2 class="featurette-heading fw-normal lh-1">Ambassador Program<span class="text-muted">is designed for passionate creators
 </span></h2>
-       <p class="text-muted"> Looking to share Foodiex with their audience. As an ambassador, you’ll receive a personalized code to share, and you’ll earn a reward for every box ordered!
+       <p class="text-muted"> Looking to share Foodiex with their audience. As an ambassador, you'll receive a personalized code to share, and you'll earn a reward for every box ordered!
  </p>
       </div>
        <div class="col-md-5">
@@ -281,6 +281,9 @@ h1 {
 .mobile-slider {
   display: none;
 }
+.mobile-grid {
+  display: none;
+}
 .desktop-grid {
   display: block;
 }
@@ -292,24 +295,13 @@ h1 {
   }
 }
 @media (max-width: 768px) {
-  .mobile-slider {
+  .mobile-grid {
     display: block;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    margin-bottom: 1.5rem;
-  }
-  .slider-track {
-    display: flex;
-    flex-direction: row;
-    gap: 1rem;
-    width: max-content;
-    padding-bottom: 0.5rem;
-  }
-  .slider-card {
-    min-width: 220px;
-    flex: 0 0 auto;
   }
   .desktop-grid {
+    display: none;
+  }
+  .mobile-slider {
     display: none;
   }
 }

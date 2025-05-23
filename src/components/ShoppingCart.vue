@@ -41,19 +41,14 @@
       </div>
       <div class="product-grid">
         <div class="product-grid__cards">
-          <div v-for="product in products" :key="product.id" class="product-grid__card" @click="addToCart(product)">
+          <div v-for="product in products" :key="product.id" class="product-grid__card">
+            <div class="product-grid__image-wrapper">
+              <img :src="product.image_url" class="product-grid__image">
+            </div>
             <div class="product-grid__info">
               <h4 class="product-grid__name">{{product.name}}</h4>
-          
             </div>
-            <div class="product-grid__image-wrapper">
-            
-         <img :src="product.image_url" class="product-grid__image">
-              <div class="product-grid__add-to-cart">
-              <button class="btn btn-success">Add ${{product.price}}.0</button> 
-              </div>
-            </div>
-          
+            <button class="product-grid__add-plus-btn btn btn-success" @click.stop="addToCart(product)">+</button>
           </div>
         </div>
       </div>
@@ -143,6 +138,7 @@ export default {
       name: '',
       address: '',
       currentOrderID: null,
+      quantities: {},  // Store quantities for each product
     }
   },
   created() {
@@ -204,16 +200,28 @@ export default {
       this.selectedCategoryId = categoryId;
       this.fetchProducts(categoryId);
     },
+    getQuantity(productId) {
+      return this.quantities[productId] || 0;
+    },
+    increaseQuantity(product) {
+      if (!this.quantities[product.id]) {
+        this.$set(this.quantities, product.id, 0);
+      }
+      this.quantities[product.id]++;
+    },
+    decreaseQuantity(product) {
+      if (this.quantities[product.id] && this.quantities[product.id] > 0) {
+        this.quantities[product.id]--;
+      }
+    },
     addToCart(product) {
-      console.log("Adding product to cart:", product);
       const cartItem = this.cartItems.find(item => item.product.id === product.id);
       if (cartItem) {
         cartItem.quantity++;
       } else {
-        console.log("Adding new item to cart.");
         this.cartItems.push({
           product,
-          quantity: 1,
+          quantity: 1
         });
       }
     },
@@ -333,24 +341,33 @@ export default {
 
 
 <style>
-.product-grid__card {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+.product-grid__cards {
   display: flex;
   flex-direction: column;
-  height: 350px; /* Ensures consistent card height */
+  gap: 1.5rem;
+  padding: 0.5rem;
+}
+
+.product-grid__card {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  background: white;
+  min-height: 180px;
+  position: relative;
 }
 
 .product-grid__image-wrapper {
-  flex: 1 1 auto;
-  display: flex;
-  align-items: stretch;
-  justify-content: stretch;
-  height: 200px; /* Adjust as needed */
-  width: 100%;
+  position: relative;
+  width: 180px;
+  min-width: 180px;
+  height: 180px;
   overflow: hidden;
+  flex-shrink: 0;
 }
 
 .product-grid__image {
@@ -360,61 +377,49 @@ export default {
   display: block;
 }
 
-.product-grid__add-to-cart {
+.product-grid__add-plus-btn {
   position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  
-}
-
-
-
-
-.product-grid__add-to-cart button {
-  margin: 10px;
-}
-
-
-.product-grid {
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.product-grid__cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-
-  grid-gap: 20px;
-
+  bottom: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  z-index: 2;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+  background-color: #4CAF50;
+  border: none;
+  color: white;
 }
 
 .product-grid__info {
   flex: 1;
-  padding: 10px;
+  padding: 1.5rem 1rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  justify-content: center;
 }
 
 .product-grid__name {
   margin: 0;
+  font-size: 1.1rem;
+  font-weight: 500;
+  line-height: 1.2;
 }
 
-.product-grid__description {
-  margin: 10px 0;
-}
-
-.product-grid__price {
-  margin: 0;
-}
-
-.product-grid__actions {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 10px;
+@media (max-width: 768px) {
+  .product-grid__image-wrapper {
+    width: 120px;
+    min-width: 120px;
+    height: 120px;
+  }
+  .product-grid__info {
+    padding: 1rem 0.5rem;
+  }
 }
 
 .category-chips {
@@ -467,5 +472,77 @@ export default {
   display: flex;
   flex-direction: column;
   justify-content: center;
+}
+
+@media (max-width: 768px) {
+  .product-grid__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .product-grid__card {
+    height: auto;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 120px;
+  }
+  .product-grid__image-wrapper {
+    width: 120px;
+    height: 120px;
+    flex: none;
+  }
+  .product-grid__info {
+    flex: 1;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+}
+
+.product-grid__add-to-cart-row {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.5rem 0 1rem 0;
+}
+
+.quantity-controls {
+  position: absolute;
+  bottom: 60px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background-color: rgba(255, 255, 255, 0.9);
+}
+
+.quantity-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  font-weight: bold;
+}
+
+.quantity-display {
+  min-width: 32px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.add-to-cart-btn {
+  position: absolute;
+  bottom: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 8px 16px;
 }
 </style>

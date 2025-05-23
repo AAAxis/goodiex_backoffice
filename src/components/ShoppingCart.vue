@@ -19,12 +19,14 @@
     <router-view />
     <!-- Category Chips Block -->
     <div style="padding: 2rem;" class="container">
-      <div class="row align-items-center mb-3">
+      <div class="row align-items-center mb-1">
         <div class="col-auto">
           <h2>Products</h2>
         </div>
+      </div>
+      <div class="row mb-3">
         <div class="col">
-          <div class="category-chips justify-content-end">
+          <div class="category-chips">
             <span
               v-for="cat in categories"
               :key="cat.id"
@@ -332,7 +334,30 @@ export default {
 
 <style>
 .product-grid__card {
-  position: relative;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  display: flex;
+  flex-direction: column;
+  height: 350px; /* Ensures consistent card height */
+}
+
+.product-grid__image-wrapper {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: stretch;
+  justify-content: stretch;
+  height: 200px; /* Adjust as needed */
+  width: 100%;
+  overflow: hidden;
+}
+
+.product-grid__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .product-grid__add-to-cart {
@@ -363,24 +388,6 @@ export default {
 
   grid-gap: 20px;
 
-}
-
-.product-grid__card {
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  overflow: hidden;
-  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
-  display: flex;
-  flex-direction: column;
-}
-
-.product-grid__image {
-  width: 16rem;
-  height: 16rem;
-  
-  object-fit: cover;
-  display: block;
-  margin: 0 auto;
 }
 
 .product-grid__info {

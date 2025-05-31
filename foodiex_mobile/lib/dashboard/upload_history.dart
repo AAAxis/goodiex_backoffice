@@ -10,7 +10,6 @@ import 'package:image_picker/image_picker.dart';
 class MealHistory extends StatefulWidget {
   final List<Meal> meals;
   final Function(String)? onDelete;
-  final VoidCallback? onAddMeal;
   final Future<void> Function()? onRefresh;
   final void Function(List<Meal>)? updateMeals;
 
@@ -18,7 +17,6 @@ class MealHistory extends StatefulWidget {
     Key? key,
     required this.meals,
     this.onDelete,
-    this.onAddMeal,
     this.onRefresh,
     this.updateMeals,
   }) : super(key: key);
@@ -169,16 +167,27 @@ class _MealHistoryState extends State<MealHistory> {
                   ),
                 ),
                 if (_filteredMeals.isEmpty)
-                  Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Text(
-                        'dashboard.no_meals'.tr(),
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), 
-                          fontSize: 16
-                        ),
-                        textAlign: TextAlign.center,
+                  SizedBox(
+                    height: 220,
+                    child: Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.history,
+                            size: 56,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.18),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'dashboard.no_meals'.tr(),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                              fontSize: 16,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                   )

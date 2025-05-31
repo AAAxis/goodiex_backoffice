@@ -67,7 +67,20 @@
     "cm": "см",
     "connect_apple_health": "Connect HealthKit",
     "welcome_title": "Добро пожаловать в Foodiex",
-    "welcome_subtitle": "Ваш персональный AI-помощник по питанию"
+    "welcome_subtitle": "Ваш персональный AI-помощник по питанию",
+    "referral_code": "Реферальный код",
+    "have_referral_code": "У вас есть реферальный код?",
+    "enter_code": "Введите код",
+    "apply_code": "Применить код",
+    "skip": "Пропустить",
+    "enter_code_error": "Пожалуйста, введите код",
+    "code_already_used": "Этот код уже использован",
+    "invalid_code": "Неверный код",
+    "code_error": "Ошибка проверки кода",
+    "free_scans_applied": "{0} бесплатных сканов добавлено!",
+    "health_data": "Данные о здоровье",
+    "how_old_are_you": "Сколько вам лет?",
+    "connect": "Подключить"
   },
   "language": {
     "english": "Английский",
@@ -243,7 +256,8 @@
     "login_required_title": "Требуется вход",
     "login_required_content": "Вы должны войти в систему, чтобы сохранять результаты. Пожалуйста, войдите или создайте аккаунт.",
     "login": "Войти",
-    "nav_settings": "Настройки"
+    "nav_settings": "Настройки",
+    "sleep_last_night": "Сон прошлой ночью"
   },
   "details": {
     "notes": "Заметки",

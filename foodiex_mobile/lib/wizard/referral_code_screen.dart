@@ -59,18 +59,15 @@ class _ReferralCodeScreenState extends State<ReferralCodeScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
-                  
-                  // Title
+                  // Subtitle
                   Text(
                     'wizard.have_referral_code'.tr(),
                     style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 18,
                       color: Theme.of(context).colorScheme.onSurface,
                     ),
                     textAlign: TextAlign.center,
                   ),
-                  const SizedBox(height: 16),
                   
                   // Input field
                   Container(

@@ -267,8 +267,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
     
     return Scaffold(
       backgroundColor: backgroundColor,
-      appBar: SharedAppBar(
-        title: 'settings.title'.tr(),
+      appBar: AppBar(
+        backgroundColor: backgroundColor,
+        elevation: 0,
+        title: Text(
+          'settings.title'.tr(),
+          style: TextStyle(color: textColor),
+        ),
+        iconTheme: IconThemeData(color: iconColor),
+        centerTitle: false,
       ),
       body: Container(
         color: backgroundColor,
@@ -291,10 +298,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               trailing: Switch(
                 value: isDark,
                 onChanged: _toggleTheme,
-                activeColor: Colors.white,
-                activeTrackColor: Colors.white54,
-                inactiveThumbColor: Colors.white,
-                inactiveTrackColor: Colors.white,
+                activeColor: isDark ? Colors.white : Colors.black,
+                activeTrackColor: isDark ? Colors.white54 : Colors.black54,
+                inactiveThumbColor: isDark ? Colors.white : Colors.black,
+                inactiveTrackColor: isDark ? Colors.white : Colors.black26,
               ),
             ),
             

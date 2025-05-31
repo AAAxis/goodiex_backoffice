@@ -41,7 +41,7 @@ class WelcomeSection extends StatefulWidget {
   State<WelcomeSection> createState() => _WelcomeSectionState();
 }
 
-class _WelcomeSectionState extends State<WelcomeSection> 
+class _WelcomeSectionState extends State<WelcomeSection>
     with TickerProviderStateMixin {
   late AnimationController _fireAnimationController;
   late AnimationController _cardAnimationController;
@@ -51,7 +51,7 @@ class _WelcomeSectionState extends State<WelcomeSection>
   late Animation<double> _cardSlideAnimation;
   late Animation<double> _progressAnimation;
   late Animation<double> _cardTransitionAnimation;
-  
+
   // Add PageView controller and stats
   PageController _pageController = PageController();
   int _currentCardIndex = 0;
@@ -68,62 +68,58 @@ class _WelcomeSectionState extends State<WelcomeSection>
   @override
   void initState() {
     super.initState();
-    
+
     // Initialize stats future
     _statsFuture = _fetchStatsFromPrefs();
-    
+
     // Fire icon animation (pulsing effect)
     _fireAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1500),
       vsync: this,
     );
-    _fireScaleAnimation = Tween<double>(
-      begin: 0.9,
-      end: 1.1,
-    ).animate(CurvedAnimation(
-      parent: _fireAnimationController,
-      curve: Curves.easeInOut,
-    ));
-    
+    _fireScaleAnimation = Tween<double>(begin: 0.9, end: 1.1).animate(
+      CurvedAnimation(
+        parent: _fireAnimationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     // Card entrance animation
     _cardAnimationController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
     );
-    _cardSlideAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _cardAnimationController,
-      curve: Curves.easeOutCubic,
-    ));
-    
+    _cardSlideAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _cardAnimationController,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+
     // Progress animation
     _progressAnimationController = AnimationController(
       duration: const Duration(milliseconds: 1200),
       vsync: this,
     );
-    _progressAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _progressAnimationController,
-      curve: Curves.easeOutCirc,
-    ));
-    
+    _progressAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _progressAnimationController,
+        curve: Curves.easeOutCirc,
+      ),
+    );
+
     // Card transition animation for switching between cards
     _cardTransitionController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    _cardTransitionAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _cardTransitionController,
-      curve: Curves.easeInOut,
-    ));
-    
+    _cardTransitionAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(
+        parent: _cardTransitionController,
+        curve: Curves.easeInOut,
+      ),
+    );
+
     // Start animations
     _fireAnimationController.repeat(reverse: true);
     _cardAnimationController.forward();
@@ -186,11 +182,11 @@ class _WelcomeSectionState extends State<WelcomeSection>
       print('Fetching stats from prefs...');
       final prefs = await SharedPreferences.getInstance();
       print('Prefs loaded');
-      
+
       // Safe parsing with fallbacks
       int steps = _defaultStats['steps'] as int;
       double sleepHours = _defaultStats['sleep_hours'] as double;
-      
+
       try {
         dynamic stepsValue = prefs.get('steps');
         if (stepsValue is int) {
@@ -201,7 +197,7 @@ class _WelcomeSectionState extends State<WelcomeSection>
       } catch (e) {
         print('Error parsing steps: $e');
       }
-      
+
       try {
         final sleepValue = prefs.getDouble('sleep_hours');
         if (sleepValue != null) {
@@ -210,11 +206,8 @@ class _WelcomeSectionState extends State<WelcomeSection>
       } catch (e) {
         print('Error parsing sleep_hours: $e');
       }
-      
-      return {
-        'steps': steps,
-        'sleep_hours': sleepHours,
-      };
+
+      return {'steps': steps, 'sleep_hours': sleepHours};
     } catch (e) {
       print('Error in _fetchStatsFromPrefs: $e');
       // Return default values on any error
@@ -249,7 +242,7 @@ class _WelcomeSectionState extends State<WelcomeSection>
               onDaySelected: widget.onDaySelected,
             ),
           ),
-          
+
           // Main stats card with vertical PageView
           AnimatedBuilder(
             animation: _cardSlideAnimation,
@@ -269,18 +262,20 @@ class _WelcomeSectionState extends State<WelcomeSection>
                             future: _statsFuture,
                             builder: (context, snapshot) {
                               Map<String, dynamic> stats = _defaultStats;
-                              
+
                               if (snapshot.hasData) {
                                 stats = snapshot.data!;
                               } else if (snapshot.hasError) {
                                 print('Error loading stats: ${snapshot.error}');
                               }
-                              
+
                               return AnimatedBuilder(
                                 animation: _cardTransitionAnimation,
                                 builder: (context, child) {
                                   return Transform.scale(
-                                    scale: 1.0 - (0.05 * _cardTransitionAnimation.value),
+                                    scale:
+                                        1.0 -
+                                        (0.05 * _cardTransitionAnimation.value),
                                     child: PageView(
                                       controller: _pageController,
                                       scrollDirection: Axis.vertical,
@@ -305,7 +300,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                                           stats['sleep_hours'] as double,
                                           cardColor,
                                           textColor,
-                                          subTextColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
+                                          subTextColor ??
+                                              (isDark
+                                                  ? Colors.grey[400]
+                                                  : Colors.grey[600]),
                                           isDark,
                                         ),
                                         _buildMacrosCard(
@@ -326,7 +324,7 @@ class _WelcomeSectionState extends State<WelcomeSection>
                             },
                           ),
                         ),
-                        
+
                         // Page indicators
                         Positioned(
                           right: 16,
@@ -341,9 +339,14 @@ class _WelcomeSectionState extends State<WelcomeSection>
                                 width: 6,
                                 height: _currentCardIndex == index ? 20 : 6,
                                 decoration: BoxDecoration(
-                                  color: _currentCardIndex == index
-                                      ? (isDark ? Colors.white : Colors.black)
-                                      : (isDark ? Colors.grey[600] : Colors.grey[400]),
+                                  color:
+                                      _currentCardIndex == index
+                                          ? (isDark
+                                              ? Colors.white
+                                              : Colors.black)
+                                          : (isDark
+                                              ? Colors.grey[600]
+                                              : Colors.grey[400]),
                                   borderRadius: BorderRadius.circular(3),
                                 ),
                               );
@@ -357,9 +360,9 @@ class _WelcomeSectionState extends State<WelcomeSection>
               );
             },
           ),
-          
+
           const SizedBox(height: 24),
-          
+
           // Removed the old macro cards section - now integrated into PageView above
         ],
       ),
@@ -379,7 +382,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
       color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isDark ? BorderSide(color: Colors.grey[800]!, width: 1) : BorderSide.none,
+        side:
+            isDark
+                ? BorderSide(color: Colors.grey[800]!, width: 1)
+                : BorderSide.none,
       ),
       child: Container(
         width: double.infinity,
@@ -392,10 +398,14 @@ class _WelcomeSectionState extends State<WelcomeSection>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    caloriesRemaining >= 0 ? 'dashboard.calories_remaining'.tr() : 'dashboard.over_goal'.tr(),
+                    caloriesRemaining >= 0
+                        ? 'dashboard.calories_remaining'.tr()
+                        : 'dashboard.over_goal'.tr(),
                     style: TextStyle(
                       fontSize: 14,
-                      color: subTextColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      color:
+                          subTextColor ??
+                          (isDark ? Colors.grey[400] : Colors.grey[600]),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -416,11 +426,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                       );
                     },
                   ),
-             
                 ],
               ),
             ),
-            
+
             // Right side - Animated Progress indicator
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -433,20 +442,28 @@ class _WelcomeSectionState extends State<WelcomeSection>
                     AnimatedBuilder(
                       animation: _progressAnimation,
                       builder: (context, child) {
-                        final targetProgress = caloriesGoal > 0 
-                            ? ((caloriesGoal - caloriesRemaining) / caloriesGoal).clamp(0.0, 1.0)
-                            : 0.0;
+                        final targetProgress =
+                            caloriesGoal > 0
+                                ? ((caloriesGoal - caloriesRemaining) /
+                                        caloriesGoal)
+                                    .clamp(0.0, 1.0)
+                                : 0.0;
                         return SizedBox(
                           width: 80,
                           height: 80,
                           child: CircularProgressIndicator(
                             value: targetProgress * _progressAnimation.value,
                             strokeWidth: 6,
-                            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                            backgroundColor:
+                                isDark ? Colors.grey[800] : Colors.grey[200],
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              caloriesRemaining >= 0 
-                                ? (isDark ? Colors.green[400]! : Colors.green[600]!)
-                                : (isDark ? Colors.orange[400]! : Colors.orange[600]!)
+                              caloriesRemaining >= 0
+                                  ? (isDark
+                                      ? Colors.green[400]!
+                                      : Colors.green[600]!)
+                                  : (isDark
+                                      ? Colors.orange[400]!
+                                      : Colors.orange[600]!),
                             ),
                           ),
                         );
@@ -460,9 +477,14 @@ class _WelcomeSectionState extends State<WelcomeSection>
                           child: Icon(
                             Icons.local_fire_department,
                             size: 28,
-                            color: caloriesRemaining >= 0 
-                              ? (isDark ? Colors.green[400] : Colors.green[600])
-                              : (isDark ? Colors.orange[400] : Colors.orange[600]),
+                            color:
+                                caloriesRemaining >= 0
+                                    ? (isDark
+                                        ? Colors.green[400]
+                                        : Colors.green[600])
+                                    : (isDark
+                                        ? Colors.orange[400]
+                                        : Colors.orange[600]),
                           ),
                         );
                       },
@@ -486,13 +508,16 @@ class _WelcomeSectionState extends State<WelcomeSection>
   ) {
     const int stepsGoal = 10000;
     final stepsPercent = (steps / stepsGoal).clamp(0.0, 1.0);
-    
+
     return Card(
       elevation: isDark ? 0 : 2,
       color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isDark ? BorderSide(color: Colors.grey[800]!, width: 1) : BorderSide.none,
+        side:
+            isDark
+                ? BorderSide(color: Colors.grey[800]!, width: 1)
+                : BorderSide.none,
       ),
       child: Container(
         width: double.infinity,
@@ -508,7 +533,9 @@ class _WelcomeSectionState extends State<WelcomeSection>
                     'dashboard.steps_today'.tr(),
                     style: TextStyle(
                       fontSize: 14,
-                      color: subTextColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      color:
+                          subTextColor ??
+                          (isDark ? Colors.grey[400] : Colors.grey[600]),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -529,11 +556,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                       );
                     },
                   ),
-          
                 ],
               ),
             ),
-            
+
             // Right side - Animated Progress indicator
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -552,11 +578,16 @@ class _WelcomeSectionState extends State<WelcomeSection>
                           child: CircularProgressIndicator(
                             value: stepsPercent * _progressAnimation.value,
                             strokeWidth: 6,
-                            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                            backgroundColor:
+                                isDark ? Colors.grey[800] : Colors.grey[200],
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              steps >= stepsGoal 
-                                ? (isDark ? Colors.green[400]! : Colors.green[600]!)
-                                : (isDark ? Colors.blue[400]! : Colors.blue[600]!)
+                              steps >= stepsGoal
+                                  ? (isDark
+                                      ? Colors.green[400]!
+                                      : Colors.green[600]!)
+                                  : (isDark
+                                      ? Colors.blue[400]!
+                                      : Colors.blue[600]!),
                             ),
                           ),
                         );
@@ -570,9 +601,14 @@ class _WelcomeSectionState extends State<WelcomeSection>
                           child: Icon(
                             Icons.directions_walk,
                             size: 28,
-                            color: steps >= stepsGoal 
-                              ? (isDark ? Colors.green[400] : Colors.green[600])
-                              : (isDark ? Colors.blue[400] : Colors.blue[600]),
+                            color:
+                                steps >= stepsGoal
+                                    ? (isDark
+                                        ? Colors.green[400]
+                                        : Colors.green[600])
+                                    : (isDark
+                                        ? Colors.blue[400]
+                                        : Colors.blue[600]),
                           ),
                         );
                       },
@@ -596,13 +632,16 @@ class _WelcomeSectionState extends State<WelcomeSection>
   ) {
     const double sleepGoal = 8.0;
     final sleepPercent = (sleepHours / sleepGoal).clamp(0.0, 1.0);
-    
+
     return Card(
       elevation: isDark ? 0 : 2,
       color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isDark ? BorderSide(color: Colors.grey[800]!, width: 1) : BorderSide.none,
+        side:
+            isDark
+                ? BorderSide(color: Colors.grey[800]!, width: 1)
+                : BorderSide.none,
       ),
       child: Container(
         width: double.infinity,
@@ -618,7 +657,9 @@ class _WelcomeSectionState extends State<WelcomeSection>
                     'dashboard.sleep_last_night'.tr(),
                     style: TextStyle(
                       fontSize: 14,
-                      color: subTextColor ?? (isDark ? Colors.grey[400] : Colors.grey[600]),
+                      color:
+                          subTextColor ??
+                          (isDark ? Colors.grey[400] : Colors.grey[600]),
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -639,11 +680,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                       );
                     },
                   ),
-             
                 ],
               ),
             ),
-            
+
             // Right side - Animated Progress indicator
             Padding(
               padding: const EdgeInsets.only(right: 16.0),
@@ -662,9 +702,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                           child: CircularProgressIndicator(
                             value: sleepPercent * _progressAnimation.value,
                             strokeWidth: 6,
-                            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+                            backgroundColor:
+                                isDark ? Colors.grey[800] : Colors.grey[200],
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              isDark ? Colors.purple[400]! : Colors.purple[600]!
+                              isDark ? Colors.red[400]! : Colors.red[600]!,
                             ),
                           ),
                         );
@@ -678,7 +719,10 @@ class _WelcomeSectionState extends State<WelcomeSection>
                           child: Icon(
                             Icons.bedtime,
                             size: 28,
-                            color: isDark ? Colors.purple[400] : Colors.purple[600],
+                            color:
+                                isDark
+                                    ? Colors.red[400]
+                                    : Colors.red[600],
                           ),
                         );
                       },
@@ -706,21 +750,26 @@ class _WelcomeSectionState extends State<WelcomeSection>
     final protein = macros['proteins'] ?? 0;
     final carbs = macros['carbs'] ?? 0;
     final fats = macros['fats'] ?? 0;
-    
+
     final proteinRemaining = proteinGoal - protein;
     final carbsRemaining = carbsGoal - carbs;
     final fatsRemaining = fatsGoal - fats;
-    
-    final proteinPercent = proteinGoal > 0 ? (protein / proteinGoal).clamp(0.0, 1.0) : 0.0;
-    final carbsPercent = carbsGoal > 0 ? (carbs / carbsGoal).clamp(0.0, 1.0) : 0.0;
+
+    final proteinPercent =
+        proteinGoal > 0 ? (protein / proteinGoal).clamp(0.0, 1.0) : 0.0;
+    final carbsPercent =
+        carbsGoal > 0 ? (carbs / carbsGoal).clamp(0.0, 1.0) : 0.0;
     final fatsPercent = fatsGoal > 0 ? (fats / fatsGoal).clamp(0.0, 1.0) : 0.0;
-    
+
     return Card(
       elevation: isDark ? 0 : 2,
       color: cardColor,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: isDark ? BorderSide(color: Colors.grey[800]!, width: 1) : BorderSide.none,
+        side:
+            isDark
+                ? BorderSide(color: Colors.grey[800]!, width: 1)
+                : BorderSide.none,
       ),
       child: Container(
         width: double.infinity,
@@ -769,7 +818,7 @@ class _WelcomeSectionState extends State<WelcomeSection>
   }) {
     final percent = goal > 0 ? (value / goal).clamp(0.0, 1.0) : 0.0;
     final percentageText = '${(percent * 100).toStringAsFixed(0)}%';
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -841,50 +890,58 @@ class DayPicker extends StatelessWidget {
     final unselectedTextColor = isDark ? Colors.white70 : Colors.black;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: days.map((date) {
-        final dayIndex = (date.weekday - 1) % 7; // Safety check
-        final dayName = dayNames[dayIndex];
-        final isSelected = selectedDay != null &&
-            date.year == selectedDay!.year &&
-            date.month == selectedDay!.month &&
-            date.day == selectedDay!.day;
-        final firstLetter = dayName.isNotEmpty ? dayName[0] : '';
-        return Expanded(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 2.0), // Reduced from 4.0 to 2.0
-            child: InkWell(
-              onTap: () {
-                onDaySelected(isSelected ? null : date);
-              },
-              borderRadius: BorderRadius.circular(18), // More pill-like
-              child: Container(
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: isSelected ? selectedBgColor : unselectedBgColor,
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(
-                    color: isDark
-                        ? Colors.grey[700]!
-                        : (isSelected ? Colors.grey[400]! : Colors.grey[300]!),
-                    width: 1.5,
-                  ),
-                ),
-                child: Text(
-                  DateFormat('d').format(date),
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: isDark
-                        ? (isSelected ? Colors.white : Colors.grey[300])
-                        : (isSelected ? Colors.white : Colors.black),
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
+      children:
+          days.map((date) {
+            final dayIndex = (date.weekday - 1) % 7; // Safety check
+            final dayName = dayNames[dayIndex];
+            final isSelected =
+                selectedDay != null &&
+                date.year == selectedDay!.year &&
+                date.month == selectedDay!.month &&
+                date.day == selectedDay!.day;
+            final firstLetter = dayName.isNotEmpty ? dayName[0] : '';
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 2.0,
+                ), // Reduced from 4.0 to 2.0
+                child: InkWell(
+                  onTap: () {
+                    onDaySelected(isSelected ? null : date);
+                  },
+                  borderRadius: BorderRadius.circular(18), // More pill-like
+                  child: Container(
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      color: isSelected ? selectedBgColor : unselectedBgColor,
+                      borderRadius: BorderRadius.circular(18),
+                      border: Border.all(
+                        color:
+                            isDark
+                                ? Colors.grey[700]!
+                                : (isSelected
+                                    ? Colors.grey[400]!
+                                    : Colors.grey[300]!),
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Text(
+                      DateFormat('d').format(date),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color:
+                            isDark
+                                ? (isSelected ? Colors.white : Colors.grey[300])
+                                : (isSelected ? Colors.white : Colors.black),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                      ),
+                    ),
                   ),
                 ),
               ),
-            ),
-          ),
-        );
-      }).toList(),
+            );
+          }).toList(),
     );
   }
 }

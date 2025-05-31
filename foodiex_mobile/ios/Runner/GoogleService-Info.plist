@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>868698601721-68sbo2f5qnbpggru3dbj3jnh45gcoa6s.apps.googleusercontent.com</string>
+	<string>868698601721-ru460rd9vim48utkrkmhtp64n1il6bhl.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.868698601721-68sbo2f5qnbpggru3dbj3jnh45gcoa6s</string>
+	<string>com.googleusercontent.apps.868698601721-ru460rd9vim48utkrkmhtp64n1il6bhl</string>
 	<key>ANDROID_CLIENT_ID</key>
 	<string>868698601721-4ul1obg5ith3ng1roms99u3njbdbp4ju.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
@@ -15,7 +15,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.theholylabs.foodiex</string>
+	<string>com.theholylabs.grape</string>
 	<key>PROJECT_ID</key>
 	<string>bankapp-9798a</string>
 	<key>STORAGE_BUCKET</key>
@@ -31,6 +31,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:868698601721:ios:d42a4f107c42e680854a28</string>
+	<string>1:868698601721:ios:c34c3cf2b97ba595854a28</string>
 </dict>
 </plist>

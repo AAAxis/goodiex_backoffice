@@ -7,7 +7,8 @@ import 'wizard_flow.dart';
 class AgeScreen extends StatefulWidget {
   final VoidCallback onNext;
   final VoidCallback onBack;
-  const AgeScreen({Key? key, required this.onNext, required this.onBack}) : super(key: key);
+  const AgeScreen({Key? key, required this.onNext, required this.onBack})
+    : super(key: key);
 
   @override
   State<AgeScreen> createState() => _AgeScreenState();
@@ -41,27 +42,32 @@ class _AgeScreenState extends State<AgeScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
-    
+
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          const WizardHeading(
-            text: 'wizard.how_old_are_you',
+          Padding(
+            padding: const EdgeInsets.only(
+              top: 32,
+              left: 24,
+              right: 24,
+              bottom: 8,
+            ),
+            child: Text(
+              'wizard.how_old_are_you'.tr(),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
           Expanded(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Text(
-                  age.toString(),
-                  style: TextStyle(
-                    fontSize: 64,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                ),
-                const SizedBox(height: 32),
                 Container(
                   height: 100,
                   padding: const EdgeInsets.symmetric(horizontal: 24),
@@ -77,20 +83,19 @@ class _AgeScreenState extends State<AgeScreen> {
                       });
                       _saveAge();
                     },
-                    children: List<Widget>.generate(
-                      maxAge - minAge + 1,
-                      (int index) {
-                        return Center(
-                          child: Text(
-                            (index + minAge).toString(),
-                            style: TextStyle(
-                              fontSize: 20,
-                              color: Theme.of(context).colorScheme.onSurface,
-                            ),
+                    children: List<Widget>.generate(maxAge - minAge + 1, (
+                      int index,
+                    ) {
+                      return Center(
+                        child: Text(
+                          (index + minAge).toString(),
+                          style: TextStyle(
+                            fontSize: 20,
+                            color: Theme.of(context).colorScheme.onSurface,
                           ),
-                        );
-                      },
-                    ),
+                        ),
+                      );
+                    }),
                   ),
                 ),
               ],
@@ -100,4 +105,4 @@ class _AgeScreenState extends State<AgeScreen> {
       ),
     );
   }
-} 
+}

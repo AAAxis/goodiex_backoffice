@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:868698601721:android:13a23d37ae34c061854a28",
+        "mobilesdk_app_id": "1:868698601721:android:9a3e747a51e2e49f854a28",
         "android_client_info": {
-          "package_name": "com.theholylabs.foodiex"
+          "package_name": "com.theholylabs.grape"
         }
       },
       "oauth_client": [

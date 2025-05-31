@@ -358,190 +358,203 @@ class _HealthScreenState extends State<HealthScreen> {
   @override
   Widget build(BuildContext context) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          // Title row with icon
-          Padding(
-            padding: const EdgeInsets.only(top: 40, left: 24, right: 24, bottom: 16),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'wizard.connect_health'.tr(),
-                  style: TextStyle(
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onSurface,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                if (Platform.isIOS) ...[
-                  const SizedBox(width: 12),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(32),
-                    onTap: () async {
-                      try {
-                        final health = Health();
-                        const types = [
-                          HealthDataType.STEPS,
-                          HealthDataType.SLEEP_IN_BED,
-                          HealthDataType.HEIGHT,
-                          HealthDataType.WEIGHT,
-                        ];
-                        const permissions = [
-                          HealthDataAccess.READ,
-                          HealthDataAccess.READ,
-                          HealthDataAccess.READ,
-                          HealthDataAccess.READ,
-                        ];
-                        final bool authorized = await health.requestAuthorization(
-                          types,
-                          permissions: permissions,
-                        );
-                        if (authorized) {
-                          final now = DateTime.now();
-                          // Get steps
-                          final stepsData = await health.getHealthDataFromTypes(
-                            types: [HealthDataType.STEPS],
-                            startTime: now.subtract(const Duration(days: 1)),
-                            endTime: now,
-                          );
-                          double totalSteps = 0;
-                          for (final entry in stepsData) {
-                            final value = entry.value is NumericHealthValue
-                                ? (entry.value as NumericHealthValue).numericValue
-                                : 0.0;
-                            totalSteps += value;
-                          }
-                          if (totalSteps > 0) {
-                            setState(() {
-                              _stepsValue = totalSteps.round().toString();
-                            });
-                          }
-
-                          // Get sleep
-                          final sleepData = await health.getHealthDataFromTypes(
-                            types: [HealthDataType.SLEEP_IN_BED],
-                            startTime: now.subtract(const Duration(days: 1)),
-                            endTime: now,
-                          );
-                          double totalSleepSeconds = 0;
-                          for (final entry in sleepData) {
-                            final value = entry.value is NumericHealthValue
-                                ? (entry.value as NumericHealthValue).numericValue
-                                : 0.0;
-                            totalSleepSeconds += value;
-                          }
-                          if (totalSleepSeconds > 0) {
-                            setState(() {
-                              _sleepHours = (totalSleepSeconds / 3600).clamp(0, 16).toDouble();
-                            });
-                          }
-
-                          // Get height
-                          final heightData = await health.getHealthDataFromTypes(
-                            types: [HealthDataType.HEIGHT],
-                            startTime: now.subtract(const Duration(days: 365 * 10)),
-                            endTime: now,
-                          );
-                          if (heightData.isNotEmpty) {
-                            final latestHeight = heightData
-                                .where((d) => d.value is NumericHealthValue)
-                                .lastOrNull
-                                ?.value as NumericHealthValue?;
-                            if (latestHeight != null && latestHeight.numericValue > 0) {
-                              setState(() {
-                                _heightValue = (latestHeight.numericValue * 100).toDouble();
-                              });
-                            }
-                          }
-
-                          // Get weight
-                          final weightData = await health.getHealthDataFromTypes(
-                            types: [HealthDataType.WEIGHT],
-                            startTime: now.subtract(const Duration(days: 90)),
-                            endTime: now,
-                          );
-                          if (weightData.isNotEmpty) {
-                            final latestWeight = weightData
-                                .where((d) => d.value is NumericHealthValue)
-                                .lastOrNull
-                                ?.value as NumericHealthValue?;
-                            if (latestWeight != null && latestWeight.numericValue > 0) {
-                              setState(() {
-                                _weightValue = latestWeight.numericValue.toDouble();
-                              });
-                            }
-                          }
-
-                          await _saveHealthData();
-                        } else {
-                          showError('wizard.health_permissions_not_granted'.tr());
-                        }
-                      } catch (e) {
-                        print('Error connecting to Apple Health: $e');
-                        showError('wizard.health_connect_error'.tr());
-                      }
-                    },
-                    child: Icon(Icons.ios_share, color: Colors.black, size: 28),
-                  ),
-                ],
-              ],
-            ),
+          const WizardHeading(
+            text: 'wizard.connect_health',
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 0, vertical: 0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                children: [
-                  Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 24, vertical: 0),
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: isDarkMode ? Theme.of(context).cardColor : Colors.grey[100],
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 8,
-                          offset: const Offset(0, 4),
+              padding: const EdgeInsets.all(24.0),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  minHeight: MediaQuery.of(context).size.height - 
+                    MediaQuery.of(context).padding.top - 
+                    MediaQuery.of(context).padding.bottom - 
+                    120, // Approximate height of WizardHeading
+                ),
+                child: IntrinsicHeight(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isDarkMode ? Theme.of(context).cardColor : Colors.grey[100],
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildHealthRow(
-                          'wizard.steps',
-                          '$_stepsValue ${'wizard.steps'.tr()}',
-                          Icons.directions_walk_rounded,
-                          Colors.green.shade600,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHealthRow(
+                              'wizard.steps',
+                              '$_stepsValue ${'wizard.steps'.tr()}',
+                              Icons.directions_walk_rounded,
+                              Colors.green.shade600,
+                            ),
+                            _buildHealthRow(
+                              'wizard.sleep',
+                              '${_sleepHours.toStringAsFixed(1)} ${'wizard.hours'.tr()}',
+                              Icons.bedtime_rounded,
+                              Colors.blue.shade600,
+                            ),
+                            _buildHealthRow(
+                              'wizard.height',
+                              '${_heightValue.round()} ${'wizard.cm'.tr()}',
+                              Icons.height_rounded,
+                              Colors.orange.shade600,
+                            ),
+                            _buildHealthRow(
+                              'wizard.weight',
+                              '${_weightValue.toStringAsFixed(1)} ${'wizard.kg'.tr()}',
+                              Icons.monitor_weight_rounded,
+                              Colors.red.shade600,
+                            ),
+                          ],
                         ),
-                        _buildHealthRow(
-                          'wizard.sleep',
-                          '${_sleepHours.toStringAsFixed(1)} ${'wizard.hours'.tr()}',
-                          Icons.bedtime_rounded,
-                          Colors.blue.shade600,
+                      ),
+                      if (Platform.isIOS)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 24),
+                          child: OutlinedButton.icon(
+                            icon: const Icon(Icons.ios_share, color: Colors.black),
+                            label: Text(
+                              'wizard.connect_apple_health'.tr(),
+                              style: const TextStyle(
+                                color: Colors.black,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                            onPressed: () async {
+                              try {
+                                final health = Health();
+                                const types = [
+                                  HealthDataType.STEPS,
+                                  HealthDataType.SLEEP_IN_BED,
+                                  HealthDataType.HEIGHT,
+                                  HealthDataType.WEIGHT,
+                                ];
+
+                                const permissions = [
+                                  HealthDataAccess.READ,
+                                  HealthDataAccess.READ,
+                                  HealthDataAccess.READ,
+                                  HealthDataAccess.READ,
+                                ];
+
+                                final bool authorized = await health.requestAuthorization(
+                                  types,
+                                  permissions: permissions,
+                                );
+
+                                if (authorized) {
+                                  final now = DateTime.now();
+                                  // Get steps
+                                  final stepsData = await health.getHealthDataFromTypes(
+                                    types: [HealthDataType.STEPS],
+                                    startTime: now.subtract(const Duration(days: 1)),
+                                    endTime: now,
+                                  );
+                                  double totalSteps = 0;
+                                  for (final entry in stepsData) {
+                                    final value = entry.value is NumericHealthValue
+                                        ? (entry.value as NumericHealthValue).numericValue
+                                        : 0.0;
+                                    totalSteps += value;
+                                  }
+                                  if (totalSteps > 0) {
+                                    setState(() {
+                                      _stepsValue = totalSteps.round().toString();
+                                    });
+                                  }
+
+                                  // Get sleep
+                                  final sleepData = await health.getHealthDataFromTypes(
+                                    types: [HealthDataType.SLEEP_IN_BED],
+                                    startTime: now.subtract(const Duration(days: 1)),
+                                    endTime: now,
+                                  );
+                                  double totalSleepSeconds = 0;
+                                  for (final entry in sleepData) {
+                                    final value = entry.value is NumericHealthValue
+                                        ? (entry.value as NumericHealthValue).numericValue
+                                        : 0.0;
+                                    totalSleepSeconds += value;
+                                  }
+                                  if (totalSleepSeconds > 0) {
+                                    setState(() {
+                                      _sleepHours = (totalSleepSeconds / 3600).clamp(0, 16).toDouble();
+                                    });
+                                  }
+
+                                  // Get height
+                                  final heightData = await health.getHealthDataFromTypes(
+                                    types: [HealthDataType.HEIGHT],
+                                    startTime: now.subtract(const Duration(days: 365 * 10)),
+                                    endTime: now,
+                                  );
+                                  if (heightData.isNotEmpty) {
+                                    final latestHeight = heightData
+                                        .where((d) => d.value is NumericHealthValue)
+                                        .lastOrNull
+                                        ?.value as NumericHealthValue?;
+                                    if (latestHeight != null && latestHeight.numericValue > 0) {
+                                      setState(() {
+                                        _heightValue = (latestHeight.numericValue * 100).toDouble();
+                                      });
+                                    }
+                                  }
+
+                                  // Get weight
+                                  final weightData = await health.getHealthDataFromTypes(
+                                    types: [HealthDataType.WEIGHT],
+                                    startTime: now.subtract(const Duration(days: 90)),
+                                    endTime: now,
+                                  );
+                                  if (weightData.isNotEmpty) {
+                                    final latestWeight = weightData
+                                        .where((d) => d.value is NumericHealthValue)
+                                        .lastOrNull
+                                        ?.value as NumericHealthValue?;
+                                    if (latestWeight != null && latestWeight.numericValue > 0) {
+                                      setState(() {
+                                        _weightValue = latestWeight.numericValue.toDouble();
+                                      });
+                                    }
+                                  }
+
+                                  await _saveHealthData();
+                                } else {
+                                  showError('wizard.health_permissions_not_granted'.tr());
+                                }
+                              } catch (e) {
+                                print('Error connecting to Apple Health: $e');
+                                showError('wizard.health_connect_error'.tr());
+                              }
+                            },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                              side: const BorderSide(color: Colors.black, width: 1.5),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                            ),
+                          ),
                         ),
-                        _buildHealthRow(
-                          'wizard.height',
-                          '${_heightValue.round()} ${'wizard.cm'.tr()}',
-                          Icons.height_rounded,
-                          Colors.orange.shade600,
-                        ),
-                        _buildHealthRow(
-                          'wizard.weight',
-                          '${_weightValue.toStringAsFixed(1)} ${'wizard.kg'.tr()}',
-                          Icons.monitor_weight_rounded,
-                          Colors.red.shade600,
-                        ),
-                      ],
-                    ),
+                    ],
                   ),
-                ],
+                ),
               ),
             ),
           ),

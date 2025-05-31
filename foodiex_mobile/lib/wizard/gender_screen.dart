@@ -132,8 +132,17 @@ class _GenderScreenState extends State<GenderScreen> {
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Column(
         children: [
-          const WizardHeading(
-            text: 'wizard.select_gender',
+          Padding(
+            padding: const EdgeInsets.only(top: 48.0, bottom: 16.0),
+            child: Text(
+              'wizard.select_gender'.tr(),
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+              textAlign: TextAlign.center,
+            ),
           ),
           Expanded(
             child: Padding(

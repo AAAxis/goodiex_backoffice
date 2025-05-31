@@ -79,7 +79,9 @@
     "code_already_used": "קוד זה כבר היה בשימוש",
     "invalid_code": "קוד לא תקין. אנא בדוק ונסה שוב",
     "code_error": "שגיאה באימות הקוד",
-    "free_scans_applied": "%s סריקות חינם הופעלו!"
+    "free_scans_applied": "%s סריקות חינם הופעלו!",
+    "health_data": "נתוני בריאות",
+    "connect": "התחבר"
   },
   "language": {
     "english": "אנגלית",

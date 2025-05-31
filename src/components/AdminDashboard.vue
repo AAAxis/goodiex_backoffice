@@ -1,6 +1,6 @@
 <template>
   <div class="admin-dashboard-wrapper">
-    <div v-if="authenticated">
+    <div>
       <div class="admin-header">
         <span class="admin-email">{{ loginEmail }}</span>
         <button class="logout-btn" @click="logout">Logout</button>
@@ -35,62 +35,26 @@
       <!-- Floating Action Button -->
       <button class="fab" @click="goToAdd">+</button>
     </div>
-    <div v-else>
-      <div class="admin-login-wrapper">
-        <div class="admin-login-card">
-          <h2 class="admin-login-title">Admin Login</h2>
-          <input v-model="loginEmail" type="email" placeholder="Enter admin email" class="admin-login-input" required />
-          <input v-model="password" type="password" placeholder="Enter admin password" class="admin-login-input" />
-          <button class="primary-btn" @click="checkPassword">Login</button>
-          <p v-if="error" class="form-message error">{{ error }}</p>
-        </div>
-      </div>
-    </div>
   </div>
 </template>
 
 <script>
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
-
-const ADMIN_KEY = 'admin_dashboard_logged_in';
-const ADMIN_EMAIL_KEY = 'admin_dashboard_email';
+import { db } from '../../firebase';
 
 export default {
   data() {
     return {
-      password: '',
       loginEmail: '',
-      authenticated: false,
-      error: '',
       categories: [],
       showDeleteConfirm: false,
       deleteTarget: null
     };
   },
   methods: {
-    checkPassword() {
-      if (this.password === 'Tel-Aviv' && this.loginEmail) { // Change this password
-        this.authenticated = true;
-        this.error = '';
-        localStorage.setItem(ADMIN_KEY, 'true');
-        localStorage.setItem(ADMIN_EMAIL_KEY, this.loginEmail);
-        this.fetchCategories();
-      } else if (!this.loginEmail) {
-        this.error = 'Please enter your email.';
-      } else {
-        this.error = 'Incorrect password';
-      }
-    },
     logout() {
-      this.authenticated = false;
-      localStorage.removeItem(ADMIN_KEY);
-      localStorage.removeItem(ADMIN_EMAIL_KEY);
-      this.password = '';
       this.loginEmail = '';
     },
     fetchCategories() {
-      const db = firebase.firestore();
       db.collection('categories').get().then(querySnapshot => {
         this.categories = [];
         querySnapshot.forEach(doc => {
@@ -111,7 +75,6 @@ export default {
       this.showDeleteConfirm = true;
     },
     deleteCategory() {
-      const db = firebase.firestore();
       db.collection('categories').doc(this.deleteTarget.id).delete().then(() => {
         this.fetchCategories();
         this.showDeleteConfirm = false;
@@ -120,11 +83,8 @@ export default {
     }
   },
   mounted() {
-    if (localStorage.getItem(ADMIN_KEY) === 'true') {
-      this.authenticated = true;
-      this.loginEmail = localStorage.getItem(ADMIN_EMAIL_KEY) || '';
-      this.fetchCategories();
-    }
+    this.loginEmail = '';
+    this.fetchCategories();
   }
 };
 </script>

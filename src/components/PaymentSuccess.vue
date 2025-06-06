@@ -79,7 +79,7 @@ export default {
         const db = firebase.firestore();
         
         // Update the order status to 'completed'
-        await db.collection('orders').doc(this.orderId).update({
+        await db.collection('web-orders').doc(this.orderId).update({
           status: 'completed',
           completedAt: firebase.firestore.FieldValue.serverTimestamp(),
           paymentStatus: 'paid'

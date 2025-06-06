@@ -7,12 +7,14 @@
           <i class="fa fa-arrow-left"></i>
         </button>
         <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">{{ storeName || 'Shop' }}</span>
-        <router-link to="/cart" class="cart-icon ms-2 position-relative" style="cursor:pointer; text-decoration: none;">
-          <i class="fa fa-shopping-cart" style="color: #111;"></i>
-          <span v-if="cartItemCount" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="font-size:0.8rem;">
+        <div class="cart-icon ms-2 position-relative" style="display: inline-block;">
+          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #111; font-size: 1.5rem;">
+            <i class="fa fa-shopping-cart"></i>
+          </router-link>
+          <span v-if="cartItemCount" class="position-absolute badge rounded-pill bg-danger" style="font-size:0.7rem; top: -3px; right: -8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;">
             {{ cartItemCount }}
           </span>
-        </router-link>
+        </div>
       </div>
     </nav>
 
@@ -43,16 +45,18 @@
         <div v-for="product in products" :key="product.id" class="product-card">
           <div class="product-image-container">
             <img :src="product.image_url" :alt="product.name" class="product-image">
-            <div class="product-overlay">
+            <div class="product-name-overlay">
+              <h3 class="product-name">{{ product.name }}</h3>
+            </div>
+          </div>
+          <div class="product-info">
+            <div class="price-and-button">
+              <div class="product-price">${{ product.price }}.00</div>
               <button class="add-to-cart-btn" @click="addToCart(product)">
                 <i class="fa fa-plus"></i>
                 Add to Cart
               </button>
             </div>
-          </div>
-          <div class="product-info">
-            <h3 class="product-name">{{ product.name }}</h3>
-            <div class="product-price">${{ product.price }}.00</div>
           </div>
         </div>
       </div>
@@ -233,50 +237,66 @@ export default {
   transform: scale(1.05);
 }
 
-/* Product Overlay */
-.product-overlay {
+/* Product Name Overlay */
+.product-name-overlay {
   position: absolute;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  opacity: 0;
-  transition: opacity 0.3s ease;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.8));
+  padding: 2rem 1rem 1rem 1rem;
 }
 
-.product-card:hover .product-overlay {
-  opacity: 1;
+.product-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: white;
+  margin: 0;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
 }
 
 /* Add to Cart Button */
 .add-to-cart-btn {
-  background: #4CAF50;
+  background: #343a40;
   color: white;
   border: none;
-  padding: 12px 24px;
-  border-radius: 50px;
+  padding: 10px 16px;
+  border-radius: 8px;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 11px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: center;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+  box-shadow: 0 2px 8px rgba(52, 58, 64, 0.3);
+  white-space: nowrap;
+  min-width: 100px;
+  height: 38px;
 }
 
 .add-to-cart-btn:hover {
-  background: #45a049;
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+  background: #23272b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(52, 58, 64, 0.4);
 }
 
 .add-to-cart-btn i {
-  font-size: 12px;
+  font-size: 10px;
+}
+
+/* Price and Button Row */
+.price-and-button {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
 }
 
 /* Product Info */
@@ -285,22 +305,10 @@ export default {
   text-align: center;
 }
 
-.product-name {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #2d3748;
-  margin: 0 0 0.5rem 0;
-  line-height: 1.4;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
 .product-price {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #4CAF50;
+  color: #2d3748;
   margin: 0;
 }
 
@@ -400,13 +408,21 @@ export default {
     font-size: 1rem;
   }
   
+  .product-name-overlay {
+    padding: 1.5rem 0.75rem 0.75rem 0.75rem;
+  }
+  
   .product-price {
     font-size: 1.1rem;
   }
   
   .add-to-cart-btn {
-    padding: 10px 20px;
-    font-size: 13px;
+    padding: 6px 12px;
+    font-size: 11px;
+  }
+  
+  .price-and-button {
+    margin-top: 0.5rem;
   }
   
   .container h2 {

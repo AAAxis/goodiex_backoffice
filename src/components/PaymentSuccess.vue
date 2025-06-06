@@ -19,10 +19,7 @@
         </div>
       </div>
       <div class="success-actions">
-        <router-link to="/shop" class="btn btn-primary btn-lg">
-          Continue Shopping
-        </router-link>
-        <router-link to="/" class="btn btn-outline-secondary btn-lg ms-3">
+        <router-link to="/" class="btn btn-primary btn-lg">
           Back to Home
         </router-link>
       </div>
@@ -111,7 +108,7 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #4CAF50 0%, #81C784 100%);
   padding: 2rem;
 }
 

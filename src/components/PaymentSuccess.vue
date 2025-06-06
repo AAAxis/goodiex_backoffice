@@ -19,7 +19,7 @@
         </div>
       </div>
       <div class="success-actions">
-        <router-link to="/" class="btn btn-primary btn-lg">
+        <router-link to="/" class="btn btn-dark btn-lg">
           Back to Home
         </router-link>
       </div>
@@ -204,6 +204,17 @@ export default {
 
 .btn-primary:hover {
   background: #45a049;
+  transform: translateY(-2px);
+}
+
+.btn-dark {
+  background: #343a40;
+  border: none;
+  color: white;
+}
+
+.btn-dark:hover {
+  background: #23272b;
   transform: translateY(-2px);
 }
 

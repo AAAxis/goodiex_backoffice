@@ -1,66 +1,27 @@
 <template>
   <div>
-    <Navbar />
-    <router-view />
-  </div>
-
-
-
-  <div class="hero-image">
-    <div class="image-container">
-      <img src="/hero.jpg" alt="Hero Image">
-      <div class="centered-hero-title">
-        <h1>Foodiex - Smart Meals Delivery</h1>
+    <!-- Hero Section -->
+    <div class="hero-image">
+      <div class="image-container">
+        <img src="/hero.jpg" alt="Hero Image">
+        <div class="centered-hero-title">
+          <h1>Foodiex - Smart Meals Delivery</h1>
+          <p class="hero-subtitle">Fresh ingredients delivered to your door</p>
+          <router-link to="/shop" class="btn btn-primary btn-lg mt-3">Start Shopping</router-link>
+        </div>
       </div>
     </div>
-  </div>
 
 <div style="padding: 1rem;" class="container">
     <!-- START THE FEATURETTES -->
 <br>
-  <h2 style="text-align:center; margin:1rem;">Over 60 dinner recipes to choose from every week</h2>
-
-
 
   <div class="row">
-  <div class="col-12">
-<button class="open-chat-button" onclick="window.open('https://t.me/polskoydm')"><i class="fas fa-comments"></i></button>
-
-  </div>
-  <div class="col-12">
-    <!-- Mobile grid (2 columns) -->
-    <div class="mobile-grid">
-      <div class="row">
-        <div class="col-6 mb-4" v-for="(category, index) in categories" :key="category.id">
-          <div class="card">
-            <a v-if="category.id" :href="`/${category.id}/shop`"><img :src="category.link" :alt="category.title" class="card-img-top"></a>
-            <div class="card-body">
-              <h5 class="card-title">{{ category.name }}</h5>
-              <p>0$ Free Delivery</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-    <!-- Desktop grid -->
-    <div class="desktop-grid">
-      <div class="row">
-        <div class="col-md-2 col-sm-4 col-xs-6 mb-4" v-for="(category, index) in categories" :key="category.id">
-          <div class="card">
-            <a v-if="category.id" :href="`/${category.id}/shop`"><img :src="category.link" :alt="category.title" class="card-img-top"></a>
-            <div class="card-body">
-              <h5 class="card-title">{{ category.name }}</h5>
-              <p>0$ Free Delivery</p>
-            </div>
-          </div>
-        </div>
-      </div>
+    <div class="col-12">
+      <button class="open-chat-button" onclick="window.open('https://t.me/polskoydm')"><i class="fas fa-comments"></i></button>
     </div>
   </div>
-</div>
 
-
- <hr class="featurette-divider">
  <h2 style="text-align:center; margin:2rem; color:black;">How it works</h2>
 <br>
     <div class="row featurette">
@@ -111,56 +72,16 @@
 <br>
  
   </div>
+</div>
 
 </template>
 
 <script>
-// Import the necessary Firebase modules
-import firebase from 'firebase/compat/app';
-import 'firebase/compat/firestore';
-
 export default {
   data() {
-    return {
-      categories: [] // Initialize an empty array to hold the categories data
-    };
-  },
-  mounted() {
-    // Initialize Firebase with your Firebase config
-    const firebaseConfig = {
-          apiKey: "AIzaSyASwq11lvLT6YfaGwp7W_dCBICDzVsBbSM",
-          authDomain: "bankapp-9798a.firebaseapp.com",
-          projectId: "bankapp-9798a",
-          storageBucket: "bankapp-9798a.appspot.com",
-          messagingSenderId: "868698601721",
-          appId: "1:868698601721:web:e061dcefcb437f53854a28",
-          measurementId: "G-WY7R44DDM4"
-    };
-
-    // Check if Firebase is already initialized to avoid reinitialization
-    if (!firebase.apps.length) {
-      firebase.initializeApp(firebaseConfig);
-    }
-
-    // Access the Firestore database
-    const db = firebase.firestore();
-
-      // Fetch categories collection
-    db.collection('categories').get().then(querySnapshot => {
-      querySnapshot.forEach(doc => {
-        const categoryData = doc.data();
-        // Only add categories that are receiving orders
-        if (categoryData.receivingOrders === true) {
-          categoryData.id = doc.id;
-          this.categories.push(categoryData);
-        }
-      });
-    }).catch(error => {
-      console.error('Error fetching categories: ', error);
-    });
+    return {};
   }
 };
-
 </script>
 
 
@@ -278,31 +199,48 @@ h1 {
   margin: 0;
 }
 
+.hero-subtitle {
+  color: #fff;
+  font-size: 1.2rem;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  margin: 1rem 0;
+}
+
+.btn-primary {
+  background-color: #4CAF50;
+  border-color: #4CAF50;
+  padding: 12px 30px;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border-radius: 25px;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.btn-primary:hover {
+  background-color: #388e3c;
+  border-color: #388e3c;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
 .mobile-slider {
   display: none;
 }
-.mobile-grid {
-  display: none;
-}
-.desktop-grid {
-  display: block;
-}
-@media (min-width: 769px) {
-  .desktop-grid > .row {
-    display: flex;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-}
+
 @media (max-width: 768px) {
-  .mobile-grid {
-    display: block;
-  }
-  .desktop-grid {
-    display: none;
-  }
   .mobile-slider {
     display: none;
+  }
+  .centered-hero-title h1 {
+    font-size: 2rem;
+  }
+  .hero-subtitle {
+    font-size: 1rem;
+  }
+  .btn-primary {
+    font-size: 1rem;
+    padding: 10px 25px;
   }
 }
 </style>

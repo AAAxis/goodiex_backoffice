@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from './components/Index.vue';
-import ShoppingCart from './components/ShoppingCart.vue';
+import ProductList from './components/ProductList.vue';
+import Cart from './components/Cart.vue';
+import PaymentSuccess from './components/PaymentSuccess.vue';
 import AdminDashboard from './components/AdminDashboard.vue';
 import AdminAddCategory from './components/AdminAddCategory.vue';
 import AdminEditCategory from './components/AdminEditCategory.vue';
@@ -11,20 +13,25 @@ import Contact from './components/Contact.vue';
 
 
 const routes = [
-
- 
-
   {
     path: '/',
     name: 'Home',
     component: Home,
   },
-
-
   {
-    path: '/:token?/shop',
-    name: 'ShoppingCart',
-    component: ShoppingCart
+    path: '/shop',
+    name: 'Shop',
+    component: ProductList
+  },
+  {
+    path: '/cart',
+    name: 'Cart',
+    component: Cart
+  },
+  {
+    path: '/payment-success',
+    name: 'PaymentSuccess',
+    component: PaymentSuccess
   },
 
   {

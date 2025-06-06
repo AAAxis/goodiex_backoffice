@@ -51,7 +51,14 @@ export default {
     this.orderId = urlParams.get('order') || '';
     this.email = urlParams.get('email') || '';
     this.total = urlParams.get('total') || '';
-    this.customerName = urlParams.get('name') || '';
+    this.customerName = decodeURIComponent(urlParams.get('name') || '');
+
+    console.log('PaymentSuccess created with params:', {
+      orderId: this.orderId,
+      email: this.email,
+      total: this.total,
+      customerName: this.customerName
+    });
 
     // Update order status to 'completed' if we have an order ID
     if (this.orderId) {

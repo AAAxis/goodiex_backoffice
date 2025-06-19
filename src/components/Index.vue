@@ -18,7 +18,7 @@
 
   <div class="row">
     <div class="col-12">
-      <button class="open-chat-button" onclick="window.open('https://t.me/polskoydm')"><i class="fas fa-comments"></i></button>
+      <button class="open-chat-button" onclick="window.open('https://t.me/theholylabs')"><i class="fas fa-comments"></i></button>
     </div>
   </div>
 

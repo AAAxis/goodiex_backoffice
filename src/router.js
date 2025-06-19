@@ -24,6 +24,18 @@ const routes = [
     component: ProductList
   },
   {
+    path: '/shop/:categoryId',
+    name: 'ShopCategory',
+    component: ProductList,
+    props: true
+  },
+  {
+    path: '/shop/:categoryId/:productId',
+    name: 'ShopProduct',
+    component: ProductList,
+    props: true
+  },
+  {
     path: '/cart',
     name: 'Cart',
     component: Cart

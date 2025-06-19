@@ -71,6 +71,16 @@ import cartStore from '../cart.js';
 
 export default {
   name: 'ProductList',
+  props: {
+    categoryId: {
+      type: String,
+      default: null
+    },
+    productId: {
+      type: String,
+      default: null
+    }
+  },
   data() {
     return {
       storeName: '',
@@ -86,7 +96,18 @@ export default {
   },
   created() {
     this.initializeFirebase();
-    this.fetchCategories();
+    this.fetchCategories().then(() => {
+      // If categoryId is provided in URL, use it
+      if (this.categoryId) {
+        this.selectedCategoryId = this.categoryId;
+        this.fetchProducts(this.categoryId);
+      }
+      // Otherwise use first category
+      else if (this.categories.length > 0) {
+        this.selectedCategoryId = this.categories[0].id;
+        this.fetchProducts(this.selectedCategoryId);
+      }
+    });
   },
   methods: {
     initializeFirebase() {
@@ -106,7 +127,7 @@ export default {
     },
     fetchCategories() {
       const db = firebase.firestore();
-      db.collection('categories').get().then(querySnapshot => {
+      return db.collection('categories').get().then(querySnapshot => {
         this.categories = [];
         querySnapshot.forEach(doc => {
           const data = doc.data();
@@ -116,12 +137,6 @@ export default {
             this.categories.push(data);
           }
         });
-        
-        // Set initial selected category to first category
-        if (this.categories.length > 0) {
-          this.selectedCategoryId = this.categories[0].id;
-          this.fetchProducts(this.selectedCategoryId);
-        }
       });
     },
     fetchProducts(categoryId) {
@@ -149,6 +164,8 @@ export default {
     switchCategory(categoryId) {
       this.selectedCategoryId = categoryId;
       this.fetchProducts(categoryId);
+      // Update URL when switching categories
+      this.$router.push({ name: 'ShopCategory', params: { categoryId } });
     },
     addToCart(product) {
       cartStore.addItem(product);

@@ -3,11 +3,11 @@
     <!-- Hero Section -->
     <div class="hero-image">
       <div class="image-container">
-        <img src="/hero.jpg" alt="Hero Image">
+        <img src="/hero.jpg" alt="E-commerce Platform Hero">
         <div class="centered-hero-title">
-          <h1>Foodiex - Smart Meals Delivery</h1>
-          <p class="hero-subtitle">Fresh ingredients delivered to your door</p>
-          <router-link to="/shop" class="btn btn-primary btn-lg mt-3">Start Shopping</router-link>
+          <h1>Create Your Online Store Today</h1>
+          <p class="hero-subtitle">Start, grow, and scale your business with our e-commerce platform</p>
+          <router-link to="/start" class="btn btn-primary btn-lg mt-3">Start Free Trial</router-link>
         </div>
       </div>
     </div>
@@ -22,17 +22,16 @@
     </div>
   </div>
 
- <h2 style="text-align:center; margin:2rem; color:black;">How it works</h2>
+ <h2 style="text-align:center; margin:2rem; color:black;">Why Choose Our Platform</h2>
 <br>
     <div class="row featurette">
       <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">QUICK ONLINE SUPERMARKET<span class="text-muted"> Groceries delivered every week </span></h2>
-        <p class="lead">cheeses, fruit, vegetables, snacks, nuts, and other products</p>
+        <h2 class="featurette-heading fw-normal lh-1">POWERFUL E-COMMERCE TOOLS<span class="text-muted"> Everything you need to succeed</span></h2>
+        <p class="lead">Create your online store with powerful tools that help you find customers, drive sales, and manage your business.</p>
       </div>
       <div class="col-md-5">
-         <img style="height:25rem;   object-position: center;  object-fit: cover;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post2.png" alt="First Photo">
-
+         <img style="height:25rem; object-position: center; object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post2.png" alt="E-commerce Dashboard">
       </div>
     </div>
 <br>
@@ -40,13 +39,12 @@
 <br>
     <div class="row featurette">
       <div class="col-md-7 order-md-2">
-        <h2 class="featurette-heading fw-normal lh-1">Get Free Products <span class="text-muted">Enjoy a free Foodiex box.</span></h2>
-        <p class="lead"> and share experience with your family or friends.</p>
+        <h2 class="featurette-heading fw-normal lh-1">Beautiful Themes <span class="text-muted">Stand out from the crowd</span></h2>
+        <p class="lead">Choose from hundreds of professional themes to create a stunning online store that reflects your brand.</p>
       </div>
       <div class="col-md-5 order-md-1">
-          <img style="height:25rem;   object-position: center;  object-fit: cover;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post1.png" alt="Second Photo">
-
+          <img style="height:25rem; object-position: center; object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post1.png" alt="Store Themes">
       </div>
     </div>
 <br>
@@ -55,22 +53,18 @@
 
     <div class="row featurette">
        <div class="col-md-7">
-        <h2 class="featurette-heading fw-normal lh-1">Ambassador Program<span class="text-muted">is designed for passionate creators
-</span></h2>
-       <p class="text-muted"> Looking to share Foodiex with their audience. As an ambassador, you'll receive a personalized code to share, and you'll earn a reward for every box ordered!
- </p>
+        <h2 class="featurette-heading fw-normal lh-1">24/7 Support<span class="text-muted"> We're here to help</span></h2>
+       <p class="text-muted">Get the help you need, when you need it. Our support team is available 24/7 to ensure your success.</p>
       </div>
        <div class="col-md-5">
-              <img style="height:25rem;   object-position: center;  object-fit: cover;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post3.png" alt="Third photo">
-
+              <img style="height:25rem; object-position: center; object-fit: cover;
+  background-repeat: no-repeat;" class="d-block w-100" src="/post3.png" alt="Support Team">
           </div>
     </div>
 <br>
     <hr class="featurette-divider">
     <!-- /END THE FEATURETTES -->
 <br>
- 
   </div>
 </div>
 

@@ -1,13 +1,17 @@
 <template>
   <div>
+    <Navbar />
     <!-- Hero Section -->
-    <div class="hero-image">
-      <div class="image-container">
-        <img src="/hero.jpg" alt="E-commerce Platform Hero">
+    <div class="hero-video">
+      <div class="video-container">
+        <video autoplay muted loop>
+          <source src="/main.mp4" type="video/mp4">
+          Your browser does not support the video tag.
+        </video>
         <div class="centered-hero-title">
           <h1>Create Your Online Store Today</h1>
           <p class="hero-subtitle">Start, grow, and scale your business with our e-commerce platform</p>
-          <router-link to="/start" class="btn btn-primary btn-lg mt-3">Start Free Trial</router-link>
+          <router-link to="/store-owner/register" class="btn btn-primary btn-lg mt-3">Start Free Trial</router-link>
         </div>
       </div>
     </div>
@@ -39,12 +43,12 @@
 <br>
     <div class="row featurette">
       <div class="col-md-7 order-md-2">
-        <h2 class="featurette-heading fw-normal lh-1">Beautiful Themes <span class="text-muted">Stand out from the crowd</span></h2>
-        <p class="lead">Choose from hundreds of professional themes to create a stunning online store that reflects your brand.</p>
+        <h2 class="featurette-heading fw-normal lh-1">Seamless Delivery & Logistics <span class="text-muted">We handle everything for you</span></h2>
+        <p class="lead">Focus on your business while we take care of all your delivery needs. Our partnerships with trusted logistics companies ensure your products reach customers safely and on time, anywhere in the world.</p>
       </div>
       <div class="col-md-5 order-md-1">
           <img style="height:25rem; object-position: center; object-fit: cover;
-  background-repeat: no-repeat;" class="d-block w-100" src="/post1.png" alt="Store Themes">
+  background-repeat: no-repeat;" class="d-block w-100" src="/post1.png" alt="Delivery and Logistics">
       </div>
     </div>
 <br>
@@ -71,7 +75,12 @@
 </template>
 
 <script>
+import Navbar from './Navbar.vue'
+
 export default {
+  components: {
+    Navbar
+  },
   data() {
     return {};
   }
@@ -81,16 +90,18 @@ export default {
 
 
 <style>
-.hero-image {
-  height: 50vh;
+.hero-video {
+  height: 100vh;
+  margin-top: -76px; /* Adjust this value based on your navbar height */
+  padding-top: 76px; /* Add padding to prevent content from going under navbar */
 }
 
-.image-container {
+.video-container {
   position: relative;
   height: 100%;
 }
 
-.image-container img {
+.video-container video {
   position: absolute;
   top: 0;
   left: 0;

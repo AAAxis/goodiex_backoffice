@@ -1,5 +1,6 @@
 <template>
   <div>
+    <Navbar />
     <!-- App Bar -->
     <nav class="navbar navbar-light bg-light mb-3 appbar">
       <div class="container-fluid d-flex align-items-center justify-content-between">
@@ -106,9 +107,13 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import cartStore from '../cart.js';
+import Navbar from './Navbar.vue'
 
 export default {
   name: 'Cart',
+  components: {
+    Navbar,
+  },
   data() {
     return {
       email: '',
@@ -173,6 +178,12 @@ export default {
 
         const db = firebase.firestore();
         
+        // Determine store ID from cart items (assuming all items are from the same store)
+        // In a real multi-store system, you'd need to split orders by store
+        const storeId = this.cartItems.length > 0 && this.cartItems[0].product.storeId 
+          ? this.cartItems[0].product.storeId 
+          : 'unknown-store';
+        
         // Create new order with 'pending' status initially
         const orderDoc = await db.collection('web-orders').add({
           status: 'pending', // Changed from 'ordering' to 'pending'
@@ -180,7 +191,8 @@ export default {
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           email: this.email,
           name: this.name,
-          address: this.address
+          address: this.address,
+          storeId: storeId // Add store ID to link order to specific store
         });
         
         const orderID = orderDoc.id;
@@ -279,5 +291,10 @@ export default {
     width: 100%;
     justify-content: space-between;
   }
+}
+
+/* Add some padding to account for fixed navbar */
+.container {
+  padding-top: 76px;
 }
 </style>

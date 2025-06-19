@@ -1,14 +1,20 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Home from './components/Index.vue';
+import StoreList from './components/StoreList.vue';
 import ProductList from './components/ProductList.vue';
 import Cart from './components/Cart.vue';
 import PaymentSuccess from './components/PaymentSuccess.vue';
-import AdminDashboard from './components/AdminDashboard.vue';
-import AdminAddCategory from './components/AdminAddCategory.vue';
-import AdminEditCategory from './components/AdminEditCategory.vue';
-import AdminMenuManager from './components/AdminMenuManager.vue';
-import AdminAddProduct from './components/AdminAddProduct.vue';
 import Contact from './components/Contact.vue';
+
+// Store Owner Components
+import StoreOwnerRegister from './components/StoreOwnerRegister.vue';
+import StoreOwnerLogin from './components/StoreOwnerLogin.vue';
+import StoreOwnerDashboard from './components/StoreOwnerDashboard.vue';
+import StoreOwnerSettings from './components/StoreOwnerSettings.vue';
+import CreateStore from './components/CreateStore.vue';
+import EditStore from './components/EditStore.vue';
+import ManageStore from './components/ManageStore.vue';
+import CreateProduct from './components/CreateProduct.vue';
 
 
 
@@ -21,17 +27,11 @@ const routes = [
   {
     path: '/shop',
     name: 'Shop',
-    component: ProductList
+    component: StoreList
   },
   {
-    path: '/shop/:categoryId',
-    name: 'ShopCategory',
-    component: ProductList,
-    props: true
-  },
-  {
-    path: '/shop/:categoryId/:productId',
-    name: 'ShopProduct',
+    path: '/shop/store/:storeId',
+    name: 'ShopStore',
     component: ProductList,
     props: true
   },
@@ -46,36 +46,48 @@ const routes = [
     component: PaymentSuccess
   },
 
+  // Store Owner Routes
   {
-    path: '/admin',
-    name: 'AdminDashboard',
-    component: AdminDashboard,
+    path: '/store-owner/register',
+    name: 'StoreOwnerRegister',
+    component: StoreOwnerRegister,
   },
-
   {
-    path: '/admin/add',
-    name: 'AdminAddCategory',
-    component: AdminAddCategory,
+    path: '/store-owner/login',
+    name: 'StoreOwnerLogin',
+    component: StoreOwnerLogin,
   },
-
   {
-    path: '/admin/edit/:id',
-    name: 'AdminEditCategory',
-    component: AdminEditCategory,
+    path: '/store-owner/dashboard',
+    name: 'StoreOwnerDashboard',
+    component: StoreOwnerDashboard,
+  },
+  {
+    path: '/store-owner/settings',
+    name: 'StoreOwnerSettings',
+    component: StoreOwnerSettings,
+  },
+  {
+    path: '/store-owner/create-store',
+    name: 'CreateStore',
+    component: CreateStore,
+  },
+  {
+    path: '/store-owner/edit-store/:storeId',
+    name: 'EditStore',
+    component: EditStore,
     props: true
   },
-
   {
-    path: '/admin/menu/:categoryId',
-    name: 'AdminMenuManager',
-    component: AdminMenuManager,
+    path: '/store-owner/manage-store/:storeId',
+    name: 'ManageStore',
+    component: ManageStore,
     props: true
   },
-
   {
-    path: '/admin/menu/:categoryId/add',
-    name: 'AdminAddProduct',
-    component: AdminAddProduct,
+    path: '/store-owner/manage-store/:storeId/create-product',
+    name: 'CreateProduct',
+    component: CreateProduct,
     props: true
   },
 

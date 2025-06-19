@@ -1,5 +1,6 @@
 <template>
   <div>
+    <Navbar />
     <!-- App Bar -->
     <nav class="navbar navbar-light bg-light mb-3 appbar">
       <div class="container-fluid d-flex align-items-center justify-content-between">
@@ -8,7 +9,7 @@
         </button>
         <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">{{ storeName || 'Shop' }}</span>
         <div class="cart-icon ms-2 position-relative" style="display: inline-block;">
-          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #111; font-size: 1.5rem;">
+          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #000; font-size: 1.5rem;">
             <i class="fa fa-shopping-cart"></i>
           </router-link>
           <span v-if="cartItemCount" class="position-absolute badge rounded-pill bg-danger" style="font-size:0.7rem; top: -3px; right: -8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;">
@@ -18,33 +19,18 @@
       </div>
     </nav>
 
-    <!-- Category Chips Block -->
     <div style="padding: 2rem;" class="container">
-      <div class="row align-items-center mb-1">
+      <div class="row align-items-center mb-4">
         <div class="col-auto">
           <h2>Products</h2>
         </div>
       </div>
-      <div class="row mb-3">
-        <div class="col">
-          <div class="category-chips">
-            <span
-              v-for="cat in categories"
-              :key="cat.id"
-              class="chip"
-              :class="{ selected: cat.id === selectedCategoryId }"
-              @click="switchCategory(cat.id)"
-            >
-              {{ cat.name }}
-            </span>
-          </div>
-        </div>
-      </div>
+      
       <!-- Product Grid -->
       <div class="product-grid">
         <div v-for="product in products" :key="product.id" class="product-card">
           <div class="product-image-container">
-            <img :src="product.image_url" :alt="product.name" class="product-image">
+            <img :src="product.image || product.image_url" :alt="product.name" class="product-image">
             <div class="product-name-overlay">
               <h3 class="product-name">{{ product.name }}</h3>
             </div>
@@ -68,15 +54,15 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import cartStore from '../cart.js';
+import Navbar from './Navbar.vue'
 
 export default {
   name: 'ProductList',
+  components: {
+    Navbar,
+  },
   props: {
-    categoryId: {
-      type: String,
-      default: null
-    },
-    productId: {
+    storeId: {
       type: String,
       default: null
     }
@@ -85,8 +71,6 @@ export default {
     return {
       storeName: '',
       products: [],
-      categories: [],
-      selectedCategoryId: null,
     }
   },
   computed: {
@@ -96,18 +80,26 @@ export default {
   },
   created() {
     this.initializeFirebase();
-    this.fetchCategories().then(() => {
-      // If categoryId is provided in URL, use it
-      if (this.categoryId) {
-        this.selectedCategoryId = this.categoryId;
-        this.fetchProducts(this.categoryId);
+    
+    // Fetch products for the store
+    if (this.storeId) {
+      this.fetchStore();
+      this.fetchProducts();
+    } else {
+      // If no storeId, redirect to shop page to choose a store
+      this.$router.push('/shop');
+    }
+  },
+  watch: {
+    // Watch for route changes to update content accordingly
+    '$route'(to, from) {
+      if (to.params.storeId !== from.params.storeId) {
+        if (to.params.storeId) {
+          this.fetchStore();
+          this.fetchProducts();
+        }
       }
-      // Otherwise use first category
-      else if (this.categories.length > 0) {
-        this.selectedCategoryId = this.categories[0].id;
-        this.fetchProducts(this.selectedCategoryId);
-      }
-    });
+    }
   },
   methods: {
     initializeFirebase() {
@@ -125,47 +117,35 @@ export default {
         firebase.initializeApp(firebaseConfig);
       }
     },
-    fetchCategories() {
+    fetchStore() {
       const db = firebase.firestore();
-      return db.collection('categories').get().then(querySnapshot => {
-        this.categories = [];
-        querySnapshot.forEach(doc => {
-          const data = doc.data();
-          // Only add categories that are receiving orders
-          if (data.receivingOrders === true) {
-            data.id = doc.id;
-            this.categories.push(data);
+      db.collection('stores').doc(this.storeId).get()
+        .then(storeDoc => {
+          if (storeDoc.exists) {
+            this.storeName = storeDoc.data().name;
+          } else {
+            this.storeName = '';
           }
         });
-      });
     },
-    fetchProducts(categoryId) {
+    fetchProducts() {
       const db = firebase.firestore();
-      db.collection('categories').doc(categoryId).collection('products').get()
+      db.collection('stores').doc(this.storeId).collection('products').get()
         .then(querySnapshot => {
           this.products = [];
           querySnapshot.forEach(doc => {
             const productData = doc.data();
             productData.id = doc.id;
+            productData.storeId = this.storeId; // Add storeId to product for cart
+            
+            // Ensure compatibility with cart component
+            if (productData.image && !productData.image_url) {
+              productData.image_url = productData.image;
+            }
+            
             this.products.push(productData);
           });
-          
-          // Get category name for the store name
-          db.collection('categories').doc(categoryId).get()
-            .then(categoryDoc => {
-              if (categoryDoc.exists) {
-                this.storeName = categoryDoc.data().name;
-              } else {
-                this.storeName = '';
-              }
-            });
         });
-    },
-    switchCategory(categoryId) {
-      this.selectedCategoryId = categoryId;
-      this.fetchProducts(categoryId);
-      // Update URL when switching categories
-      this.$router.push({ name: 'ShopCategory', params: { categoryId } });
     },
     addToCart(product) {
       cartStore.addItem(product);
@@ -329,42 +309,7 @@ export default {
   margin: 0;
 }
 
-/* Category Chips Redesign */
-.category-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  margin-bottom: 2rem;
-  justify-content: center;
-}
 
-.chip {
-  display: inline-flex;
-  align-items: center;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  background: #f8f9fa;
-  color: #6c757d;
-  cursor: pointer;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border: 2px solid transparent;
-  transition: all 0.3s ease;
-  text-decoration: none;
-}
-
-.chip:hover {
-  background: #e9ecef;
-  color: #495057;
-  transform: translateY(-2px);
-}
-
-.chip.selected {
-  background: #4CAF50;
-  color: white;
-  border-color: #4CAF50;
-  box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-}
 
 /* Header Styling */
 .container h2 {
@@ -387,12 +332,12 @@ export default {
 
 .cart-icon {
   font-size: 1.5rem;
-  color: #4CAF50;
+  color: #000;
   transition: all 0.3s ease;
 }
 
 .cart-icon:hover {
-  color: #45a049;
+  color: #333;
   transform: scale(1.1);
 }
 
@@ -445,16 +390,6 @@ export default {
   .container h2 {
     font-size: 1.5rem;
     text-align: left;
-  }
-  
-  .category-chips {
-    justify-content: flex-start;
-    margin-bottom: 1.5rem;
-  }
-  
-  .chip {
-    padding: 0.5rem 1rem;
-    font-size: 0.85rem;
   }
 }
 
@@ -519,5 +454,10 @@ export default {
   100% {
     opacity: 1;
   }
+}
+
+/* Add some padding to account for fixed navbar */
+.container {
+  padding-top: 76px;
 }
 </style>

@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from 'vue-router';
 import Home from './components/Index.vue';
 import StoreList from './components/StoreList.vue';
 import ProductList from './components/ProductList.vue';
+import ProductDetail from './components/ProductDetail.vue';
 import Cart from './components/Cart.vue';
 import PaymentSuccess from './components/PaymentSuccess.vue';
 import Contact from './components/Contact.vue';
@@ -33,6 +34,12 @@ const routes = [
     path: '/shop/store/:storeId',
     name: 'ShopStore',
     component: ProductList,
+    props: true
+  },
+  {
+    path: '/shop/store/:storeId/product/:productId',
+    name: 'ProductDetail',
+    component: ProductDetail,
     props: true
   },
   {

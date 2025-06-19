@@ -74,7 +74,7 @@
               <input type="text" id="name" v-model="name" required class="form-control">
             </div>
             <div class="form-group mb-3">
-              <label for="address" class="form-label">Delivery Address *</label>
+              <label for="address" class="form-label">Delivery Instructions *</label>
               <textarea id="address" v-model="address" required class="form-control" rows="3"></textarea>
             </div>
             <div class="cart-summary p-3 bg-light rounded">

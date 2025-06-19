@@ -28,7 +28,7 @@
       
       <!-- Product Grid -->
       <div class="product-grid">
-        <div v-for="product in products" :key="product.id" class="product-card">
+        <div v-for="product in products" :key="product.id" class="product-card" @click="goToProductDetail(product.id)">
           <div class="product-image-container">
             <img :src="product.image || product.image_url" :alt="product.name" class="product-image">
             <div class="product-name-overlay">
@@ -38,7 +38,7 @@
           <div class="product-info">
             <div class="price-and-button">
               <div class="product-price">${{ product.price }}.00</div>
-              <button class="add-to-cart-btn" @click="addToCart(product)">
+              <button class="add-to-cart-btn" @click.stop="addToCart(product)">
                 <i class="fa fa-plus"></i>
                 Add to Cart
               </button>
@@ -147,6 +147,16 @@ export default {
           });
         });
     },
+    goToProductDetail(productId) {
+      this.$router.push({
+        name: 'ProductDetail',
+        params: {
+          storeId: this.storeId,
+          productId: productId
+        }
+      });
+    },
+    
     addToCart(product) {
       cartStore.addItem(product);
       

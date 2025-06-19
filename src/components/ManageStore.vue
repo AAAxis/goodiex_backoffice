@@ -26,6 +26,12 @@
         >
           Orders ({{ totalOrders }})
         </button>
+        <button 
+          :class="['tab-btn', activeTab === 'mobile-orders' ? 'active' : '']"
+          @click="activeTab = 'mobile-orders'"
+        >
+          Mobile Orders ({{ totalMobileOrders }})
+        </button>
       </div>
 
 
@@ -134,6 +140,59 @@
           </table>
         </div>
       </div>
+
+      <!-- Mobile Orders Tab -->
+      <div v-if="activeTab === 'mobile-orders'" class="tab-content">
+        <div class="section-header">
+          <h2>Mobile Orders</h2>
+          <div class="order-stats">
+            <span class="stat-item">Total: {{ mobileOrders.length }}</span>
+            <span class="stat-item">Revenue: ${{ mobileStoreRevenue.toFixed(2) }}</span>
+          </div>
+        </div>
+
+        <div v-if="mobileOrdersLoading" class="loading">Loading mobile orders...</div>
+        
+        <div v-else-if="mobileOrders.length === 0" class="empty-state">
+          <p>No mobile orders yet for this store.</p>
+        </div>
+
+        <div v-else class="mobile-orders-table">
+          <table>
+            <thead>
+              <tr>
+                <th>Order ID</th>
+                <th>Customer</th>
+                <th>Date</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="order in mobileOrders" :key="order.id">
+                <td class="order-id">{{ order.id.substring(0, 8) }}...</td>
+                <td>
+                  <div class="customer-info">
+                    <div class="customer-name">{{ order.name }}</div>
+                    <div class="customer-email">{{ order.email }}</div>
+                  </div>
+                </td>
+                <td>{{ formatDate(order.timestamp) }}</td>
+                <td class="order-total">${{ order.total.toFixed(2) }}</td>
+                <td>
+                  <span :class="['order-status', order.status]">
+                    {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
+                  </span>
+                </td>
+                <td>
+                  <button class="btn-small btn-view" @click="viewMobileOrderDetails(order)">View Details</button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -149,16 +208,24 @@ export default {
       store: {},
       products: [],
       orders: [],
+      mobileOrders: [],
       activeTab: 'products',
       productsLoading: false,
       ordersLoading: false,
+      mobileOrdersLoading: false,
       totalProducts: 0,
-      totalOrders: 0
+      totalOrders: 0,
+      totalMobileOrders: 0
     }
   },
   computed: {
     storeRevenue() {
       return this.orders
+        .filter(order => order.status === 'completed')
+        .reduce((total, order) => total + (parseFloat(order.total) || 0), 0);
+    },
+    mobileStoreRevenue() {
+      return this.mobileOrders
         .filter(order => order.status === 'completed')
         .reduce((total, order) => total + (parseFloat(order.total) || 0), 0);
     }
@@ -171,6 +238,7 @@ export default {
         await this.fetchStore()
         await this.fetchProducts()
         await this.fetchOrders()
+        await this.fetchMobileOrders()
       } else {
         this.$router.push('/store-owner/login')
       }
@@ -210,19 +278,13 @@ export default {
       }
     },
 
-
-
     goBack() {
       this.$router.push('/store-owner/dashboard')
     },
 
-
-
     createProduct() {
       this.$router.push(`/store-owner/manage-store/${this.storeId}/create-product`)
     },
-
-
 
     async deleteProduct(productId) {
       if (confirm('Are you sure you want to delete this product?')) {
@@ -271,6 +333,38 @@ export default {
       // For now, just show an alert with order details
       // You can implement a proper modal later
       alert(`Order Details:\n\nOrder ID: ${order.id}\nCustomer: ${order.name}\nEmail: ${order.email}\nTotal: $${order.total}\nStatus: ${order.status}\nAddress: ${order.address}`)
+    },
+
+         async fetchMobileOrders() {
+       this.mobileOrdersLoading = true
+       try {
+         const querySnapshot = await db.collection('orders')
+           .where('storeId', '==', this.storeId)
+           .orderBy('timestamp', 'desc')
+           .get()
+        
+        this.mobileOrders = []
+        
+        querySnapshot.forEach((doc) => {
+          this.mobileOrders.push({
+            id: doc.id,
+            ...doc.data()
+          })
+        })
+        
+        this.totalMobileOrders = this.mobileOrders.length
+        
+      } catch (error) {
+        console.error('Error fetching mobile orders:', error)
+      } finally {
+        this.mobileOrdersLoading = false
+      }
+    },
+
+    viewMobileOrderDetails(order) {
+      // For now, just show an alert with order details
+      // You can implement a proper modal later
+      alert(`Mobile Order Details:\n\nOrder ID: ${order.id}\nCustomer: ${order.name}\nEmail: ${order.email}\nTotal: $${order.total}\nStatus: ${order.status}\nAddress: ${order.address}`)
     }
   }
 }
@@ -345,8 +439,6 @@ export default {
   color: #c62828;
 }
 
-
-
 .management-tabs {
   display: flex;
   background: white;
@@ -415,8 +507,6 @@ export default {
   align-items: center;
   gap: 1rem;
 }
-
-
 
 .loading, .empty-state {
   text-align: center;
@@ -544,8 +634,6 @@ export default {
   border-radius: 4px;
 }
 
-
-
 .table-actions {
   display: flex;
   gap: 0.5rem;
@@ -658,6 +746,27 @@ export default {
 
 .btn-view:hover {
   background: #1976d2;
+}
+
+.mobile-orders-table {
+  overflow-x: auto;
+}
+
+.mobile-orders-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.mobile-orders-table th,
+.mobile-orders-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.mobile-orders-table th {
+  background: #f8f9fa;
+  font-weight: 500;
 }
 
 @media (max-width: 768px) {

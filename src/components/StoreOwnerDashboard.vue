@@ -159,16 +159,28 @@ export default {
         let totalRevenue = 0
         
         for (const store of this.stores) {
-          // Get orders for this specific store
-          const ordersQuery = await db.collection('web-orders')
+          let storeOrders = 0
+          let storeRevenue = 0
+          
+          // Get web orders for this specific store
+          const webOrdersQuery = await db.collection('web-orders')
             .where('storeId', '==', store.id)
             .where('status', '==', 'completed')
             .get()
           
-          let storeOrders = 0
-          let storeRevenue = 0
+          webOrdersQuery.forEach((doc) => {
+            const orderData = doc.data()
+            storeOrders++
+            storeRevenue += parseFloat(orderData.total || 0)
+          })
           
-          ordersQuery.forEach((doc) => {
+          // Get mobile orders for this specific store
+          const mobileOrdersQuery = await db.collection('orders')
+            .where('storeId', '==', store.id)
+            .where('status', '==', 'completed')
+            .get()
+          
+          mobileOrdersQuery.forEach((doc) => {
             const orderData = doc.data()
             storeOrders++
             storeRevenue += parseFloat(orderData.total || 0)

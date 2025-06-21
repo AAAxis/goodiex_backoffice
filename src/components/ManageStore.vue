@@ -194,6 +194,70 @@
         </div>
       </div>
     </div>
+
+    <!-- Order Details Modal -->
+    <div v-if="showOrderModal" class="modal-overlay" @click="closeOrderModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Order Details</h3>
+          <button class="modal-close" @click="closeOrderModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <div v-if="loadingOrderDetails" class="loading">Loading order details...</div>
+          <div v-else>
+            <div class="order-info-section">
+              <div class="info-row">
+                <strong>Order ID:</strong> {{ selectedOrder.id }}
+              </div>
+              <div class="info-row">
+                <strong>Customer:</strong> {{ selectedOrder.name }}
+              </div>
+              <div class="info-row">
+                <strong>Email:</strong> {{ selectedOrder.email }}
+              </div>
+              <div class="info-row">
+                <strong>Date:</strong> {{ formatDate(selectedOrder.timestamp) }}
+              </div>
+              <div class="info-row">
+                <strong>Status:</strong> 
+                <span :class="['order-status', selectedOrder.status]">
+                  {{ selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1) }}
+                </span>
+              </div>
+              <div class="info-row">
+                <strong>Address:</strong> {{ selectedOrder.address || 'N/A' }}
+              </div>
+              <div class="info-row">
+                <strong>Total:</strong> <span class="order-total">${{ selectedOrder.total.toFixed(2) }}</span>
+              </div>
+            </div>
+
+            <div class="cart-section">
+              <h4>Order Items</h4>
+              <div v-if="orderCartItems.length === 0" class="empty-cart">
+                <p>No items found in this order.</p>
+              </div>
+              <div v-else class="cart-items">
+                <div v-for="item in orderCartItems" :key="item.id" class="cart-item">
+                  <div class="item-image">
+                    <img v-if="item.product_image_url" :src="item.product_image_url" :alt="item.product_name" />
+                    <div v-else class="no-image">No Image</div>
+                  </div>
+                  <div class="item-details">
+                    <div class="item-name">{{ item.product_name }}</div>
+                    <div class="item-price">${{ item.price }} × {{ item.quantity }}</div>
+                    <div class="item-total">${{ (item.price * item.quantity).toFixed(2) }}</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn-secondary" @click="closeOrderModal">Close</button>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -215,7 +279,11 @@ export default {
       mobileOrdersLoading: false,
       totalProducts: 0,
       totalOrders: 0,
-      totalMobileOrders: 0
+      totalMobileOrders: 0,
+      showOrderModal: false,
+      selectedOrder: {},
+      orderCartItems: [],
+      loadingOrderDetails: false
     }
   },
   computed: {
@@ -329,19 +397,37 @@ export default {
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
     },
 
-    viewOrderDetails(order) {
-      // For now, just show an alert with order details
-      // You can implement a proper modal later
-      alert(`Order Details:\n\nOrder ID: ${order.id}\nCustomer: ${order.name}\nEmail: ${order.email}\nTotal: $${order.total}\nStatus: ${order.status}\nAddress: ${order.address}`)
+    async viewOrderDetails(order) {
+      this.selectedOrder = order
+      this.showOrderModal = true
+      this.loadingOrderDetails = true
+      this.orderCartItems = []
+
+      try {
+        // Fetch cart items from web-orders collection
+        const cartSnapshot = await db.collection('web-orders').doc(order.id).collection('cart').get()
+        
+        cartSnapshot.forEach((doc) => {
+          this.orderCartItems.push({
+            id: doc.id,
+            ...doc.data()
+          })
+        })
+        
+      } catch (error) {
+        console.error('Error fetching order cart items:', error)
+      } finally {
+        this.loadingOrderDetails = false
+      }
     },
 
-         async fetchMobileOrders() {
-       this.mobileOrdersLoading = true
-       try {
-         const querySnapshot = await db.collection('orders')
-           .where('storeId', '==', this.storeId)
-           .orderBy('timestamp', 'desc')
-           .get()
+    async fetchMobileOrders() {
+      this.mobileOrdersLoading = true
+      try {
+        const querySnapshot = await db.collection('orders')
+          .where('storeId', '==', this.storeId)
+          .orderBy('timestamp', 'desc')
+          .get()
         
         this.mobileOrders = []
         
@@ -361,10 +447,47 @@ export default {
       }
     },
 
-    viewMobileOrderDetails(order) {
-      // For now, just show an alert with order details
-      // You can implement a proper modal later
-      alert(`Mobile Order Details:\n\nOrder ID: ${order.id}\nCustomer: ${order.name}\nEmail: ${order.email}\nTotal: $${order.total}\nStatus: ${order.status}\nAddress: ${order.address}`)
+    async viewMobileOrderDetails(order) {
+      this.selectedOrder = order
+      this.showOrderModal = true
+      this.loadingOrderDetails = true
+      this.orderCartItems = []
+
+      try {
+        // For mobile orders, the cart items might be stored differently
+        // Check if items are stored directly in the order document or in a subcollection
+        if (order.items && Array.isArray(order.items)) {
+          // Items are stored directly in the order document
+          this.orderCartItems = order.items.map((item, index) => ({
+            id: index,
+            product_name: item.name || item.product_name,
+            product_image_url: item.image || item.image_url || item.product_image_url,
+            price: item.price,
+            quantity: item.quantity
+          }))
+        } else {
+          // Try to fetch from subcollection (similar to web orders)
+          const cartSnapshot = await db.collection('orders').doc(order.id).collection('cart').get()
+          
+          cartSnapshot.forEach((doc) => {
+            this.orderCartItems.push({
+              id: doc.id,
+              ...doc.data()
+            })
+          })
+        }
+        
+      } catch (error) {
+        console.error('Error fetching mobile order cart items:', error)
+      } finally {
+        this.loadingOrderDetails = false
+      }
+    },
+
+    closeOrderModal() {
+      this.showOrderModal = false
+      this.selectedOrder = {}
+      this.orderCartItems = []
     }
   }
 }
@@ -769,6 +892,180 @@ export default {
   font-weight: 500;
 }
 
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 600px;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  padding: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.modal-header h3 {
+  margin: 0;
+  color: #333;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #666;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-close:hover {
+  color: #333;
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-footer {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e0e0e0;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.btn-secondary:hover {
+  background: #5a6268;
+}
+
+.order-info-section {
+  margin-bottom: 2rem;
+}
+
+.info-row {
+  display: flex;
+  margin-bottom: 0.75rem;
+  align-items: center;
+}
+
+.info-row strong {
+  min-width: 100px;
+  margin-right: 1rem;
+}
+
+.cart-section {
+  border-top: 1px solid #e0e0e0;
+  padding-top: 1.5rem;
+}
+
+.cart-section h4 {
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.empty-cart {
+  text-align: center;
+  padding: 2rem;
+  color: #666;
+  font-style: italic;
+}
+
+.cart-items {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.cart-item {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.item-image {
+  width: 60px;
+  height: 60px;
+  margin-right: 1rem;
+  flex-shrink: 0;
+}
+
+.item-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.item-image .no-image {
+  width: 100%;
+  height: 100%;
+  background: #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  color: #999;
+  border-radius: 4px;
+}
+
+.item-details {
+  flex: 1;
+}
+
+.item-name {
+  font-weight: 500;
+  margin-bottom: 0.25rem;
+  color: #333;
+}
+
+.item-price {
+  color: #666;
+  font-size: 0.9rem;
+  margin-bottom: 0.25rem;
+}
+
+.item-total {
+  font-weight: 600;
+  color: #4CAF50;
+}
+
 @media (max-width: 768px) {
   .manage-store-wrapper {
     padding: 1rem;
@@ -791,6 +1088,32 @@ export default {
   
   .categories-grid {
     grid-template-columns: 1fr;
+  }
+
+  .modal-content {
+    width: 95%;
+    margin: 1rem;
+  }
+
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .info-row strong {
+    min-width: auto;
+    margin-right: 0;
+    margin-bottom: 0.25rem;
+  }
+
+  .cart-item {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .item-image {
+    margin-right: 0;
+    margin-bottom: 0.5rem;
   }
 }
 </style> 

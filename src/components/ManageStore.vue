@@ -162,9 +162,10 @@
             <thead>
               <tr>
                 <th>Order ID</th>
-                <th>Customer</th>
+                <th>Items</th>
                 <th>Date</th>
                 <th>Total</th>
+                <th>Currency</th>
                 <th>Status</th>
                 <th>Actions</th>
               </tr>
@@ -173,13 +174,23 @@
               <tr v-for="order in mobileOrders" :key="order.id">
                 <td class="order-id">{{ order.id.substring(0, 8) }}...</td>
                 <td>
-                  <div class="customer-info">
-                    <div class="customer-name">{{ order.name }}</div>
-                    <div class="customer-email">{{ order.email }}</div>
+                  <div class="order-items">
+                    <div v-if="order.items && order.items.length > 0" class="items-summary">
+                      <div v-for="item in order.items" :key="item.id" class="item-row">
+                        <span class="item-name">{{ item.name }}</span>
+                        <span class="item-qty">×{{ item.quantity }}</span>
+                      </div>
+                    </div>
+                    <div v-else class="no-items">No items</div>
                   </div>
                 </td>
                 <td>{{ formatDate(order.timestamp) }}</td>
-                <td class="order-total">${{ order.total.toFixed(2) }}</td>
+                <td class="order-total">
+                  {{ formatCurrency(order.total, order.currency) }}
+                </td>
+                <td class="currency-badge">
+                  {{ (order.currency || 'USD').toUpperCase() }}
+                </td>
                 <td>
                   <span :class="['order-status', order.status]">
                     {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
@@ -362,9 +373,29 @@ export default {
     },
 
     viewMobileOrderDetails(order) {
-      // For now, just show an alert with order details
-      // You can implement a proper modal later
-      alert(`Mobile Order Details:\n\nOrder ID: ${order.id}\nCustomer: ${order.name}\nEmail: ${order.email}\nTotal: $${order.total}\nStatus: ${order.status}\nAddress: ${order.address}`)
+      // Format items list for display
+      let itemsText = 'Items:\n'
+      if (order.items && order.items.length > 0) {
+        order.items.forEach(item => {
+          itemsText += `- ${item.name} (${item.categoryName}) x${item.quantity} = ${this.formatCurrency(item.totalPrice, order.currency)}\n`
+        })
+      } else {
+        itemsText += 'No items found\n'
+      }
+      
+      alert(`Mobile Order Details:\n\nOrder ID: ${order.id}\nUser ID: ${order.userId}\nTotal: ${this.formatCurrency(order.total, order.currency)}\nCurrency: ${(order.currency || 'USD').toUpperCase()}\nStatus: ${order.status}\nDate: ${this.formatDate(order.timestamp)}\n\n${itemsText}`)
+    },
+
+    formatCurrency(amount, currency = 'USD') {
+      const currencySymbols = {
+        'usd': '$',
+        'eur': '€',
+        'gbp': '£',
+        'jpy': '¥'
+      }
+      
+      const symbol = currencySymbols[currency?.toLowerCase()] || '$'
+      return `${symbol}${(amount || 0).toFixed(2)}`
     }
   }
 }
@@ -767,6 +798,48 @@ export default {
 .mobile-orders-table th {
   background: #f8f9fa;
   font-weight: 500;
+}
+
+.order-items {
+  max-width: 200px;
+}
+
+.items-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.item-name {
+  font-weight: 500;
+  color: #333;
+  flex: 1;
+  margin-right: 0.5rem;
+}
+
+.item-qty {
+  color: #666;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.no-items {
+  color: #999;
+  font-style: italic;
+  font-size: 0.85rem;
+}
+
+.currency-badge {
+  font-weight: 600;
+  color: #2196f3;
+  font-size: 0.9rem;
 }
 
 @media (max-width: 768px) {

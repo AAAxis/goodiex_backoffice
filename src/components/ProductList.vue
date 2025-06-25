@@ -37,7 +37,7 @@
           </div>
           <div class="product-info">
             <div class="price-and-button">
-              <div class="product-price">${{ product.price }}.00</div>
+              <div class="product-price">{{ formatPrice(product.price) }}</div>
               <button class="add-to-cart-btn" @click.stop="addToCart(product)">
                 <i class="fa fa-plus"></i>
                 Add to Cart
@@ -69,6 +69,7 @@ export default {
   },
   data() {
     return {
+      store: {},
       storeName: '',
       products: [],
     }
@@ -122,7 +123,8 @@ export default {
       db.collection('stores').doc(this.storeId).get()
         .then(storeDoc => {
           if (storeDoc.exists) {
-            this.storeName = storeDoc.data().name;
+            this.store = storeDoc.data();
+            this.storeName = this.store.name;
           } else {
             this.storeName = '';
           }
@@ -158,10 +160,17 @@ export default {
     },
     
     addToCart(product) {
+      const hadItemsFromDifferentStore = cartStore.currentStoreId && cartStore.currentStoreId !== product.storeId;
+      
       cartStore.addItem(product);
       
-      // Show a brief confirmation
-      this.showAddToCartFeedback(product);
+      if (hadItemsFromDifferentStore) {
+        // Show notification about cart being cleared
+        this.showStoreChangeNotification(product);
+      } else {
+        // Show regular add to cart confirmation
+        this.showAddToCartFeedback(product);
+      }
     },
     showAddToCartFeedback(product) {
       // Create a simple toast notification
@@ -194,6 +203,70 @@ export default {
           document.body.removeChild(toast);
         }, 300);
       }, 2500);
+    },
+    showStoreChangeNotification(product) {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification store-change';
+      toast.innerHTML = `
+        <div class="d-flex align-items-center">
+          <i class="fa fa-info-circle text-warning me-2"></i>
+          <div>
+            <div><strong>Cart cleared!</strong></div>
+            <div style="font-size: 0.9rem;">You can only shop from one store at a time. ${product.name} added to cart.</div>
+          </div>
+        </div>
+      `;
+      toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid #ff9800;
+        z-index: 1000;
+        animation: slideInRight 0.3s ease;
+        max-width: 300px;
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 4000);
+    },
+    formatPrice(price) {
+      const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
+      return `${symbol}${parseFloat(price).toFixed(2)}`
+    },
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
     }
   }
 };
@@ -318,8 +391,6 @@ export default {
   color: #2d3748;
   margin: 0;
 }
-
-
 
 /* Header Styling */
 .container h2 {

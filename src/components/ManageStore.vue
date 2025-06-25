@@ -9,6 +9,10 @@
         <div class="store-info">
           <h1>{{ store.name }}</h1>
           <p class="store-description">{{ store.description }}</p>
+          <div class="store-currency">
+            <span class="currency-label">Currency:</span>
+            <span class="currency-value">{{ store.currency || 'USD' }}</span>
+          </div>
         </div>
 
       </div>
@@ -71,7 +75,7 @@
                 </td>
                 <td>{{ product.name }}</td>
                 <td>{{ product.description || 'No description' }}</td>
-                <td>${{ product.price }}</td>
+                <td>{{ formatPrice(product.price) }}</td>
                 <td>
                   <span :class="['availability-badge', (product.stock > 0) ? 'available' : 'unavailable']">
                     {{ (product.stock > 0) ? `${product.stock} Available` : 'Out of Stock' }}
@@ -94,7 +98,7 @@
           <h2>Store Orders</h2>
           <div class="order-stats">
             <span class="stat-item">Total: {{ orders.length }}</span>
-            <span class="stat-item">Revenue: ${{ storeRevenue.toFixed(2) }}</span>
+            <span class="stat-item">Revenue: {{ formatPrice(storeRevenue) }}</span>
           </div>
         </div>
 
@@ -126,7 +130,7 @@
                   </div>
                 </td>
                 <td>{{ formatDate(order.timestamp) }}</td>
-                <td class="order-total">${{ order.total.toFixed(2) }}</td>
+                <td class="order-total">{{ formatPrice(order.total) }}</td>
                 <td>
                   <span :class="['order-status', order.status]">
                     {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
@@ -147,7 +151,7 @@
           <h2>Mobile Orders</h2>
           <div class="order-stats">
             <span class="stat-item">Total: {{ mobileOrders.length }}</span>
-            <span class="stat-item">Revenue: ${{ mobileStoreRevenue.toFixed(2) }}</span>
+            <span class="stat-item">Revenue: {{ formatPrice(mobileStoreRevenue) }}</span>
           </div>
         </div>
 
@@ -179,7 +183,7 @@
                   </div>
                 </td>
                 <td>{{ formatDate(order.timestamp) }}</td>
-                <td class="order-total">${{ order.total.toFixed(2) }}</td>
+                <td class="order-total">{{ formatPrice(order.total) }}</td>
                 <td>
                   <span :class="['order-status', order.status]">
                     {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
@@ -228,7 +232,7 @@
                 <strong>Address:</strong> {{ selectedOrder.address || 'N/A' }}
               </div>
               <div class="info-row">
-                <strong>Total:</strong> <span class="order-total">${{ selectedOrder.total.toFixed(2) }}</span>
+                <strong>Total:</strong> <span class="order-total">{{ formatPrice(selectedOrder.total) }}</span>
               </div>
             </div>
 
@@ -245,8 +249,8 @@
                   </div>
                   <div class="item-details">
                     <div class="item-name">{{ item.product_name }}</div>
-                    <div class="item-price">${{ item.price }} × {{ item.quantity }}</div>
-                    <div class="item-total">${{ (item.price * item.quantity).toFixed(2) }}</div>
+                    <div class="item-price">{{ formatPrice(item.price) }} × {{ item.quantity }}</div>
+                    <div class="item-total">{{ formatPrice(item.price * item.quantity) }}</div>
                   </div>
                 </div>
               </div>
@@ -488,6 +492,37 @@ export default {
       this.showOrderModal = false
       this.selectedOrder = {}
       this.orderCartItems = []
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
+    },
+
+    formatPrice(price) {
+      const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
+      return `${symbol}${parseFloat(price).toFixed(2)}`
     }
   }
 }
@@ -542,6 +577,27 @@ export default {
 .store-description {
   color: #666;
   margin: 0 0 1rem 0;
+}
+
+.store-currency {
+  display: flex;
+  align-items: center;
+  margin-top: 0.5rem;
+}
+
+.currency-label {
+  color: #666;
+  font-size: 0.9rem;
+  margin-right: 0.5rem;
+}
+
+.currency-value {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .status-badge {

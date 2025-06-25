@@ -28,6 +28,36 @@
         </div>
 
         <div class="form-group">
+          <label>Currency *</label>
+          <select 
+            v-model="storeData.currency" 
+            required 
+          >
+            <option value="">Select Currency</option>
+            <option value="USD">USD - US Dollar ($)</option>
+            <option value="EUR">EUR - Euro (€)</option>
+            <option value="GBP">GBP - British Pound (£)</option>
+            <option value="JPY">JPY - Japanese Yen (¥)</option>
+            <option value="CAD">CAD - Canadian Dollar (C$)</option>
+            <option value="AUD">AUD - Australian Dollar (A$)</option>
+            <option value="CHF">CHF - Swiss Franc (CHF)</option>
+            <option value="CNY">CNY - Chinese Yuan (¥)</option>
+            <option value="SEK">SEK - Swedish Krona (kr)</option>
+            <option value="NOK">NOK - Norwegian Krone (kr)</option>
+            <option value="MXN">MXN - Mexican Peso ($)</option>
+            <option value="INR">INR - Indian Rupee (₹)</option>
+            <option value="BRL">BRL - Brazilian Real (R$)</option>
+            <option value="RUB">RUB - Russian Ruble (₽)</option>
+            <option value="KRW">KRW - South Korean Won (₩)</option>
+            <option value="SGD">SGD - Singapore Dollar (S$)</option>
+            <option value="HKD">HKD - Hong Kong Dollar (HK$)</option>
+            <option value="NZD">NZD - New Zealand Dollar (NZ$)</option>
+            <option value="TRY">TRY - Turkish Lira (₺)</option>
+            <option value="ZAR">ZAR - South African Rand (R)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
           <label>Store Image</label>
           <input 
             type="file" 
@@ -100,6 +130,7 @@ export default {
       storeData: {
         name: '',
         description: '',
+        currency: 'USD',
         email: '',
         phone: '',
         address: '',

@@ -57,7 +57,7 @@
               <h1 class="product-title">{{ product.name }}</h1>
               
               <div class="product-price-section">
-                <span class="current-price">${{ product.price }}.00</span>
+                <span class="current-price">{{ formatPrice(product.price) }}</span>
               </div>
               
               <div class="product-availability">
@@ -127,6 +127,7 @@ export default {
   data() {
     return {
       product: {},
+      store: {},
       storeName: '',
       loading: true,
       quantity: 1
@@ -201,7 +202,8 @@ export default {
         const db = firebase.firestore();
         const storeDoc = await db.collection('stores').doc(this.storeId).get();
         if (storeDoc.exists) {
-          this.storeName = storeDoc.data().name;
+          this.store = storeDoc.data();
+          this.storeName = this.store.name;
         }
       } catch (error) {
         console.error('Error fetching store:', error);
@@ -223,11 +225,17 @@ export default {
     addToCart() {
       if (this.product.stock === 0) return;
       
+      const hadItemsFromDifferentStore = cartStore.currentStoreId && cartStore.currentStoreId !== this.product.storeId;
+      
       for (let i = 0; i < this.quantity; i++) {
         cartStore.addItem(this.product);
       }
       
-      this.showAddToCartFeedback();
+      if (hadItemsFromDifferentStore) {
+        this.showStoreChangeNotification();
+      } else {
+        this.showAddToCartFeedback();
+      }
     },
     
     showAddToCartFeedback() {
@@ -259,6 +267,73 @@ export default {
           document.body.removeChild(toast);
         }, 300);
       }, 2500);
+    },
+
+    showStoreChangeNotification() {
+      const toast = document.createElement('div');
+      toast.className = 'toast-notification store-change';
+      toast.innerHTML = `
+        <div class="d-flex align-items-center">
+          <i class="fa fa-info-circle text-warning me-2"></i>
+          <div>
+            <div><strong>Cart cleared!</strong></div>
+            <div style="font-size: 0.9rem;">You can only shop from one store at a time. ${this.quantity} × ${this.product.name} added to cart.</div>
+          </div>
+        </div>
+      `;
+      toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-left: 4px solid #ff9800;
+        z-index: 1000;
+        animation: slideInRight 0.3s ease;
+        max-width: 300px;
+      `;
+      
+      document.body.appendChild(toast);
+      
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          document.body.removeChild(toast);
+        }, 300);
+      }, 4000);
+    },
+
+    formatPrice(price) {
+      const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
+      return `${symbol}${parseFloat(price).toFixed(2)}`
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
     }
   }
 };

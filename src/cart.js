@@ -3,6 +3,7 @@ import { reactive } from 'vue'
 
 const cartStore = reactive({
   items: [],
+  currentStoreId: null, // Track which store the cart belongs to
   
   get total() {
     return this.items.reduce((total, item) => total + item.product.price * item.quantity, 0);
@@ -13,6 +14,15 @@ const cartStore = reactive({
   },
   
   addItem(product) {
+    // Check if this product is from a different store
+    if (this.currentStoreId && this.currentStoreId !== product.storeId) {
+      // Clear cart if switching to a different store
+      this.clearCart();
+    }
+    
+    // Set the current store ID
+    this.currentStoreId = product.storeId;
+    
     const existingItem = this.items.find(item => item.product.id === product.id);
     if (existingItem) {
       existingItem.quantity++;
@@ -27,6 +37,12 @@ const cartStore = reactive({
   
   removeItem(index) {
     this.items.splice(index, 1);
+    
+    // If cart becomes empty, clear the store ID
+    if (this.items.length === 0) {
+      this.currentStoreId = null;
+    }
+    
     this.saveToStorage();
   },
   
@@ -41,17 +57,36 @@ const cartStore = reactive({
   
   clearCart() {
     this.items = [];
+    this.currentStoreId = null;
     this.saveToStorage();
   },
   
   saveToStorage() {
-    localStorage.setItem('foodiex_cart', JSON.stringify(this.items));
+    const cartData = {
+      items: this.items,
+      currentStoreId: this.currentStoreId
+    };
+    localStorage.setItem('foodiex_cart', JSON.stringify(cartData));
   },
   
   loadFromStorage() {
     const savedCart = localStorage.getItem('foodiex_cart');
     if (savedCart) {
-      this.items = JSON.parse(savedCart);
+      try {
+        const cartData = JSON.parse(savedCart);
+        if (cartData.items) {
+          this.items = cartData.items;
+          this.currentStoreId = cartData.currentStoreId || null;
+        } else {
+          // Handle old format
+          this.items = cartData;
+          this.currentStoreId = this.items.length > 0 ? this.items[0].product.storeId : null;
+        }
+      } catch (error) {
+        console.error('Error loading cart from storage:', error);
+        this.items = [];
+        this.currentStoreId = null;
+      }
     }
   }
 });

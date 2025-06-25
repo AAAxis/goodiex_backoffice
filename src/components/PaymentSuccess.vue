@@ -11,7 +11,7 @@
       <div class="order-details">
         <h3>Order Details</h3>
         <p><strong>Order ID:</strong> {{ orderId }}</p>
-        <p><strong>Total:</strong> ${{ total }}</p>
+        <p><strong>Total:</strong> {{ formatPrice(total, currency) }}</p>
         <p><strong>Email:</strong> {{ email }}</p>
         <div v-if="orderUpdated" class="order-status">
           <i class="fa fa-check-circle text-success"></i>
@@ -39,6 +39,7 @@ export default {
       email: '',
       total: '',
       customerName: '',
+      currency: '',
       orderUpdated: false
     }
   },
@@ -49,12 +50,14 @@ export default {
     this.email = urlParams.get('email') || '';
     this.total = urlParams.get('total') || '';
     this.customerName = decodeURIComponent(urlParams.get('name') || '');
+    this.currency = urlParams.get('currency') || 'USD';
 
     console.log('PaymentSuccess created with params:', {
       orderId: this.orderId,
       email: this.email,
       total: this.total,
-      customerName: this.customerName
+      customerName: this.customerName,
+      currency: this.currency
     });
 
     // Update order status to 'completed' if we have an order ID
@@ -63,6 +66,37 @@ export default {
     }
   },
   methods: {
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency.toUpperCase()] || '$'
+    },
+
+    formatPrice(total, currency) {
+      const symbol = this.getCurrencySymbol(currency);
+      return `${symbol}${parseFloat(total).toFixed(2)}`;
+    },
+
     async updateOrderStatus() {
       try {
         // Initialize Firebase if not already done

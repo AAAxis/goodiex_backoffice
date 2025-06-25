@@ -7,6 +7,11 @@
       
       <h1 class="create-product-title">Add New Product</h1>
       
+      <div v-if="store.name" class="store-info">
+        <span class="store-name">{{ store.name }}</span>
+        <span class="store-currency">Currency: {{ store.currency || 'USD' }}</span>
+      </div>
+      
       <form @submit.prevent="createProduct" class="product-form">
         <div class="form-group">
           <label>Product Name *</label>
@@ -28,7 +33,7 @@
         </div>
 
         <div class="form-group">
-          <label>Price *</label>
+          <label>Price ({{ getCurrencySymbol(store.currency || 'USD') }}) *</label>
           <input 
             v-model="productData.price" 
             type="number" 
@@ -81,6 +86,7 @@ export default {
     return {
       storeId: '',
       user: null,
+      store: {},
       productData: {
         name: '',
         description: '',
@@ -97,9 +103,10 @@ export default {
   mounted() {
     this.storeId = this.$route.params.storeId
     
-    auth.onAuthStateChanged((user) => {
+    auth.onAuthStateChanged(async (user) => {
       if (user) {
         this.user = user
+        await this.fetchStore()
       } else {
         this.$router.push('/store-owner/login')
       }
@@ -176,6 +183,43 @@ export default {
 
     goBack() {
       this.$router.push(`/store-owner/manage-store/${this.storeId}`)
+    },
+
+    async fetchStore() {
+      try {
+        const storeDoc = await db.collection('stores').doc(this.storeId).get()
+        if (storeDoc.exists) {
+          this.store = storeDoc.data()
+        }
+      } catch (error) {
+        console.error('Error fetching store:', error)
+      }
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
     }
   }
 }
@@ -221,6 +265,32 @@ export default {
   margin-bottom: 2rem;
   color: #333;
   font-size: 1.8rem;
+}
+
+.store-info {
+  text-align: center;
+  margin-bottom: 2rem;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.store-name {
+  font-weight: 600;
+  color: #333;
+  font-size: 1.1rem;
+}
+
+.store-currency {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
 }
 
 .product-form {

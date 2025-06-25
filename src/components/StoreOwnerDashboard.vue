@@ -25,7 +25,16 @@
         </div>
         <div class="stat-card">
           <h3>Total Revenue</h3>
-          <p class="stat-number">${{ totalRevenue.toFixed(2) }}</p>
+          <div v-if="revenueByCurrency.length === 1" class="stat-number">
+            {{ formatPrice(revenueByCurrency[0].total, revenueByCurrency[0].currency) }}
+          </div>
+          <div v-else-if="revenueByCurrency.length > 1" class="multiple-currencies">
+            <div v-for="revenue in revenueByCurrency" :key="revenue.currency" class="currency-revenue">
+              <span class="currency-code">{{ revenue.currency }}</span>
+              <span class="revenue-amount">{{ formatPrice(revenue.total, revenue.currency) }}</span>
+            </div>
+          </div>
+          <div v-else class="stat-number">$0.00</div>
         </div>
       </div>
 
@@ -69,7 +78,7 @@
                 </div>
                 <div class="stat-mini">
                   <span class="stat-label">Revenue:</span>
-                  <span class="stat-value">${{ (store.totalRevenue || 0).toFixed(2) }}</span>
+                  <span class="stat-value">{{ formatPrice(store.totalRevenue || 0, store.currency || 'USD') }}</span>
                 </div>
               </div>
             </div>
@@ -93,7 +102,8 @@ export default {
       stores: [],
       loading: true,
       totalOrders: 0,
-      totalRevenue: 0
+      totalRevenue: 0,
+      revenueByCurrency: []
     }
   },
   computed: {
@@ -186,11 +196,65 @@ export default {
         this.totalOrders = totalOrders
         this.totalRevenue = totalRevenue
         
+        // Calculate revenue by currency
+        this.revenueByCurrency = await this.calculateRevenueByCurrency()
+        
       } catch (error) {
         console.error('Error calculating stats:', error)
         this.totalOrders = 0
         this.totalRevenue = 0
       }
+    },
+
+    async calculateRevenueByCurrency() {
+      const revenueByCurrency = new Map()
+      
+      for (const store of this.stores) {
+        const currency = store.currency || 'USD'
+        const storeRevenue = store.totalRevenue || 0
+        
+        if (revenueByCurrency.has(currency)) {
+          revenueByCurrency.set(currency, revenueByCurrency.get(currency) + storeRevenue)
+        } else {
+          revenueByCurrency.set(currency, storeRevenue)
+        }
+      }
+      
+      return Array.from(revenueByCurrency.entries()).map(([currency, total]) => ({
+        currency,
+        total
+      }))
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
+    },
+
+    formatPrice(total, currency) {
+      const symbol = this.getCurrencySymbol(currency)
+      return `${symbol}${total.toFixed(2)}`
     },
 
     createStore() {
@@ -328,6 +392,34 @@ export default {
   font-weight: bold;
   color: #4CAF50;
   margin: 0;
+}
+
+.multiple-currencies {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.currency-revenue {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.currency-code {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  background: #f0f0f0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
+}
+
+.revenue-amount {
+  font-size: 1.1rem;
+  font-weight: bold;
+  color: #4CAF50;
 }
 
 .stores-section {

@@ -20,7 +20,7 @@
             <div class="ms-3 d-flex flex-column justify-content-center">
               <h5 class="mb-1">{{ item.product.name }}</h5>
               <p class="mb-0 text-muted">Quantity: {{ item.quantity }}</p>
-              <p class="mb-0 text-success fw-bold">${{ item.product.price }}.00</p>
+              <p class="mb-0 text-success fw-bold">{{ formatPrice(item.product.price, item.product.storeId) }}</p>
             </div>
           </div>
           <div class="d-flex align-items-center">
@@ -41,7 +41,7 @@
         
         <div class="cart-summary mt-4 p-3 bg-light rounded">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h4 class="mb-0">Total: ${{ cartTotal.toFixed(2) }}</h4>
+            <h4 class="mb-0">Total: {{ formatPrice(cartTotal, store.currency) }}</h4>
           </div>
           <button class="btn btn-success btn-lg w-100" @click="proceedToCheckout">
             Proceed to Checkout
@@ -82,12 +82,12 @@
               <h6>Order Summary:</h6>
               <div v-for="item in cartItems" :key="item.product.id" class="d-flex justify-content-between">
                 <span>{{ item.product.name }} x{{ item.quantity }}</span>
-                <span>${{ (item.product.price * item.quantity).toFixed(2) }}</span>
+                <span>{{ formatPrice(item.product.price * item.quantity, store.currency) }}</span>
               </div>
               <hr>
               <div class="d-flex justify-content-between fw-bold">
                 <span>Total:</span>
-                <span>${{ cartTotal.toFixed(2) }}</span>
+                <span>{{ formatPrice(cartTotal, store.currency) }}</span>
               </div>
             </div>
           </div>
@@ -120,6 +120,8 @@ export default {
       name: '',
       address: '',
       currentOrderID: null,
+      store: {}, // Single store information
+      cartStore // Add reference to cartStore for template access
     }
   },
   computed: {
@@ -133,7 +135,76 @@ export default {
       return this.email && this.name && this.address;
     }
   },
+  watch: {
+    'cartStore.currentStoreId': {
+      handler(newStoreId) {
+        if (newStoreId) {
+          this.fetchStore(newStoreId);
+        }
+      },
+      immediate: true
+    }
+  },
   methods: {
+    async fetchStore(storeId) {
+      if (!storeId) return;
+      
+      try {
+        const firebaseConfig = {
+          apiKey: "AIzaSyASwq11lvLT6YfaGwp7W_dCBICDzVsBbSM",
+          authDomain: "bankapp-9798a.firebaseapp.com",
+          projectId: "bankapp-9798a",
+          storageBucket: "bankapp-9798a.appspot.com",
+          messagingSenderId: "868698601721",
+          appId: "1:868698601721:web:e061dcefcb437f53854a28",
+          measurementId: "G-WY7R44DDM4"
+        };
+
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+
+        const db = firebase.firestore();
+        const storeDoc = await db.collection('stores').doc(storeId).get();
+        if (storeDoc.exists) {
+          this.store = storeDoc.data();
+        }
+      } catch (error) {
+        console.error('Error fetching store:', error);
+      }
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R'
+      }
+      return symbols[currency] || '$'
+    },
+
+    formatPrice(price, currency) {
+      const symbol = this.getCurrencySymbol(currency);
+      return `${symbol}${parseFloat(price).toFixed(2)}`;
+    },
+
     increaseQuantity(index) {
       cartStore.updateQuantity(index, this.cartItems[index].quantity + 1);
     },
@@ -178,12 +249,6 @@ export default {
 
         const db = firebase.firestore();
         
-        // Determine store ID from cart items (assuming all items are from the same store)
-        // In a real multi-store system, you'd need to split orders by store
-        const storeId = this.cartItems.length > 0 && this.cartItems[0].product.storeId 
-          ? this.cartItems[0].product.storeId 
-          : 'unknown-store';
-        
         // Create new order with 'pending' status initially
         const orderDoc = await db.collection('web-orders').add({
           status: 'pending', // Changed from 'ordering' to 'pending'
@@ -192,7 +257,7 @@ export default {
           email: this.email,
           name: this.name,
           address: this.address,
-          storeId: storeId // Add store ID to link order to specific store
+          storeId: cartStore.currentStoreId // Add store ID to link order to specific store
         });
         
         const orderID = orderDoc.id;
@@ -209,14 +274,26 @@ export default {
           });
         }
 
-        // Call backend to create checkout session
-        const axios = (await import('axios')).default;
-        const response = await axios.post('https://api.theholylabs.com/create-checkout-session', {
-          order: orderID,
-          email: this.email,
-          total: this.cartTotal,
-          name: this.name
+        // Create checkout session with Stripe
+        const response = await fetch('https://api.theholylabs.com/create-checkout-session', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            order: orderID,
+            email: this.email,
+            total: this.cartTotal,
+            name: this.name,
+            currency: this.store.currency || 'USD' // Send store currency to backend
+          }),
         });
+        
+        const responseData = await response.json();
+        
+        if (!response.ok) {
+          throw new Error(responseData.error || 'Payment request failed');
+        }
         
         // Close the modal
         this.closeCheckoutModal();
@@ -225,13 +302,13 @@ export default {
         cartStore.clearCart();
         
         // Redirect to Stripe checkout
-        window.location.href = response.data.sessionUrl;
+        window.location.href = responseData.sessionUrl;
         
       } catch (error) {
         console.error('Error creating checkout session:', error);
         alert('There was an error processing your order. Please try again.');
       }
-    }
+    },
   }
 };
 </script>

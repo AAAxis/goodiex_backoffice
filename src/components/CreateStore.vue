@@ -54,6 +54,7 @@
             <option value="NZD">NZD - New Zealand Dollar (NZ$)</option>
             <option value="TRY">TRY - Turkish Lira (₺)</option>
             <option value="ZAR">ZAR - South African Rand (R)</option>
+            <option value="ILS">ILS - Israeli Shekel (₪)</option>
           </select>
         </div>
 

@@ -15,26 +15,10 @@
           <h3>Total Stores</h3>
           <p class="stat-number">{{ stores.length }}</p>
         </div>
-        <div class="stat-card">
-          <h3>Active Stores</h3>
-          <p class="stat-number">{{ activeStores }}</p>
-        </div>
+
         <div class="stat-card">
           <h3>Total Orders</h3>
           <p class="stat-number">{{ totalOrders }}</p>
-        </div>
-        <div class="stat-card">
-          <h3>Total Revenue</h3>
-          <div v-if="revenueByCurrency.length === 1" class="stat-number">
-            {{ formatPrice(revenueByCurrency[0].total, revenueByCurrency[0].currency) }}
-          </div>
-          <div v-else-if="revenueByCurrency.length > 1" class="multiple-currencies">
-            <div v-for="revenue in revenueByCurrency" :key="revenue.currency" class="currency-revenue">
-              <span class="currency-code">{{ revenue.currency }}</span>
-              <span class="revenue-amount">{{ formatPrice(revenue.total, revenue.currency) }}</span>
-            </div>
-          </div>
-          <div v-else class="stat-number">$0.00</div>
         </div>
       </div>
 
@@ -58,10 +42,6 @@
               </span>
               <div class="store-actions">
                 <button class="btn-manage" @click="manageStore(store.id)">Manage</button>
-                <button class="btn-edit" @click="editStore(store.id)">Edit</button>
-                <button class="btn-toggle" @click="toggleStoreStatus(store.id, store.isActive)">
-                  {{ store.isActive ? 'Deactivate' : 'Activate' }}
-                </button>
               </div>
             </div>
             <div class="store-image">
@@ -102,14 +82,10 @@ export default {
       stores: [],
       loading: true,
       totalOrders: 0,
-      totalRevenue: 0,
       revenueByCurrency: []
     }
   },
   computed: {
-    activeStores() {
-      return this.stores.filter(store => store.isActive).length
-    }
   },
   async mounted() {
     auth.onAuthStateChanged(async (user) => {
@@ -166,7 +142,6 @@ export default {
     async calculateTotalStats() {
       try {
         let totalOrders = 0
-        let totalRevenue = 0
         
         for (const store of this.stores) {
           // Get orders for this specific store
@@ -188,13 +163,11 @@ export default {
           store.totalOrders = storeOrders
           store.totalRevenue = storeRevenue
           
-          // Add to overall totals
+          // Add to overall totals (only for orders, not revenue from different currencies)
           totalOrders += storeOrders
-          totalRevenue += storeRevenue
         }
         
         this.totalOrders = totalOrders
-        this.totalRevenue = totalRevenue
         
         // Calculate revenue by currency
         this.revenueByCurrency = await this.calculateRevenueByCurrency()
@@ -202,7 +175,6 @@ export default {
       } catch (error) {
         console.error('Error calculating stats:', error)
         this.totalOrders = 0
-        this.totalRevenue = 0
       }
     },
 
@@ -247,7 +219,8 @@ export default {
         'HKD': 'HK$',
         'NZD': 'NZ$',
         'TRY': '₺',
-        'ZAR': 'R'
+        'ZAR': 'R',
+        'ILS': '₪'
       }
       return symbols[currency] || '$'
     },
@@ -263,22 +236,6 @@ export default {
 
     manageStore(storeId) {
       this.$router.push(`/store-owner/manage-store/${storeId}`)
-    },
-
-    editStore(storeId) {
-      this.$router.push(`/store-owner/edit-store/${storeId}`)
-    },
-
-    async toggleStoreStatus(storeId, currentStatus) {
-      try {
-        await db.collection('stores').doc(storeId).update({
-          isActive: !currentStatus,
-          updatedAt: new Date()
-        })
-        await this.fetchStores()
-      } catch (error) {
-        console.error('Error updating store status:', error)
-      }
     },
 
     goToSettings() {

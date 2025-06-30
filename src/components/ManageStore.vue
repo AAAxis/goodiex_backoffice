@@ -482,8 +482,6 @@
           </div>
         </div>
       </div>
-
-      <p v-if="message" class="form-message" :class="messageType">{{ message }}</p>
     </div>
 
     <!-- Order Details Modal -->
@@ -1027,8 +1025,8 @@ export default {
     },
 
     getDnsValue() {
-      // Return the DNS value that users need to configure
-      return this.store?.domainCname || `store-${this.storeId}.goodiex.com`
+      // Return the Vercel domain that users need to configure
+      return 'goodiex.vercel.app'
     },
 
     async checkDnsStatus() {

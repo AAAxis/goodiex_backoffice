@@ -1048,21 +1048,7 @@ export default {
       this.showMessage('Checking DNS status...', 'info')
 
       try {
-        // First, check if domain exists in Vercel
-        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
-          }
-        })
-
-        if (!vercelResponse.ok) {
-          this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
-          return
-        }
-
-        const vercelResult = await vercelResponse.json()
-        
-        // Check DNS propagation using a DNS lookup service
+        // Check DNS propagation using a DNS lookup service (no Vercel API required)
         const dnsCheckResponse = await fetch(`https://dns.google/resolve?name=${this.store.domain}&type=A`)
         const dnsResult = await dnsCheckResponse.json()
         
@@ -1088,7 +1074,6 @@ export default {
         // Update store with comprehensive status
         const updateData = {
           domainStatus: dnsStatus,
-          vercelDomainStatus: vercelResult.verification?.status || 'pending',
           lastDnsCheck: new Date(),
           dnsRecords: dnsResult.Answer || [],
           dnsMessage: dnsMessage

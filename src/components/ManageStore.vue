@@ -1073,7 +1073,7 @@ export default {
 
     getDnsValue() {
       // Vercel provides specific DNS records
-      return '76.76.19.76' // Vercel's IP for A record
+      return '216.198.79.193' // Vercel's IP for A record
     },
 
     // Add method to get CNAME value

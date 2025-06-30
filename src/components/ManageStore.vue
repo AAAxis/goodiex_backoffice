@@ -42,6 +42,12 @@
         >
           Edit Store
         </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'domain' }]" 
+          @click="activeTab = 'domain'"
+        >
+          Domain Settings
+        </button>
       </div>
 
 
@@ -344,6 +350,140 @@
 
         <p v-if="message" class="form-message" :class="messageType">{{ message }}</p>
       </div>
+
+      <!-- Domain Settings Tab -->
+      <div v-if="activeTab === 'domain'" class="tab-content">
+        <div class="tab-header">
+          <h2>Domain Settings</h2>
+        </div>
+
+        <div class="domain-settings">
+          <div class="domain-info">
+            <h3>Current Domain</h3>
+            <div class="current-domain">
+              <div class="domain-display">
+                <span class="domain-url">{{ store?.domain || 'No custom domain set' }}</span>
+                <span v-if="store?.domain" :class="['domain-status', store?.domainStatus || 'pending']">
+                  {{ store?.domainStatus || 'Pending' }}
+                </span>
+              </div>
+              <p v-if="store?.domain" class="domain-note">
+                Your store is accessible at: <strong>{{ store.domain }}</strong>
+              </p>
+              <p v-else class="domain-note">
+                Connect a custom domain to make your store more professional and easier to remember.
+              </p>
+            </div>
+          </div>
+
+          <div class="domain-form">
+            <h3>Connect Custom Domain</h3>
+            <form @submit.prevent="updateDomain" class="domain-form-content">
+              <div class="form-group">
+                <label>Domain Name *</label>
+                <div class="domain-input-group">
+                  <input 
+                    v-model="domainData.domain" 
+                    type="text" 
+                    placeholder="yourstore.com" 
+                    required 
+                    class="domain-input"
+                  />
+                  <span class="domain-suffix">.com</span>
+                </div>
+                <small class="form-help">
+                  Enter your domain without http:// or www. (e.g., mystore.com)
+                </small>
+              </div>
+
+              <div class="form-group">
+                <label class="checkbox-label">
+                  <input 
+                    type="checkbox" 
+                    v-model="domainData.includeWww"
+                  />
+                  <span class="checkmark"></span>
+                  Also redirect www.yourdomain.com to yourdomain.com
+                </label>
+              </div>
+
+              <div class="domain-requirements">
+                <h4>Domain Requirements</h4>
+                <ul>
+                  <li>You must own the domain you want to connect</li>
+                  <li>Domain must be active and not expired</li>
+                  <li>DNS settings need to be configured (instructions provided after setup)</li>
+                  <li>SSL certificate will be automatically provisioned</li>
+                </ul>
+              </div>
+
+              <button type="submit" class="update-btn" :disabled="domainLoading">
+                {{ domainLoading ? 'Connecting Domain...' : 'Connect Domain' }}
+              </button>
+            </form>
+          </div>
+
+          <div v-if="store?.domain" class="domain-actions">
+            <h3>Domain Management</h3>
+            <div class="domain-actions-content">
+              <div class="action-item">
+                <h4>DNS Configuration</h4>
+                <p>Configure your domain's DNS settings to point to our servers:</p>
+                <div class="dns-settings">
+                  <div class="dns-record">
+                    <strong>Type:</strong> CNAME
+                  </div>
+                  <div class="dns-record">
+                    <strong>Name:</strong> @
+                  </div>
+                  <div class="dns-record">
+                    <strong>Value:</strong> {{ getDnsValue() }}
+                  </div>
+                </div>
+                <button class="btn-secondary" @click="copyDnsValue">
+                  Copy DNS Settings
+                </button>
+                <button class="btn-secondary" @click="checkDnsStatus" style="margin-left: 10px;">
+                  Check DNS Status
+                </button>
+              </div>
+
+              <div class="action-item">
+                <h4>Remove Domain</h4>
+                <p>Disconnect your custom domain and revert to the default URL.</p>
+                <button 
+                  class="remove-domain-btn" 
+                  @click="showRemoveDomainConfirmation = true"
+                  :disabled="domainLoading"
+                >
+                  Remove Domain
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Remove Domain Confirmation Modal -->
+        <div v-if="showRemoveDomainConfirmation" class="modal-overlay" @click="cancelRemoveDomain">
+          <div class="modal-content" @click.stop>
+            <h3>Remove Custom Domain</h3>
+            <p>Are you sure you want to remove the domain <strong>"{{ store?.domain }}"</strong>?</p>
+            <p>Your store will revert to the default URL after removal.</p>
+            <div class="modal-actions">
+              <button class="cancel-btn" @click="cancelRemoveDomain">Cancel</button>
+              <button 
+                class="confirm-delete-btn" 
+                @click="removeDomain"
+                :disabled="domainLoading"
+              >
+                {{ domainLoading ? 'Removing...' : 'Remove Domain' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p v-if="message" class="form-message" :class="messageType">{{ message }}</p>
     </div>
 
     <!-- Order Details Modal -->
@@ -420,11 +560,11 @@ export default {
   data() {
     return {
       storeId: '',
-      store: {},
+      store: null,
       products: [],
       orders: [],
       mobileOrders: [],
-      activeTab: 'products',
+      activeTab: 'overview',
       productsLoading: false,
       ordersLoading: false,
       mobileOrdersLoading: false,
@@ -432,7 +572,7 @@ export default {
       totalOrders: 0,
       totalMobileOrders: 0,
       showOrderModal: false,
-      selectedOrder: {},
+      selectedOrder: null,
       orderCartItems: [],
       loadingOrderDetails: false,
       showDeleteConfirmation: false,
@@ -447,11 +587,17 @@ export default {
         address: '',
         isActive: true
       },
-      currentImage: '',
-      imagePreview: '',
       imageFile: null,
+      imagePreview: null,
+      currentImage: null,
       loading: false,
-      deleting: false
+      deleting: false,
+      domainData: {
+        domain: '',
+        includeWww: false
+      },
+      domainLoading: false,
+      showRemoveDomainConfirmation: false
     }
   },
   computed: {
@@ -495,6 +641,12 @@ export default {
             isActive: this.store.isActive
           }
           this.currentImage = this.store.image
+          
+          // Populate domain data if it exists
+          if (this.store.domain) {
+            this.domainData.domain = this.store.domain
+            this.domainData.includeWww = this.store.includeWww || false
+          }
         }
       } catch (error) {
         console.error('Error fetching store:', error)
@@ -663,7 +815,7 @@ export default {
 
     closeOrderModal() {
       this.showOrderModal = false
-      this.selectedOrder = {}
+      this.selectedOrder = null
       this.orderCartItems = []
     },
 
@@ -794,6 +946,168 @@ export default {
     cancelDelete() {
       this.showDeleteConfirmation = false
       this.deleteConfirmation = ''
+    },
+
+    async updateDomain() {
+      this.domainLoading = true
+      this.message = ''
+
+      try {
+        // Validate domain format
+        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
+        if (!domainRegex.test(this.domainData.domain)) {
+          this.showMessage('Please enter a valid domain name (e.g., mystore.com)', 'error')
+          return
+        }
+
+        // Verify domain with backend
+        const verifyResponse = await fetch('http://localhost:5000/api/domain/verify', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            domain: this.domainData.domain
+          })
+        })
+
+        if (!verifyResponse.ok) {
+          this.showMessage('Failed to verify domain. Please try again.', 'error')
+          return
+        }
+
+        const verifyResult = await verifyResponse.json()
+        
+        if (verifyResult.dns_status === 'unresolved') {
+          this.showMessage('Domain does not resolve. Please check if the domain exists and is active.', 'error')
+          return
+        }
+
+        // Generate CNAME for the store
+        const cnameResponse = await fetch('http://localhost:5000/api/domain/generate-cname', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            store_id: this.storeId
+          })
+        })
+
+        if (!cnameResponse.ok) {
+          this.showMessage('Failed to generate DNS settings. Please try again.', 'error')
+          return
+        }
+
+        const cnameResult = await cnameResponse.json()
+
+        const updateData = {
+          domain: this.domainData.domain,
+          includeWww: this.domainData.includeWww,
+          domainStatus: 'pending',
+          domainCname: cnameResult.cname,
+          domainUpdatedAt: new Date()
+        }
+
+        await db.collection('stores').doc(this.storeId).update(updateData)
+
+        this.showMessage('Domain connected successfully! Please configure your DNS settings.', 'success')
+        await this.fetchStore()
+        
+        // Reset form
+        this.domainData.domain = ''
+        this.domainData.includeWww = false
+
+      } catch (error) {
+        console.error('Error updating domain:', error)
+        this.showMessage('Failed to connect domain. Please try again.', 'error')
+      } finally {
+        this.domainLoading = false
+      }
+    },
+
+    getDnsValue() {
+      // Return the DNS value that users need to configure
+      return this.store?.domainCname || `store-${this.storeId}.goodiex.com`
+    },
+
+    async checkDnsStatus() {
+      if (!this.store?.domain || !this.store?.domainCname) {
+        return
+      }
+
+      try {
+        const response = await fetch('http://localhost:5000/api/domain/check-dns', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            domain: this.store.domain,
+            store_id: this.storeId,
+            expected_cname: this.store.domainCname
+          })
+        })
+
+        if (response.ok) {
+          const result = await response.json()
+          
+          // Update store with DNS status
+          await db.collection('stores').doc(this.storeId).update({
+            domainStatus: result.status,
+            lastDnsCheck: new Date()
+          })
+          
+          await this.fetchStore()
+          
+          if (result.status === 'active') {
+            this.showMessage('DNS is properly configured! Your domain is now active.', 'success')
+          } else {
+            this.showMessage('DNS is not yet configured. Please update your DNS settings.', 'warning')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking DNS status:', error)
+      }
+    },
+
+    copyDnsValue() {
+      const dnsValue = this.getDnsValue()
+      navigator.clipboard.writeText(dnsValue).then(() => {
+        this.showMessage('DNS settings copied to clipboard!', 'success')
+      }).catch(() => {
+        this.showMessage('Failed to copy DNS settings', 'error')
+      })
+    },
+
+    async removeDomain() {
+      this.domainLoading = true
+      this.message = ''
+
+      try {
+        const updateData = {
+          domain: null,
+          includeWww: false,
+          domainStatus: null,
+          domainUpdatedAt: new Date()
+        }
+
+        await db.collection('stores').doc(this.storeId).update(updateData)
+
+        this.showMessage('Domain removed successfully!', 'success')
+        await this.fetchStore()
+        this.showRemoveDomainConfirmation = false
+
+      } catch (error) {
+        console.error('Error removing domain:', error)
+        this.showMessage('Failed to remove domain. Please try again.', 'error')
+      } finally {
+        this.domainLoading = false
+      }
+    },
+
+    cancelRemoveDomain() {
+      this.showRemoveDomainConfirmation = false
     }
   }
 }
@@ -1689,6 +2003,236 @@ export default {
   .item-image {
     margin-right: 0;
     margin-bottom: 0.5rem;
+  }
+}
+
+/* Domain Settings Styles */
+.domain-settings {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.domain-info {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.current-domain {
+  margin-top: 16px;
+}
+
+.domain-display {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.domain-url {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.domain-status {
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.domain-status.active {
+  background: #d4edda;
+  color: #155724;
+}
+
+.domain-status.pending {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.domain-status.error {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.domain-note {
+  color: #6c757d;
+  margin: 0;
+}
+
+.domain-form {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 24px;
+  margin-bottom: 32px;
+}
+
+.domain-form h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.domain-input-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.domain-input {
+  flex: 1;
+  padding-right: 60px;
+}
+
+.domain-suffix {
+  position: absolute;
+  right: 12px;
+  color: #6c757d;
+  font-weight: 500;
+  pointer-events: none;
+}
+
+.form-help {
+  color: #6c757d;
+  font-size: 14px;
+  margin-top: 4px;
+  display: block;
+}
+
+.domain-requirements {
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 6px;
+  padding: 16px;
+  margin: 20px 0;
+}
+
+.domain-requirements h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #856404;
+}
+
+.domain-requirements ul {
+  margin: 0;
+  padding-left: 20px;
+  color: #856404;
+}
+
+.domain-requirements li {
+  margin-bottom: 6px;
+}
+
+.domain-actions {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.domain-actions h3 {
+  margin-top: 0;
+  margin-bottom: 20px;
+  color: #2c3e50;
+}
+
+.domain-actions-content {
+  display: grid;
+  gap: 24px;
+}
+
+.action-item {
+  padding: 20px;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  background: #f8f9fa;
+}
+
+.action-item h4 {
+  margin-top: 0;
+  margin-bottom: 12px;
+  color: #2c3e50;
+}
+
+.action-item p {
+  color: #6c757d;
+  margin-bottom: 16px;
+}
+
+.dns-settings {
+  background: white;
+  border: 1px solid #dee2e6;
+  border-radius: 4px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.dns-record {
+  display: flex;
+  justify-content: space-between;
+  padding: 8px 0;
+  border-bottom: 1px solid #f1f3f4;
+}
+
+.dns-record:last-child {
+  border-bottom: none;
+}
+
+.dns-record strong {
+  color: #495057;
+  min-width: 80px;
+}
+
+.remove-domain-btn {
+  background: #dc3545;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.2s;
+}
+
+.remove-domain-btn:hover {
+  background: #c82333;
+}
+
+.remove-domain-btn:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+/* Responsive Design for Domain Settings */
+@media (max-width: 768px) {
+  .domain-settings {
+    padding: 0 16px;
+  }
+  
+  .domain-info,
+  .domain-form,
+  .domain-actions {
+    padding: 16px;
+  }
+  
+  .domain-display {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  
+  .dns-record {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .dns-record strong {
+    min-width: auto;
   }
 }
 </style> 

@@ -19,10 +19,6 @@
         <div class="stat-card">
           <h3>Total Orders</h3>
           <p class="stat-number">{{ totalOrders }}</p>
-          <div class="order-breakdown">
-            <span class="breakdown-item">Web: {{ totalWebOrders }}</span>
-            <span class="breakdown-item">Mobile: {{ totalMobileOrders }}</span>
-          </div>
         </div>
 
         <div class="stat-card">
@@ -64,10 +60,6 @@
                 <div class="stat-mini">
                   <span class="stat-label">Orders:</span>
                   <span class="stat-value">{{ store.totalOrders || 0 }}</span>
-                  <div class="order-breakdown-mini">
-                    <span class="breakdown-item-mini">Web: {{ store.webOrders || 0 }}</span>
-                    <span class="breakdown-item-mini">Mobile: {{ store.mobileOrders || 0 }}</span>
-                  </div>
                 </div>
                 <div class="stat-mini">
                   <span class="stat-label">Revenue:</span>
@@ -394,26 +386,6 @@ export default {
   margin: 0;
 }
 
-.order-breakdown {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 0.5rem;
-  padding: 0.5rem;
-  background: #f8f9fa;
-  border-radius: 8px;
-}
-
-.breakdown-item {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #666;
-  background: white;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
-  border: 1px solid #e0e0e0;
-}
-
 .multiple-currencies {
   display: flex;
   flex-direction: column;
@@ -564,22 +536,6 @@ export default {
   font-size: 1rem;
   font-weight: bold;
   color: #4CAF50;
-}
-
-.order-breakdown-mini {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.25rem 0;
-}
-
-.breakdown-item-mini {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #666;
-  background: #f0f0f0;
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
 }
 
 @media (max-width: 768px) {

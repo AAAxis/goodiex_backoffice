@@ -13,13 +13,17 @@
 
       <div class="stats-grid">
         <div class="stat-card">
-          <h3>Total Orders</h3>
-          <p class="stat-number">{{ totalOrders }}</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Pending Orders</h3>
-          <p class="stat-number">{{ totalPendingOrders }}</p>
+          <h3>Orders Overview</h3>
+          <div class="orders-overview">
+            <div class="order-stat">
+              <span class="order-label">Total Orders</span>
+              <span class="order-number">{{ totalOrders }}</span>
+            </div>
+            <div class="order-stat">
+              <span class="order-label">Pending Orders</span>
+              <span class="order-number">{{ totalPendingOrders }}</span>
+            </div>
+          </div>
         </div>
 
         <div class="stat-card">

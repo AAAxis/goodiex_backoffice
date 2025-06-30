@@ -1006,15 +1006,15 @@ export default {
           projectId: projectId
         })
 
-        const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
+        // Use the project-specific domains endpoint
+        const vercelResponse = await fetch(`https://api.vercel.com/v1/projects/${projectId}/domains`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${apiToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: this.domainData.domain,
-            projectId: projectId
+            name: this.domainData.domain
           })
         })
 
@@ -1089,8 +1089,14 @@ export default {
           return
         }
 
-        // First, check if domain exists in Vercel
-        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+        const projectId = import.meta.env.VITE_VERCEL_PROJECT_ID
+        if (!projectId) {
+          this.showMessage('Vercel Project ID not configured. Please set VITE_VERCEL_PROJECT_ID environment variable.', 'error')
+          return
+        }
+
+        // First, check if domain exists in Vercel project
+        const vercelResponse = await fetch(`https://api.vercel.com/v1/projects/${projectId}/domains/${this.store.domain}`, {
           headers: {
             'Authorization': `Bearer ${apiToken}`,
           }
@@ -1177,9 +1183,15 @@ export default {
           return
         }
 
-        // Remove domain from Vercel
+        const projectId = import.meta.env.VITE_VERCEL_PROJECT_ID
+        if (!projectId) {
+          this.showMessage('Vercel Project ID not configured. Please set VITE_VERCEL_PROJECT_ID environment variable.', 'error')
+          return
+        }
+
+        // Remove domain from Vercel project
         if (this.store?.domain) {
-          const response = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+          const response = await fetch(`https://api.vercel.com/v1/projects/${projectId}/domains/${this.store.domain}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${apiToken}`,

@@ -14,6 +14,7 @@ You need to set up the following environment variables for the domain management
    - `domains:read`
    - `domains:write`
    - `projects:read`
+   - `projects:write`
 4. Copy the generated token
 
 ### 2. Vercel Project ID
@@ -41,7 +42,8 @@ If you're getting a 400 Bad Request error when adding a domain, check the follow
 2. **Domain Format**: Ensure the domain is in the correct format (e.g., `yourstore.com` without `http://` or `www.`)
 3. **Domain Ownership**: You must own the domain you're trying to add
 4. **Vercel Project**: The project ID must be valid and you must have access to it
-5. **API Token Permissions**: Your API token must have the required scopes
+5. **API Token Permissions**: Your API token must have the required scopes (`domains:read`, `domains:write`, `projects:read`, `projects:write`)
+6. **Project Access**: Make sure your API token has access to the specific project you're trying to add the domain to
 
 ### Domain Already Exists
 

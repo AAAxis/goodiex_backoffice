@@ -412,15 +412,18 @@
                   <input 
                     v-model="domainData.domain" 
                     type="text" 
-                    placeholder="yourstore.com" 
+                    placeholder="mystore.com" 
                     required 
                     class="domain-input"
+                    @input="validateDomain"
                   />
-                  <span class="domain-suffix">.com</span>
                 </div>
                 <small class="form-help">
-                  Enter your domain without http:// or www. (e.g., mystore.com)
+                  Enter your domain without http:// or www. (e.g., mystore.com, mystore.net, mystore.org)
                 </small>
+                <div v-if="domainValidationMessage" class="validation-message" :class="domainValidationType">
+                  {{ domainValidationMessage }}
+                </div>
               </div>
 
               <div class="form-group">
@@ -439,8 +442,9 @@
                 <ul>
                   <li>You must own the domain you want to connect</li>
                   <li>Domain must be active and not expired</li>
-                  <li>DNS settings need to be configured (instructions provided after setup)</li>
-                  <li>SSL certificate will be automatically provisioned</li>
+                  <li>Domain should not already be configured in Vercel</li>
+                  <li>DNS settings will need to be configured after domain is added</li>
+                  <li>SSL certificate will be automatically provisioned by Vercel</li>
                 </ul>
               </div>
 
@@ -625,7 +629,9 @@ export default {
         includeWww: false
       },
       domainLoading: false,
-      showRemoveDomainConfirmation: false
+      showRemoveDomainConfirmation: false,
+      domainValidationMessage: '',
+      domainValidationType: ''
     }
   },
   computed: {
@@ -1204,6 +1210,43 @@ export default {
 
     cancelRemoveDomain() {
       this.showRemoveDomainConfirmation = false
+    },
+
+    validateDomain() {
+      const domain = this.domainData.domain.trim().toLowerCase()
+      
+      if (!domain) {
+        this.domainValidationMessage = ''
+        this.domainValidationType = ''
+        return
+      }
+
+      // Basic domain validation
+      const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+      
+      if (!domainRegex.test(domain)) {
+        this.domainValidationMessage = 'Please enter a valid domain name (e.g., mystore.com)'
+        this.domainValidationType = 'error'
+        return
+      }
+
+      // Check if domain has at least one dot
+      if (!domain.includes('.')) {
+        this.domainValidationMessage = 'Domain must include a top-level domain (e.g., .com, .net, .org)'
+        this.domainValidationType = 'error'
+        return
+      }
+
+      // Check if domain is already configured for this store
+      if (this.store?.domain === domain) {
+        this.domainValidationMessage = 'This domain is already configured for this store'
+        this.domainValidationType = 'warning'
+        return
+      }
+
+      // Domain looks valid
+      this.domainValidationMessage = 'Domain format looks good!'
+      this.domainValidationType = 'success'
     }
   }
 }
@@ -2290,7 +2333,16 @@ export default {
 
 .domain-input {
   flex: 1;
-  padding-right: 60px;
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.domain-input:focus {
+  outline: none;
+  border-color: #4CAF50;
 }
 
 .domain-suffix {
@@ -2306,6 +2358,32 @@ export default {
   font-size: 14px;
   margin-top: 4px;
   display: block;
+}
+
+.validation-message {
+  margin-top: 8px;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.validation-message.success {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.validation-message.error {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+.validation-message.warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
 }
 
 .domain-requirements {

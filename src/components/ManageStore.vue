@@ -431,7 +431,7 @@
                 <p>Configure your domain's DNS settings to point to our proxy server. The proxy will automatically route your domain to the correct store:</p>
                 <div class="dns-settings">
                   <div class="dns-record">
-                    <strong>Type:</strong> CNAME
+                    <strong>Type:</strong> A
                   </div>
                   <div class="dns-record">
                     <strong>Name:</strong> @
@@ -1028,8 +1028,8 @@ export default {
     },
 
     getDnsValue() {
-      // Replace with your actual server IP or domain
-      return '69.197.134.25'
+      // Replace with your actual server IP address
+      return '69.197.134.25' // e.g., '123.456.789.10'
     },
 
     async checkDnsStatus() {

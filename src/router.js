@@ -6,6 +6,8 @@ import ProductDetail from './components/ProductDetail.vue';
 import Cart from './components/Cart.vue';
 import PaymentSuccess from './components/PaymentSuccess.vue';
 import Contact from './components/Contact.vue';
+import PrivacyPolicy from './components/PrivacyPolicy.vue';
+import DeleteData from './components/DeleteData.vue';
 
 // Store Owner Components
 import StoreOwnerRegister from './components/StoreOwnerRegister.vue';
@@ -102,6 +104,16 @@ const routes = [
     path: '/contact',
     name: 'Contact',
     component: Contact
+  },
+  {
+    path: '/privacy-policy',
+    name: 'PrivacyPolicy',
+    component: PrivacyPolicy
+  },
+  {
+    path: '/delete-data',
+    name: 'DeleteData',
+    component: DeleteData
   },
 ];
 

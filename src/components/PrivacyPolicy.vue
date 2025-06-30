@@ -96,9 +96,9 @@
               <h5><i class="fas fa-phone text-primary me-2"></i>Contact Us</h5>
               <p>If you have questions about this Privacy Policy or our data practices, please contact us:</p>
               <ul>
-                <li><strong>Email:</strong> privacy@foodiex.com</li>
-                <li><strong>Phone:</strong> +1 (555) 123-4567</li>
-                <li><strong>Address:</strong> 123 Food Street, Cuisine City, CC 12345</li>
+                <li><strong>Email:</strong> dima@theholylabs.com</li>
+                <li><strong>Phone:</strong> +1 (236) 234-4580</li>
+                <li><strong>Address:</strong> 1578 Hunter St, North Vancouver, BC</li>
               </ul>
             </div>
 

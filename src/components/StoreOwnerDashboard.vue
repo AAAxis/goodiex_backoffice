@@ -34,6 +34,22 @@
         </div>
 
         <div class="stat-card">
+          <h3>Pending Orders</h3>
+          <p class="stat-number">{{ totalPendingOrders }}</p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Average Order Value</h3>
+          <p class="stat-number">{{ formatPrice(averageOrderValue, 'USD') }}</p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Top Product</h3>
+          <p v-if="topProduct" class="stat-text">{{ topProduct.name }}</p>
+          <p v-else class="stat-text">No orders yet</p>
+        </div>
+
+        <div class="stat-card">
           <h3>Total Revenue</h3>
           <div v-if="revenueByCurrency.length === 1" class="stat-number">
             {{ formatPrice(revenueByCurrency[0].total, revenueByCurrency[0].currency) }}
@@ -101,6 +117,9 @@ export default {
       totalOrders: 0,
       totalWebOrders: 0,
       totalMobileOrders: 0,
+      totalPendingOrders: 0,
+      averageOrderValue: 0,
+      topProduct: null,
       revenueByCurrency: [],
       revenueChart: null,
       ordersChart: null
@@ -173,39 +192,73 @@ export default {
         let totalOrders = 0
         let totalWebOrders = 0
         let totalMobileOrders = 0
+        let totalPendingOrders = 0
+        let totalRevenue = 0
+        let allOrderItems = new Map() // Track product sales
         
         for (const store of this.stores) {
           // Get web orders for this specific store
           const webOrdersQuery = await db.collection('web-orders')
             .where('storeId', '==', store.id)
-            .where('status', '==', 'completed')
             .get()
           
           // Get mobile orders for this specific store
           const mobileOrdersQuery = await db.collection('orders')
             .where('storeId', '==', store.id)
-            .where('status', '==', 'completed')
             .get()
           
           let storeOrders = 0
           let storeRevenue = 0
           let storeWebOrders = 0
           let storeMobileOrders = 0
+          let storePendingOrders = 0
           
-          // Calculate web orders revenue
+          // Calculate web orders revenue and pending orders
           webOrdersQuery.forEach((doc) => {
             const orderData = doc.data()
             storeOrders++
             storeWebOrders++
-            storeRevenue += parseFloat(orderData.total || 0)
+            
+            if (orderData.status === 'completed') {
+              storeRevenue += parseFloat(orderData.total || 0)
+            } else if (orderData.status === 'pending') {
+              storePendingOrders++
+            }
+            
+            // Track product sales from web orders
+            if (orderData.cart && Array.isArray(orderData.cart)) {
+              orderData.cart.forEach(item => {
+                const productId = item.product_id || item.id
+                if (productId) {
+                  const currentCount = allOrderItems.get(productId) || 0
+                  allOrderItems.set(productId, currentCount + (item.quantity || 1))
+                }
+              })
+            }
           })
           
-          // Calculate mobile orders revenue
+          // Calculate mobile orders revenue and pending orders
           mobileOrdersQuery.forEach((doc) => {
             const orderData = doc.data()
             storeOrders++
             storeMobileOrders++
-            storeRevenue += parseFloat(orderData.total || 0)
+            
+            if (orderData.status === 'completed') {
+              storeRevenue += parseFloat(orderData.total || 0)
+            } else if (orderData.status === 'pending') {
+              storePendingOrders++
+            }
+            
+            // Track product sales from mobile orders
+            if (orderData.items && Array.isArray(orderData.items)) {
+              orderData.items.forEach(item => {
+                const productId = item.product_id || item.id
+                if (productId) {
+                  const currentCount = allOrderItems.get(productId) || 0
+                  allOrderItems.set(productId, currentCount + (item.quantity || 1))
+                }
+              })
+            }
           })
           
           // Update store object with stats
@@ -218,11 +271,20 @@ export default {
           totalOrders += storeOrders
           totalWebOrders += storeWebOrders
           totalMobileOrders += storeMobileOrders
+          totalPendingOrders += storePendingOrders
+          totalRevenue += storeRevenue
         }
         
         this.totalOrders = totalOrders
         this.totalWebOrders = totalWebOrders
         this.totalMobileOrders = totalMobileOrders
+        this.totalPendingOrders = totalPendingOrders
+        
+        // Calculate average order value
+        this.averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
+        
+        // Find top product
+        await this.findTopProduct(allOrderItems)
         
         // Calculate revenue by currency
         this.revenueByCurrency = await this.calculateRevenueByCurrency()
@@ -237,6 +299,9 @@ export default {
         this.totalOrders = 0
         this.totalWebOrders = 0
         this.totalMobileOrders = 0
+        this.totalPendingOrders = 0
+        this.averageOrderValue = 0
+        this.topProduct = null
       }
     },
 
@@ -348,6 +413,10 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
           plugins: {
             legend: {
               position: 'bottom',
@@ -399,6 +468,10 @@ export default {
         options: {
           responsive: true,
           maintainAspectRatio: false,
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          },
           plugins: {
             legend: {
               position: 'bottom',
@@ -422,6 +495,46 @@ export default {
           }
         }
       })
+    },
+
+    async findTopProduct(allOrderItems) {
+      if (allOrderItems.size === 0) {
+        this.topProduct = null
+        return
+      }
+
+      let topProduct = null
+      let maxSales = 0
+      
+      // Find the product with highest sales
+      for (const [productId, sales] of allOrderItems) {
+        if (sales > maxSales) {
+          maxSales = sales
+          topProduct = {
+            id: productId,
+            name: productId,
+            sales: sales
+          }
+        }
+      }
+      
+      // Try to get the actual product name from any store
+      if (topProduct) {
+        for (const store of this.stores) {
+          try {
+            const productDoc = await db.collection('stores').doc(store.id).collection('products').doc(topProduct.id).get()
+            if (productDoc.exists) {
+              const productData = productDoc.data()
+              topProduct.name = productData.name || productId
+              break
+            }
+          } catch (error) {
+            console.error('Error fetching product name:', error)
+          }
+        }
+      }
+      
+      this.topProduct = topProduct
     },
   }
 }
@@ -553,6 +666,15 @@ export default {
   font-weight: bold;
   color: #4CAF50;
   margin: 0;
+}
+
+.stat-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #333;
+  margin: 0;
+  text-align: center;
+  line-height: 1.3;
 }
 
 .multiple-currencies {

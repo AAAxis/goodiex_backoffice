@@ -762,18 +762,23 @@ export default {
     text-align: center;
   }
   
-  .stores-grid {
+  .stats-grid {
     grid-template-columns: 1fr;
+    gap: 1rem;
   }
   
   .chart-container-mini {
-    width: 100px;
-    height: 100px;
+    width: 120px;
+    height: 120px;
   }
   
   .chart-container-mini canvas {
-    max-width: 100px;
-    max-height: 100px;
+    max-width: 120px;
+    max-height: 120px;
+  }
+  
+  .stores-grid {
+    grid-template-columns: 1fr;
   }
 }
 </style> 

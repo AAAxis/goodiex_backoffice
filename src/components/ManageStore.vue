@@ -1029,7 +1029,7 @@ export default {
 
     getDnsValue() {
       // Replace with your actual server IP or domain
-      return 'theholylabs.com' // or 'yourdomain.com'
+      return '69.197.134.25'
     },
 
     async checkDnsStatus() {

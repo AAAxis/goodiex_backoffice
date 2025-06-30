@@ -4,16 +4,6 @@
       <div class="dashboard-header">
         <div class="header-left">
           <h1 class="dashboard-title">{{ userName || userEmail }}</h1>
-          <div class="header-charts">
-            <div class="chart-container">
-              <h4>Revenue by Currency</h4>
-              <canvas ref="revenueChart" width="200" height="200"></canvas>
-            </div>
-            <div class="chart-container">
-              <h4>Orders by Platform</h4>
-              <canvas ref="ordersChart" width="200" height="200"></canvas>
-            </div>
-          </div>
         </div>
         <div class="header-actions">
           <span class="user-email">{{ userEmail }}</span>
@@ -24,13 +14,11 @@
 
       <div class="stats-grid">
         <div class="stat-card">
-          <h3>Total Stores</h3>
-          <p class="stat-number">{{ stores.length }}</p>
-        </div>
-
-        <div class="stat-card">
           <h3>Total Orders</h3>
           <p class="stat-number">{{ totalOrders }}</p>
+          <div class="chart-container-mini">
+            <canvas ref="ordersChart" width="150" height="150"></canvas>
+          </div>
         </div>
 
         <div class="stat-card">
@@ -41,18 +29,8 @@
         <div class="stat-card">
           <h3>Average Order Value</h3>
           <p class="stat-number">{{ formatPrice(averageOrderValue, 'USD') }}</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Total Revenue</h3>
-          <div v-if="revenueByCurrency.length === 1" class="stat-number">
-            {{ formatPrice(revenueByCurrency[0].total, revenueByCurrency[0].currency) }}
-          </div>
-          <div v-else class="multiple-currencies">
-            <div v-for="revenue in revenueByCurrency" :key="revenue.currency" class="currency-revenue">
-              <span class="currency-code">{{ revenue.currency }}</span>
-              <span class="revenue-amount">{{ formatPrice(revenue.total, revenue.currency) }}</span>
-            </div>
+          <div class="chart-container-mini">
+            <canvas ref="revenueChart" width="150" height="150"></canvas>
           </div>
         </div>
       </div>
@@ -537,40 +515,6 @@ export default {
   white-space: nowrap;
 }
 
-.header-charts {
-  display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
-}
-
-.chart-container {
-  background: #f8f9fa;
-  padding: 1rem;
-  border-radius: 8px;
-  text-align: center;
-  width: 200px;
-  height: 250px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.chart-container h4 {
-  margin: 0 0 0.5rem 0;
-  color: #666;
-  font-size: 0.8rem;
-  text-transform: uppercase;
-  font-weight: 600;
-}
-
-.chart-container canvas {
-  max-width: 100%;
-  max-height: 180px;
-  width: 180px !important;
-  height: 180px !important;
-}
-
 .header-actions {
   display: flex;
   align-items: center;
@@ -624,6 +568,11 @@ export default {
   border-radius: 12px;
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
 }
 
 .stat-card h3 {
@@ -638,34 +587,6 @@ export default {
   font-weight: bold;
   color: #4CAF50;
   margin: 0;
-}
-
-.multiple-currencies {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
-}
-
-.currency-revenue {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.25rem 0;
-}
-
-.currency-code {
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #666;
-  background: #f0f0f0;
-  padding: 0.125rem 0.5rem;
-  border-radius: 12px;
-}
-
-.revenue-amount {
-  font-size: 1.1rem;
-  font-weight: bold;
-  color: #4CAF50;
 }
 
 .stores-section {
@@ -792,6 +713,20 @@ export default {
   color: #4CAF50;
 }
 
+.chart-container-mini {
+  width: 100px;
+  height: 100px;
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chart-container-mini canvas {
+  max-width: 100px;
+  max-height: 100px;
+}
+
 @media (max-width: 768px) {
   .dashboard-wrapper {
     padding: 1rem;
@@ -813,23 +748,6 @@ export default {
     text-align: center;
   }
   
-  .header-charts {
-    justify-content: center;
-    width: 100%;
-  }
-  
-  .chart-container {
-    min-width: 150px;
-    width: 150px;
-    height: 200px;
-    flex: 1;
-  }
-  
-  .chart-container canvas {
-    width: 130px !important;
-    height: 130px !important;
-  }
-  
   .header-actions {
     justify-content: center;
   }
@@ -842,6 +760,16 @@ export default {
   
   .stores-grid {
     grid-template-columns: 1fr;
+  }
+  
+  .chart-container-mini {
+    width: 100px;
+    height: 100px;
+  }
+  
+  .chart-container-mini canvas {
+    max-width: 100px;
+    max-height: 100px;
   }
 }
 </style> 

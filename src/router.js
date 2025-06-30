@@ -15,7 +15,6 @@ import StoreOwnerLogin from './components/StoreOwnerLogin.vue';
 import StoreOwnerDashboard from './components/StoreOwnerDashboard.vue';
 import StoreOwnerSettings from './components/StoreOwnerSettings.vue';
 import CreateStore from './components/CreateStore.vue';
-import EditStore from './components/EditStore.vue';
 import ManageStore from './components/ManageStore.vue';
 import CreateProduct from './components/CreateProduct.vue';
 
@@ -80,12 +79,6 @@ const routes = [
     path: '/store-owner/create-store',
     name: 'CreateStore',
     component: CreateStore,
-  },
-  {
-    path: '/store-owner/edit-store/:storeId',
-    name: 'EditStore',
-    component: EditStore,
-    props: true
   },
   {
     path: '/store-owner/manage-store/:storeId',

@@ -981,26 +981,61 @@ export default {
       this.message = ''
 
       try {
-        // Use environment variables instead of hardcoded token
+        // Check if environment variables are set
+        const apiToken = import.meta.env.VITE_VERCEL_API_TOKEN
+        const projectId = import.meta.env.VITE_VERCEL_PROJECT_ID
+        
+        if (!apiToken) {
+          this.showMessage('Vercel API token not configured. Please set VITE_VERCEL_API_TOKEN environment variable.', 'error')
+          return
+        }
+        
+        if (!projectId) {
+          this.showMessage('Vercel Project ID not configured. Please set VITE_VERCEL_PROJECT_ID environment variable.', 'error')
+          return
+        }
+
+        // Validate domain format
+        if (!this.domainData.domain || !this.domainData.domain.includes('.')) {
+          this.showMessage('Please enter a valid domain name (e.g., yourstore.com)', 'error')
+          return
+        }
+
+        console.log('Adding domain to Vercel:', {
+          name: this.domainData.domain,
+          projectId: projectId
+        })
+
         const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+            'Authorization': `Bearer ${apiToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
             name: this.domainData.domain,
-            projectId: import.meta.env.VITE_VERCEL_PROJECT_ID
+            projectId: projectId
           })
         })
 
         if (!vercelResponse.ok) {
-          const error = await vercelResponse.json()
-          this.showMessage(`Failed to add domain: ${error.error?.message || 'Unknown error'}`, 'error')
+          const errorText = await vercelResponse.text()
+          console.error('Vercel API Error Response:', errorText)
+          
+          let errorMessage = 'Unknown error'
+          try {
+            const error = JSON.parse(errorText)
+            errorMessage = error.error?.message || error.message || errorText
+          } catch (e) {
+            errorMessage = errorText
+          }
+          
+          this.showMessage(`Failed to add domain: ${errorMessage}`, 'error')
           return
         }
 
         const vercelResult = await vercelResponse.json()
+        console.log('Vercel API Success Response:', vercelResult)
 
         // Update store with domain info
         const updateData = {
@@ -1022,7 +1057,7 @@ export default {
 
       } catch (error) {
         console.error('Error adding domain:', error)
-        this.showMessage('Failed to add domain. Please try again.', 'error')
+        this.showMessage(`Failed to add domain: ${error.message}`, 'error')
       } finally {
         this.domainLoading = false
       }
@@ -1048,14 +1083,22 @@ export default {
       this.showMessage('Checking DNS status...', 'info')
 
       try {
+        const apiToken = import.meta.env.VITE_VERCEL_API_TOKEN
+        if (!apiToken) {
+          this.showMessage('Vercel API token not configured. Please set VITE_VERCEL_API_TOKEN environment variable.', 'error')
+          return
+        }
+
         // First, check if domain exists in Vercel
         const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
           headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+            'Authorization': `Bearer ${apiToken}`,
           }
         })
 
         if (!vercelResponse.ok) {
+          const errorText = await vercelResponse.text()
+          console.error('Vercel API Error Response:', errorText)
           this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
           return
         }
@@ -1128,17 +1171,24 @@ export default {
       this.message = ''
 
       try {
+        const apiToken = import.meta.env.VITE_VERCEL_API_TOKEN
+        if (!apiToken) {
+          this.showMessage('Vercel API token not configured. Please set VITE_VERCEL_API_TOKEN environment variable.', 'error')
+          return
+        }
+
         // Remove domain from Vercel
         if (this.store?.domain) {
           const response = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
             method: 'DELETE',
             headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+              'Authorization': `Bearer ${apiToken}`,
             }
           })
 
           if (!response.ok) {
-            console.warn('Failed to remove domain from Vercel:', await response.text())
+            const errorText = await response.text()
+            console.warn('Failed to remove domain from Vercel:', errorText)
           }
         }
 
@@ -1167,6 +1217,22 @@ export default {
 
     cancelRemoveDomain() {
       this.showRemoveDomainConfirmation = false
+    },
+
+    // Debug method to check environment variables (remove in production)
+    debugEnvironment() {
+      const apiToken = import.meta.env.VITE_VERCEL_API_TOKEN
+      const projectId = import.meta.env.VITE_VERCEL_PROJECT_ID
+      
+      console.log('Environment Variables Check:')
+      console.log('VITE_VERCEL_API_TOKEN:', apiToken ? 'Set' : 'Not set')
+      console.log('VITE_VERCEL_PROJECT_ID:', projectId ? `Set (${projectId})` : 'Not set')
+      
+      if (!apiToken || !projectId) {
+        this.showMessage('Environment variables not configured. Check DOMAIN_SETUP.md for setup instructions.', 'error')
+      } else {
+        this.showMessage('Environment variables are configured correctly.', 'success')
+      }
     }
   }
 }

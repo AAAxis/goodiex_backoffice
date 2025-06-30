@@ -210,8 +210,6 @@
 </template>
 
 <script>
-import { Modal } from 'bootstrap'
-
 export default {
   name: 'DeleteData',
   data() {
@@ -263,9 +261,10 @@ export default {
         // Generate a reference ID for tracking
         this.referenceId = 'DEL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         
-        // Show success modal
-        const modal = new Modal(this.$refs.successModal);
-        modal.show();
+        // Show success modal using vanilla JavaScript
+        const modal = document.getElementById('successModal');
+        const bootstrapModal = new bootstrap.Modal(modal);
+        bootstrapModal.show();
         
         // Reset form
         this.form = {

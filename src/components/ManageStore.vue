@@ -1028,9 +1028,8 @@ export default {
     },
 
     getDnsValue() {
-      // Return the proxy domain that handles custom domains
-      // This should point to your server where Nginx is running
-      return 'theholylabs.com' // Update this to your actual server domain
+      // Replace with your actual server IP or domain
+      return '69.197.134.25' // or 'yourdomain.com'
     },
 
     async checkDnsStatus() {

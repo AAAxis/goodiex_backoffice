@@ -2,7 +2,19 @@
   <div class="dashboard-wrapper">
     <div class="dashboard-content">
       <div class="dashboard-header">
-        <h1 class="dashboard-title">{{ userName || userEmail }}</h1>
+        <div class="header-left">
+          <h1 class="dashboard-title">{{ userName || userEmail }}</h1>
+          <div class="header-charts">
+            <div class="chart-container">
+              <h4>Revenue by Currency</h4>
+              <canvas ref="revenueChart" width="200" height="200"></canvas>
+            </div>
+            <div class="chart-container">
+              <h4>Orders by Platform</h4>
+              <canvas ref="ordersChart" width="200" height="200"></canvas>
+            </div>
+          </div>
+        </div>
         <div class="header-actions">
           <span class="user-email">{{ userEmail }}</span>
           <button class="settings-btn" @click="goToSettings">Settings</button>
@@ -89,7 +101,9 @@ export default {
       totalOrders: 0,
       totalWebOrders: 0,
       totalMobileOrders: 0,
-      revenueByCurrency: []
+      revenueByCurrency: [],
+      revenueChart: null,
+      ordersChart: null
     }
   },
   computed: {
@@ -105,6 +119,14 @@ export default {
         this.$router.push('/store-owner/login')
       }
     })
+  },
+  beforeUnmount() {
+    if (this.revenueChart) {
+      this.revenueChart.destroy()
+    }
+    if (this.ordersChart) {
+      this.ordersChart.destroy()
+    }
   },
   methods: {
     async fetchUserName() {
@@ -205,6 +227,11 @@ export default {
         // Calculate revenue by currency
         this.revenueByCurrency = await this.calculateRevenueByCurrency()
         
+        // Update charts
+        this.$nextTick(() => {
+          this.createCharts()
+        })
+        
       } catch (error) {
         console.error('Error calculating stats:', error)
         this.totalOrders = 0
@@ -284,7 +311,118 @@ export default {
       } catch (error) {
         console.error('Logout error:', error)
       }
-    }
+    },
+
+    createCharts() {
+      this.createRevenueChart()
+      this.createOrdersChart()
+    },
+
+    createRevenueChart() {
+      const ctx = this.$refs.revenueChart
+      if (!ctx) return
+
+      if (this.revenueChart) {
+        this.revenueChart.destroy()
+      }
+
+      const labels = this.revenueByCurrency.map(item => item.currency)
+      const data = this.revenueByCurrency.map(item => item.total)
+      const colors = [
+        '#4CAF50', '#2196F3', '#FF9800', '#9C27B0', 
+        '#F44336', '#00BCD4', '#FF5722', '#795548',
+        '#607D8B', '#E91E63', '#3F51B5', '#009688'
+      ]
+
+      this.revenueChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors.slice(0, labels.length),
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 10,
+                usePointStyle: true,
+                font: {
+                  size: 11
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || ''
+                  const value = context.parsed
+                  return `${label}: ${this.formatPrice(value, label)}`
+                }
+              }
+            }
+          }
+        }
+      })
+    },
+
+    createOrdersChart() {
+      const ctx = this.$refs.ordersChart
+      if (!ctx) return
+
+      if (this.ordersChart) {
+        this.ordersChart.destroy()
+      }
+
+      const labels = ['Web Orders', 'Mobile Orders']
+      const data = [this.totalWebOrders, this.totalMobileOrders]
+      const colors = ['#2196F3', '#4CAF50']
+
+      this.ordersChart = new Chart(ctx, {
+        type: 'pie',
+        data: {
+          labels: labels,
+          datasets: [{
+            data: data,
+            backgroundColor: colors,
+            borderWidth: 2,
+            borderColor: '#fff'
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'bottom',
+              labels: {
+                padding: 10,
+                usePointStyle: true,
+                font: {
+                  size: 11
+                }
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: (context) => {
+                  const label = context.label || ''
+                  const value = context.parsed
+                  return `${label}: ${value}`
+                }
+              }
+            }
+          }
+        }
+      })
+    },
   }
 }
 </script>
@@ -304,7 +442,7 @@ export default {
 .dashboard-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 2rem;
   background: white;
   padding: 1.5rem;
@@ -312,16 +450,47 @@ export default {
   box-shadow: 0 2px 8px rgba(0,0,0,0.1);
 }
 
+.header-left {
+  display: flex;
+  align-items: flex-start;
+  gap: 2rem;
+  flex: 1;
+}
+
 .dashboard-title {
   font-size: 2rem;
   color: #333;
   margin: 0;
+  white-space: nowrap;
+}
+
+.header-charts {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.chart-container {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: center;
+  min-width: 200px;
+}
+
+.chart-container h4 {
+  margin: 0 0 0.5rem 0;
+  color: #666;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  font-weight: 600;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 1rem;
+  flex-shrink: 0;
 }
 
 .user-email {
@@ -546,7 +715,31 @@ export default {
   .dashboard-header {
     flex-direction: column;
     gap: 1rem;
+    align-items: stretch;
+  }
+  
+  .header-left {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .dashboard-title {
     text-align: center;
+  }
+  
+  .header-charts {
+    justify-content: center;
+    width: 100%;
+  }
+  
+  .chart-container {
+    min-width: 150px;
+    flex: 1;
+  }
+  
+  .header-actions {
+    justify-content: center;
   }
   
   .section-header {

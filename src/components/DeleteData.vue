@@ -47,29 +47,16 @@
             </div>
 
             <form @submit.prevent="submitDeletionRequest" class="mt-4">
-              <div class="row">
-                <div class="col-md-6 mb-3">
-                  <label for="firstName" class="form-label">First Name *</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="firstName" 
-                    v-model="form.firstName"
-                    required
-                  >
-                </div>
-                <div class="col-md-6 mb-3">
-                  <label for="lastName" class="form-label">Last Name *</label>
-                  <input 
-                    type="text" 
-                    class="form-control" 
-                    id="lastName" 
-                    v-model="form.lastName"
-                    required
-                  >
-                </div>
+              <div class="mb-3">
+                <label for="name" class="form-label">Name *</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="name" 
+                  v-model="form.name"
+                  required
+                >
               </div>
-
               <div class="mb-3">
                 <label for="email" class="form-label">Email Address *</label>
                 <input 
@@ -79,30 +66,7 @@
                   v-model="form.email"
                   required
                 >
-                <div class="form-text">This should be the email associated with your mobile app account</div>
               </div>
-
-              <div class="mb-3">
-                <label for="phone" class="form-label">Phone Number</label>
-                <input 
-                  type="tel" 
-                  class="form-control" 
-                  id="phone" 
-                  v-model="form.phone"
-                  placeholder="+1 (555) 123-4567"
-                >
-              </div>
-
-              <div class="mb-3">
-                <label for="appType" class="form-label">Mobile App Type *</label>
-                <select class="form-select" id="appType" v-model="form.appType" required>
-                  <option value="">Select your app</option>
-                  <option value="ios">iOS App</option>
-                  <option value="android">Android App</option>
-                  <option value="both">Both iOS and Android</option>
-                </select>
-              </div>
-
               <div class="mb-3">
                 <label for="reason" class="form-label">Reason for Deletion (Optional)</label>
                 <textarea 
@@ -110,45 +74,14 @@
                   id="reason" 
                   rows="3"
                   v-model="form.reason"
-                  placeholder="Please let us know why you're requesting data deletion. This helps us improve our services."
+                  placeholder="Please let us know why you're requesting data deletion."
                 ></textarea>
               </div>
-
-              <div class="mb-3">
-                <div class="form-check">
-                  <input 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    id="confirmDeletion" 
-                    v-model="form.confirmDeletion"
-                    required
-                  >
-                  <label class="form-check-label" for="confirmDeletion">
-                    I understand that this action will permanently delete my account and all associated data. This action cannot be undone.
-                  </label>
-                </div>
-              </div>
-
-              <div class="mb-3">
-                <div class="form-check">
-                  <input 
-                    class="form-check-input" 
-                    type="checkbox" 
-                    id="confirmIdentity" 
-                    v-model="form.confirmIdentity"
-                    required
-                  >
-                  <label class="form-check-label" for="confirmIdentity">
-                    I confirm that I am the rightful owner of this account and have the authority to request data deletion.
-                  </label>
-                </div>
-              </div>
-
               <div class="d-grid gap-2">
                 <button 
                   type="submit" 
                   class="btn btn-danger btn-lg"
-                  :disabled="!form.confirmDeletion || !form.confirmIdentity || isSubmitting"
+                  :disabled="isSubmitting"
                 >
                   <i class="fas fa-trash-alt me-2"></i>
                   {{ isSubmitting ? 'Submitting Request...' : 'Submit Deletion Request' }}
@@ -190,12 +123,7 @@
             <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
           </div>
           <div class="modal-body">
-            <p>Your data deletion request has been submitted successfully. We will:</p>
-            <ul>
-              <li>Verify your identity within 24-48 hours</li>
-              <li>Process your deletion request within 30 days</li>
-              <li>Send you a confirmation email once completed</li>
-            </ul>
+            <p>Your data deletion request has been submitted successfully. We will process your request as soon as possible.</p>
             <p class="mb-0"><strong>Reference ID:</strong> {{ referenceId }}</p>
           </div>
           <div class="modal-footer">
@@ -215,14 +143,9 @@ export default {
   data() {
     return {
       form: {
-        firstName: '',
-        lastName: '',
+        name: '',
         email: '',
-        phone: '',
-        appType: '',
-        reason: '',
-        confirmDeletion: false,
-        confirmIdentity: false
+        reason: ''
       },
       isSubmitting: false,
       referenceId: ''
@@ -239,7 +162,7 @@ export default {
       try {
         // Prepare query parameters for the API call
         const queryParams = new URLSearchParams({
-          name: `${this.form.firstName} ${this.form.lastName}`,
+          name: this.form.name,
           email: this.form.email,
           reason: this.form.reason || 'User requested data deletion'
         });
@@ -256,7 +179,7 @@ export default {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
 
-        const result = await response.json();
+        await response.json();
         
         // Generate a reference ID for tracking
         this.referenceId = 'DEL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
@@ -268,14 +191,9 @@ export default {
         
         // Reset form
         this.form = {
-          firstName: '',
-          lastName: '',
+          name: '',
           email: '',
-          phone: '',
-          appType: '',
-          reason: '',
-          confirmDeletion: false,
-          confirmIdentity: false
+          reason: ''
         };
         
       } catch (error) {

@@ -276,7 +276,7 @@ export default {
         }
 
         // Create checkout session with Stripe
-        const response = await fetch('https://api.theholylabs.com/create-checkout-session', {
+        const response = await fetch('https://api.theholylabs.com/create-checkout-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

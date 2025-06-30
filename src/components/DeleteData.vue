@@ -239,11 +239,29 @@ export default {
       this.isSubmitting = true;
       
       try {
-        // Generate a reference ID
-        this.referenceId = 'DEL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
+        // Prepare query parameters for the API call
+        const queryParams = new URLSearchParams({
+          name: `${this.form.firstName} ${this.form.lastName}`,
+          email: this.form.email,
+          reason: this.form.reason || 'User requested data deletion'
+        });
+
+        // Make API call to the delete-data endpoint
+        const response = await fetch(`https://api.theholylabs.com/delete-data?${queryParams.toString()}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
         
-        // Simulate API call
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        // Generate a reference ID for tracking
+        this.referenceId = 'DEL-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9).toUpperCase();
         
         // Show success modal
         const modal = new Modal(this.$refs.successModal);
@@ -263,7 +281,7 @@ export default {
         
       } catch (error) {
         console.error('Error submitting deletion request:', error);
-        alert('An error occurred while submitting your request. Please try again.');
+        alert('An error occurred while submitting your request. Please try again or contact support.');
       } finally {
         this.isSubmitting = false;
       }

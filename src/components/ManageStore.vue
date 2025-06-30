@@ -981,7 +981,36 @@ export default {
       this.message = ''
 
       try {
-        // Use environment variables instead of hardcoded token
+        // Validate domain format
+        const domain = this.domainData.domain.trim().toLowerCase()
+        
+        // Basic domain validation
+        const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
+        if (!domainRegex.test(domain)) {
+          this.showMessage('Please enter a valid domain name (e.g., mystore.com)', 'error')
+          return
+        }
+
+        // Check if domain already exists for this store
+        if (this.store?.domain === domain) {
+          this.showMessage('This domain is already configured for this store.', 'error')
+          return
+        }
+
+        // First, check if domain is available in Vercel
+        const checkResponse = await fetch(`https://api.vercel.com/v1/domains/${domain}`, {
+          method: 'GET',
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+          }
+        })
+
+        if (checkResponse.ok) {
+          this.showMessage('This domain is already configured in Vercel. Please use a different domain or contact support.', 'error')
+          return
+        }
+
+        // Add domain to Vercel
         const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
           method: 'POST',
           headers: {
@@ -989,14 +1018,22 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: this.domainData.domain,
-            projectId: import.meta.env.VITE_VERCEL_PROJECT_ID
+            name: domain
           })
         })
 
         if (!vercelResponse.ok) {
-          const error = await vercelResponse.json()
-          this.showMessage(`Failed to add domain: ${error.error?.message || 'Unknown error'}`, 'error')
+          const errorData = await vercelResponse.json()
+          console.error('Vercel API Error:', errorData)
+          
+          let errorMessage = 'Failed to add domain'
+          if (errorData.error?.message) {
+            errorMessage = errorData.error.message
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          }
+          
+          this.showMessage(`Domain error: ${errorMessage}`, 'error')
           return
         }
 
@@ -1004,7 +1041,7 @@ export default {
 
         // Update store with domain info
         const updateData = {
-          domain: this.domainData.domain,
+          domain: domain,
           includeWww: this.domainData.includeWww,
           domainStatus: 'pending',
           vercelDomainId: vercelResult.id,
@@ -1048,7 +1085,21 @@ export default {
       this.showMessage('Checking DNS status...', 'info')
 
       try {
-        // Check DNS propagation using a DNS lookup service (no Vercel API required)
+        // First, check if domain exists in Vercel
+        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+          }
+        })
+
+        if (!vercelResponse.ok) {
+          this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
+          return
+        }
+
+        const vercelResult = await vercelResponse.json()
+        
+        // Check DNS propagation using a DNS lookup service
         const dnsCheckResponse = await fetch(`https://dns.google/resolve?name=${this.store.domain}&type=A`)
         const dnsResult = await dnsCheckResponse.json()
         
@@ -1074,6 +1125,7 @@ export default {
         // Update store with comprehensive status
         const updateData = {
           domainStatus: dnsStatus,
+          vercelDomainStatus: vercelResult.verification?.status || 'pending',
           lastDnsCheck: new Date(),
           dnsRecords: dnsResult.Answer || [],
           dnsMessage: dnsMessage

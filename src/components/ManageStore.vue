@@ -1036,14 +1036,22 @@ export default {
 
         const vercelResult = await vercelResponse.json()
         console.log('Vercel API Success Response:', vercelResult)
+        console.log('Vercel Result ID:', vercelResult.id)
+        console.log('Vercel Result Keys:', Object.keys(vercelResult))
 
         // Update store with domain info
         const updateData = {
           domain: this.domainData.domain,
           includeWww: this.domainData.includeWww,
           domainStatus: 'pending',
-          vercelDomainId: vercelResult.id,
           domainUpdatedAt: new Date()
+        }
+
+        // Only add vercelDomainId if it exists in the response
+        if (vercelResult.id) {
+          updateData.vercelDomainId = vercelResult.id
+        } else {
+          console.warn('No ID found in Vercel response, skipping vercelDomainId')
         }
 
         await db.collection('stores').doc(this.storeId).update(updateData)

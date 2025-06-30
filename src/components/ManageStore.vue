@@ -954,14 +954,7 @@ export default {
       this.message = ''
 
       try {
-        // Validate domain format
-        const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{0,61}[a-zA-Z0-9]?\.[a-zA-Z]{2,}$/
-        if (!domainRegex.test(this.domainData.domain)) {
-          this.showMessage('Please enter a valid domain name (e.g., mystore.com)', 'error')
-          return
-        }
-
-        // Verify domain with backend
+        // Use your reverse proxy instead of direct IP
         const verifyResponse = await fetch('https://api.theholylabs.com/api/domain/verify', {
           method: 'POST',
           headers: {
@@ -1028,8 +1021,7 @@ export default {
     },
 
     getDnsValue() {
-      // Replace with your actual server IP address
-      return '69.197.134.25' // e.g., '123.456.789.10'
+      return '69.197.134.25' // Your actual server IP
     },
 
     async checkDnsStatus() {

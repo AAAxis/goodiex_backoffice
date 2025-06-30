@@ -428,7 +428,7 @@
             <div class="domain-actions-content">
               <div class="action-item">
                 <h4>DNS Configuration</h4>
-                <p>Configure your domain's DNS settings to point to our servers:</p>
+                <p>Configure your domain's DNS settings to point to our proxy server. The proxy will automatically route your domain to the correct store:</p>
                 <div class="dns-settings">
                   <div class="dns-record">
                     <strong>Type:</strong> CNAME
@@ -440,6 +440,9 @@
                     <strong>Value:</strong> {{ getDnsValue() }}
                   </div>
                 </div>
+                <p class="dns-note">
+                  <strong>How it works:</strong> When someone visits your custom domain, our proxy server will automatically detect which store it belongs to and serve the correct content.
+                </p>
                 <button class="btn-secondary" @click="copyDnsValue">
                   Copy DNS Settings
                 </button>
@@ -562,7 +565,7 @@ export default {
       products: [],
       orders: [],
       mobileOrders: [],
-      activeTab: 'overview',
+      activeTab: 'products',
       productsLoading: false,
       ordersLoading: false,
       mobileOrdersLoading: false,
@@ -1025,8 +1028,9 @@ export default {
     },
 
     getDnsValue() {
-      // Return the Vercel domain that users need to configure
-      return 'goodiex.vercel.app'
+      // Return the proxy domain that handles custom domains
+      // This should point to your server where Nginx is running
+      return 'theholylabs.com' // Update this to your actual server domain
     },
 
     async checkDnsStatus() {
@@ -2184,6 +2188,17 @@ export default {
 .dns-record strong {
   color: #495057;
   min-width: 80px;
+}
+
+.dns-note {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 12px;
+  color: #1565c0;
+  font-size: 14px;
+  line-height: 1.4;
 }
 
 .remove-domain-btn {

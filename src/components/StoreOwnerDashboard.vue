@@ -563,7 +563,7 @@ export default {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
   margin-bottom: 2rem;
 }
@@ -593,6 +593,35 @@ export default {
   font-weight: bold;
   color: #4CAF50;
   margin: 0;
+}
+
+.orders-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+}
+
+.order-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #4CAF50;
+}
+
+.order-label {
+  font-size: 0.9rem;
+  color: #666;
+  font-weight: 500;
+}
+
+.order-number {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: #4CAF50;
 }
 
 .stores-section {

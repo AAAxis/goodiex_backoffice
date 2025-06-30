@@ -954,58 +954,39 @@ export default {
       this.message = ''
 
       try {
-        // Use your reverse proxy instead of direct IP
-        const verifyResponse = await fetch('https://api.theholylabs.com/api/domain/verify', {
+        // Use environment variables instead of hardcoded token
+        const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
           method: 'POST',
           headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            domain: this.domainData.domain
+            name: this.domainData.domain,
+            projectId: import.meta.env.VITE_VERCEL_PROJECT_ID
           })
         })
 
-        if (!verifyResponse.ok) {
-          this.showMessage('Failed to verify domain. Please try again.', 'error')
+        if (!vercelResponse.ok) {
+          const error = await vercelResponse.json()
+          this.showMessage(`Failed to add domain: ${error.error?.message || 'Unknown error'}`, 'error')
           return
         }
 
-        const verifyResult = await verifyResponse.json()
-        
-        if (verifyResult.dns_status === 'unresolved') {
-          this.showMessage('Domain does not resolve. Please check if the domain exists and is active.', 'error')
-          return
-        }
+        const vercelResult = await vercelResponse.json()
 
-        // Generate CNAME for the store
-        const cnameResponse = await fetch('https://api.theholylabs.com/api/domain/generate-cname', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            store_id: this.storeId
-          })
-        })
-
-        if (!cnameResponse.ok) {
-          this.showMessage('Failed to generate DNS settings. Please try again.', 'error')
-          return
-        }
-
-        const cnameResult = await cnameResponse.json()
-
+        // Update store with domain info
         const updateData = {
           domain: this.domainData.domain,
           includeWww: this.domainData.includeWww,
           domainStatus: 'pending',
-          domainCname: cnameResult.cname,
+          vercelDomainId: vercelResult.id,
           domainUpdatedAt: new Date()
         }
 
         await db.collection('stores').doc(this.storeId).update(updateData)
 
-        this.showMessage('Domain connected successfully! Please configure your DNS settings.', 'success')
+        this.showMessage('Domain added successfully! Please configure your DNS settings.', 'success')
         await this.fetchStore()
         
         // Reset form
@@ -1013,33 +994,33 @@ export default {
         this.domainData.includeWww = false
 
       } catch (error) {
-        console.error('Error updating domain:', error)
-        this.showMessage('Failed to connect domain. Please try again.', 'error')
+        console.error('Error adding domain:', error)
+        this.showMessage('Failed to add domain. Please try again.', 'error')
       } finally {
         this.domainLoading = false
       }
     },
 
     getDnsValue() {
-      return '69.197.134.25' // Your actual server IP
+      // Vercel provides specific DNS records
+      return '76.76.19.76' // Vercel's IP for A record
+    },
+
+    // Add method to get CNAME value
+    getCnameValue() {
+      return 'cname.vercel-dns.com' // Vercel's CNAME
     },
 
     async checkDnsStatus() {
-      if (!this.store?.domain || !this.store?.domainCname) {
+      if (!this.store?.domain || !this.store?.vercelDomainId) {
         return
       }
 
       try {
-        const response = await fetch('https://api.theholylabs.com/api/domain/check-dns', {
-          method: 'POST',
+        const response = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
           headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            domain: this.store.domain,
-            store_id: this.storeId,
-            expected_cname: this.store.domainCname
-          })
+            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+          }
         })
 
         if (response.ok) {
@@ -1047,16 +1028,16 @@ export default {
           
           // Update store with DNS status
           await db.collection('stores').doc(this.storeId).update({
-            domainStatus: result.status,
+            domainStatus: result.verification?.status || 'pending',
             lastDnsCheck: new Date()
           })
           
           await this.fetchStore()
           
-          if (result.status === 'active') {
-            this.showMessage('DNS is properly configured! Your domain is now active.', 'success')
+          if (result.verification?.status === 'VALID') {
+            this.showMessage('Domain is properly configured and active!', 'success')
           } else {
-            this.showMessage('DNS is not yet configured. Please update your DNS settings.', 'warning')
+            this.showMessage('Domain is not yet configured. Please update your DNS settings.', 'warning')
           }
         }
       } catch (error) {
@@ -1078,10 +1059,26 @@ export default {
       this.message = ''
 
       try {
+        // Remove domain from Vercel
+        if (this.store?.domain) {
+          const response = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+            }
+          })
+
+          if (!response.ok) {
+            console.warn('Failed to remove domain from Vercel:', await response.text())
+          }
+        }
+
+        // Update store
         const updateData = {
           domain: null,
           includeWww: false,
           domainStatus: null,
+          vercelDomainId: null,
           domainUpdatedAt: new Date()
         }
 

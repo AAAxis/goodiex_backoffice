@@ -5,7 +5,7 @@
         <button class="back-btn" @click="goBack">← Back to Dashboard</button>
       </div>
 
-      <div v-if="store" class="store-header">
+      <div class="store-header">
         <div class="store-info">
           <h1>{{ store.name }}</h1>
           <p class="store-description">{{ store.description }}</p>
@@ -17,14 +17,7 @@
 
       </div>
 
-      <div v-else class="store-header">
-        <div class="store-info">
-          <h1>Loading Store...</h1>
-          <p class="store-description">Please wait while we load your store information.</p>
-        </div>
-      </div>
-
-      <div v-if="store" class="management-tabs">
+      <div class="management-tabs">
         <button 
           :class="['tab-btn', activeTab === 'products' ? 'active' : '']"
           @click="activeTab = 'products'"
@@ -57,13 +50,10 @@
         </button>
       </div>
 
-      <!-- Loading State -->
-      <div v-if="!store" class="loading-container">
-        <div class="loading">Loading store information...</div>
-      </div>
+
 
       <!-- Products Tab -->
-      <div v-if="store && activeTab === 'products'" class="tab-content">
+      <div v-if="activeTab === 'products'" class="tab-content">
         <div class="section-header">
           <h2>All Products</h2>
           <div class="header-right">
@@ -115,7 +105,7 @@
       </div>
 
       <!-- Orders Tab -->
-      <div v-if="store && activeTab === 'orders'" class="tab-content">
+      <div v-if="activeTab === 'orders'" class="tab-content">
         <div class="section-header">
           <h2>Store Orders</h2>
           <div class="order-stats">
@@ -168,7 +158,7 @@
       </div>
 
       <!-- Mobile Orders Tab -->
-      <div v-if="store && activeTab === 'mobile-orders'" class="tab-content">
+      <div v-if="activeTab === 'mobile-orders'" class="tab-content">
         <div class="section-header">
           <h2>Mobile Orders</h2>
           <div class="order-stats">
@@ -221,7 +211,7 @@
       </div>
 
       <!-- Edit Store Tab -->
-      <div v-if="store && activeTab === 'edit-store'" class="tab-content">
+      <div v-if="activeTab === 'edit-store'" class="tab-content">
         <div class="section-header">
           <h2>Edit Store</h2>
         </div>
@@ -328,7 +318,7 @@
         <div v-if="showDeleteConfirmation" class="modal-overlay" @click="cancelDelete">
           <div class="modal-content" @click.stop>
             <h3>Confirm Store Deletion</h3>
-            <p>Are you absolutely sure you want to delete <strong>"{{ store?.name || 'this store' }}"</strong>?</p>
+            <p>Are you absolutely sure you want to delete <strong>"{{ store.name }}"</strong>?</p>
             <p class="modal-warning">This action will permanently delete:</p>
             <ul class="modal-list">
               <li>The store and all its information</li>
@@ -362,7 +352,7 @@
       </div>
 
       <!-- Domain Settings Tab -->
-      <div v-if="store && activeTab === 'domain'" class="tab-content">
+      <div v-if="activeTab === 'domain'" class="tab-content">
         <div class="tab-header">
           <h2>Domain Settings</h2>
         </div>
@@ -382,7 +372,6 @@
                 </p>
                 <p v-else class="domain-note">
                   Connect a custom domain to make your store more professional and easier to remember.
-                  <br><small style="color: #dc3545;">Note: Your Vercel API token must have domain management permissions.</small>
                 </p>
                 
                 <!-- DNS Status Details -->
@@ -423,18 +412,15 @@
                   <input 
                     v-model="domainData.domain" 
                     type="text" 
-                    placeholder="mystore.com" 
+                    placeholder="yourstore.com" 
                     required 
                     class="domain-input"
-                    @input="validateDomain"
                   />
+                  <span class="domain-suffix">.com</span>
                 </div>
                 <small class="form-help">
-                  Enter your domain without http:// or www. (e.g., mystore.com, mystore.net, mystore.org)
+                  Enter your domain without http:// or www. (e.g., mystore.com)
                 </small>
-                <div v-if="domainValidationMessage" class="validation-message" :class="domainValidationType">
-                  {{ domainValidationMessage }}
-                </div>
               </div>
 
               <div class="form-group">
@@ -453,10 +439,8 @@
                 <ul>
                   <li>You must own the domain you want to connect</li>
                   <li>Domain must be active and not expired</li>
-                  <li>Domain should not already be configured in Vercel</li>
-                  <li>DNS settings will need to be configured after domain is added</li>
-                  <li>SSL certificate will be automatically provisioned by Vercel</li>
-                  <li>Vercel API token must have domain management permissions</li>
+                  <li>DNS settings need to be configured (instructions provided after setup)</li>
+                  <li>SSL certificate will be automatically provisioned</li>
                 </ul>
               </div>
 
@@ -641,9 +625,7 @@ export default {
         includeWww: false
       },
       domainLoading: false,
-      showRemoveDomainConfirmation: false,
-      domainValidationMessage: '',
-      domainValidationType: ''
+      showRemoveDomainConfirmation: false
     }
   },
   computed: {
@@ -893,7 +875,7 @@ export default {
     },
 
     formatPrice(price) {
-      const symbol = this.getCurrencySymbol(this.store?.currency || 'USD')
+      const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
       return `${symbol}${parseFloat(price).toFixed(2)}`
     },
 
@@ -999,23 +981,7 @@ export default {
       this.message = ''
 
       try {
-        // Validate domain format
-        const domain = this.domainData.domain.trim().toLowerCase()
-        
-        // Basic domain validation
-        const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-        if (!domainRegex.test(domain)) {
-          this.showMessage('Please enter a valid domain name (e.g., mystore.com)', 'error')
-          return
-        }
-
-        // Check if domain already exists for this store
-        if (this.store?.domain === domain) {
-          this.showMessage('This domain is already configured for this store.', 'error')
-          return
-        }
-
-        // Add domain to Vercel
+        // Use environment variables instead of hardcoded token
         const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
           method: 'POST',
           headers: {
@@ -1023,26 +989,14 @@ export default {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            name: domain
+            name: this.domainData.domain,
+            projectId: import.meta.env.VITE_VERCEL_PROJECT_ID
           })
         })
 
         if (!vercelResponse.ok) {
-          const errorData = await vercelResponse.json()
-          console.error('Vercel API Error:', errorData)
-          
-          let errorMessage = 'Failed to add domain'
-          if (vercelResponse.status === 403) {
-            errorMessage = 'API token does not have permission to add domains. Please check your Vercel API token permissions.'
-          } else if (vercelResponse.status === 409) {
-            errorMessage = 'This domain is already configured in Vercel. Please use a different domain or contact support.'
-          } else if (errorData.error?.message) {
-            errorMessage = errorData.error.message
-          } else if (errorData.message) {
-            errorMessage = errorData.message
-          }
-          
-          this.showMessage(`Domain error: ${errorMessage}`, 'error')
+          const error = await vercelResponse.json()
+          this.showMessage(`Failed to add domain: ${error.error?.message || 'Unknown error'}`, 'error')
           return
         }
 
@@ -1050,7 +1004,7 @@ export default {
 
         // Update store with domain info
         const updateData = {
-          domain: domain,
+          domain: this.domainData.domain,
           includeWww: this.domainData.includeWww,
           domainStatus: 'pending',
           vercelDomainId: vercelResult.id,
@@ -1094,7 +1048,21 @@ export default {
       this.showMessage('Checking DNS status...', 'info')
 
       try {
-        // Check DNS propagation using a DNS lookup service (this doesn't require Vercel API)
+        // First, check if domain exists in Vercel
+        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+          headers: {
+            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+          }
+        })
+
+        if (!vercelResponse.ok) {
+          this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
+          return
+        }
+
+        const vercelResult = await vercelResponse.json()
+        
+        // Check DNS propagation using a DNS lookup service
         const dnsCheckResponse = await fetch(`https://dns.google/resolve?name=${this.store.domain}&type=A`)
         const dnsResult = await dnsCheckResponse.json()
         
@@ -1117,32 +1085,10 @@ export default {
           dnsMessage = 'DNS records not found. Please wait for propagation or check your DNS settings.'
         }
 
-        // Try to get Vercel domain status if possible
-        let vercelStatus = 'unknown'
-        try {
-          const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
-            headers: {
-              'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
-            }
-          })
-
-          if (vercelResponse.ok) {
-            const vercelResult = await vercelResponse.json()
-            vercelStatus = vercelResult.verification?.status || 'pending'
-          } else if (vercelResponse.status === 403) {
-            vercelStatus = 'permission_denied'
-          } else {
-            vercelStatus = 'not_found'
-          }
-        } catch (vercelError) {
-          console.warn('Could not check Vercel domain status:', vercelError)
-          vercelStatus = 'error'
-        }
-
         // Update store with comprehensive status
         const updateData = {
           domainStatus: dnsStatus,
-          vercelDomainStatus: vercelStatus,
+          vercelDomainStatus: vercelResult.verification?.status || 'pending',
           lastDnsCheck: new Date(),
           dnsRecords: dnsResult.Answer || [],
           dnsMessage: dnsMessage
@@ -1221,43 +1167,6 @@ export default {
 
     cancelRemoveDomain() {
       this.showRemoveDomainConfirmation = false
-    },
-
-    validateDomain() {
-      const domain = this.domainData.domain.trim().toLowerCase()
-      
-      if (!domain) {
-        this.domainValidationMessage = ''
-        this.domainValidationType = ''
-        return
-      }
-
-      // Basic domain validation
-      const domainRegex = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?(\.[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$/
-      
-      if (!domainRegex.test(domain)) {
-        this.domainValidationMessage = 'Please enter a valid domain name (e.g., mystore.com)'
-        this.domainValidationType = 'error'
-        return
-      }
-
-      // Check if domain has at least one dot
-      if (!domain.includes('.')) {
-        this.domainValidationMessage = 'Domain must include a top-level domain (e.g., .com, .net, .org)'
-        this.domainValidationType = 'error'
-        return
-      }
-
-      // Check if domain is already configured for this store
-      if (this.store?.domain === domain) {
-        this.domainValidationMessage = 'This domain is already configured for this store'
-        this.domainValidationType = 'warning'
-        return
-      }
-
-      // Domain looks valid
-      this.domainValidationMessage = 'Domain format looks good!'
-      this.domainValidationType = 'success'
     }
   }
 }
@@ -1426,15 +1335,6 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #666;
-}
-
-.loading-container {
-  background: white;
-  padding: 4rem 2rem;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 2rem;
-  text-align: center;
 }
 
 .categories-grid {
@@ -2353,16 +2253,7 @@ export default {
 
 .domain-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 6px;
-  font-size: 1rem;
-  transition: border-color 0.2s;
-}
-
-.domain-input:focus {
-  outline: none;
-  border-color: #4CAF50;
+  padding-right: 60px;
 }
 
 .domain-suffix {
@@ -2378,32 +2269,6 @@ export default {
   font-size: 14px;
   margin-top: 4px;
   display: block;
-}
-
-.validation-message {
-  margin-top: 8px;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.validation-message.success {
-  background: #d4edda;
-  color: #155724;
-  border: 1px solid #c3e6cb;
-}
-
-.validation-message.error {
-  background: #f8d7da;
-  color: #721c24;
-  border: 1px solid #f5c6cb;
-}
-
-.validation-message.warning {
-  background: #fff3cd;
-  color: #856404;
-  border: 1px solid #ffeaa7;
 }
 
 .domain-requirements {

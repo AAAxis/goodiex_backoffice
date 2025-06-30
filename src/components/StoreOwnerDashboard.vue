@@ -35,15 +35,7 @@
         </div>
 
         <div v-else class="stores-grid">
-          <div v-for="store in stores" :key="store.id" class="store-card">
-            <div class="store-header">
-              <span :class="['status-badge', store.isActive ? 'active' : 'inactive']">
-                {{ store.isActive ? 'Active' : 'Inactive' }}
-              </span>
-              <div class="store-actions">
-                <button class="btn-manage" @click="manageStore(store.id)">Manage</button>
-              </div>
-            </div>
+          <div v-for="store in stores" :key="store.id" class="store-card" @click="manageStore(store.id)">
             <div class="store-image">
               <img v-if="store.image" :src="store.image" :alt="store.name" />
               <div v-else class="no-image">No Image</div>
@@ -431,20 +423,12 @@ export default {
   overflow: hidden;
   transition: transform 0.2s;
   background: white;
+  cursor: pointer;
 }
 
 .store-card:hover {
   transform: translateY(-2px);
   box-shadow: 0 4px 16px rgba(0,0,0,0.1);
-}
-
-.store-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e0e0e0;
 }
 
 .store-image {
@@ -509,75 +493,6 @@ export default {
   font-size: 1rem;
   font-weight: bold;
   color: #4CAF50;
-}
-
-.store-status {
-  margin-bottom: 1rem;
-}
-
-.status-badge {
-  padding: 0.25rem 0.75rem;
-  border-radius: 20px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  text-transform: uppercase;
-}
-
-.status-badge.active {
-  background: #e8f5e8;
-  color: #2e7d32;
-}
-
-.status-badge.inactive {
-  background: #ffebee;
-  color: #c62828;
-}
-
-.store-actions {
-  display: flex;
-  gap: 0.5rem;
-}
-
-.btn-manage {
-  background: #1976d2;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.btn-manage:hover {
-  background: #1565c0;
-}
-
-.btn-edit {
-  background: #9c27b0;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.btn-edit:hover {
-  background: #7b1fa2;
-}
-
-.btn-toggle {
-  background: #ff9800;
-  color: white;
-  border: none;
-  padding: 0.4rem 0.8rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.8rem;
-}
-
-.btn-toggle:hover {
-  background: #f57c00;
 }
 
 @media (max-width: 768px) {

@@ -961,7 +961,7 @@ export default {
         }
 
         // Verify domain with backend
-        const verifyResponse = await fetch('http://localhost:5000/api/domain/verify', {
+        const verifyResponse = await fetch('https://api.theholylabs.com/api/domain/verify', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -984,7 +984,7 @@ export default {
         }
 
         // Generate CNAME for the store
-        const cnameResponse = await fetch('http://localhost:5000/api/domain/generate-cname', {
+        const cnameResponse = await fetch('https://api.theholylabs.com/api/domain/generate-cname', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -1037,7 +1037,7 @@ export default {
       }
 
       try {
-        const response = await fetch('http://localhost:5000/api/domain/check-dns', {
+        const response = await fetch('https://api.theholylabs.com/api/domain/check-dns', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

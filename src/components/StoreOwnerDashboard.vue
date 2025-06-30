@@ -6,7 +6,6 @@
           <h1 class="dashboard-title">{{ userName || userEmail }}</h1>
         </div>
         <div class="header-actions">
-          <span class="user-email">{{ userEmail }}</span>
           <button class="settings-btn" @click="goToSettings">Settings</button>
           <button class="logout-btn" @click="logout">Logout</button>
         </div>
@@ -16,9 +15,6 @@
         <div class="stat-card">
           <h3>Total Orders</h3>
           <p class="stat-number">{{ totalOrders }}</p>
-          <div class="chart-container-mini">
-            <canvas ref="ordersChart" width="150" height="150"></canvas>
-          </div>
         </div>
 
         <div class="stat-card">
@@ -29,6 +25,17 @@
         <div class="stat-card">
           <h3>Average Order Value</h3>
           <p class="stat-number">{{ formatPrice(averageOrderValue, 'USD') }}</p>
+        </div>
+
+        <div class="stat-card">
+          <h3>Orders by Platform</h3>
+          <div class="chart-container-mini">
+            <canvas ref="ordersChart" width="150" height="150"></canvas>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Revenue by Currency</h3>
           <div class="chart-container-mini">
             <canvas ref="revenueChart" width="150" height="150"></canvas>
           </div>
@@ -522,11 +529,6 @@ export default {
   flex-shrink: 0;
 }
 
-.user-email {
-  color: #666;
-  font-size: 0.9rem;
-}
-
 .settings-btn {
   background: #607d8b;
   color: white;
@@ -557,8 +559,8 @@ export default {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
   margin-bottom: 2rem;
 }
 
@@ -714,8 +716,8 @@ export default {
 }
 
 .chart-container-mini {
-  width: 100px;
-  height: 100px;
+  width: 150px;
+  height: 150px;
   margin-top: 1rem;
   display: flex;
   align-items: center;
@@ -723,8 +725,10 @@ export default {
 }
 
 .chart-container-mini canvas {
-  max-width: 100px;
-  max-height: 100px;
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 150px;
+  max-height: 150px;
 }
 
 @media (max-width: 768px) {

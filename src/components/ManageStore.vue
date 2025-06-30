@@ -5,7 +5,7 @@
         <button class="back-btn" @click="goBack">← Back to Dashboard</button>
       </div>
 
-      <div class="store-header">
+      <div v-if="store" class="store-header">
         <div class="store-info">
           <h1>{{ store.name }}</h1>
           <p class="store-description">{{ store.description }}</p>
@@ -17,7 +17,14 @@
 
       </div>
 
-      <div class="management-tabs">
+      <div v-else class="store-header">
+        <div class="store-info">
+          <h1>Loading Store...</h1>
+          <p class="store-description">Please wait while we load your store information.</p>
+        </div>
+      </div>
+
+      <div v-if="store" class="management-tabs">
         <button 
           :class="['tab-btn', activeTab === 'products' ? 'active' : '']"
           @click="activeTab = 'products'"
@@ -50,10 +57,13 @@
         </button>
       </div>
 
-
+      <!-- Loading State -->
+      <div v-if="!store" class="loading-container">
+        <div class="loading">Loading store information...</div>
+      </div>
 
       <!-- Products Tab -->
-      <div v-if="activeTab === 'products'" class="tab-content">
+      <div v-if="store && activeTab === 'products'" class="tab-content">
         <div class="section-header">
           <h2>All Products</h2>
           <div class="header-right">
@@ -105,7 +115,7 @@
       </div>
 
       <!-- Orders Tab -->
-      <div v-if="activeTab === 'orders'" class="tab-content">
+      <div v-if="store && activeTab === 'orders'" class="tab-content">
         <div class="section-header">
           <h2>Store Orders</h2>
           <div class="order-stats">
@@ -158,7 +168,7 @@
       </div>
 
       <!-- Mobile Orders Tab -->
-      <div v-if="activeTab === 'mobile-orders'" class="tab-content">
+      <div v-if="store && activeTab === 'mobile-orders'" class="tab-content">
         <div class="section-header">
           <h2>Mobile Orders</h2>
           <div class="order-stats">
@@ -211,7 +221,7 @@
       </div>
 
       <!-- Edit Store Tab -->
-      <div v-if="activeTab === 'edit-store'" class="tab-content">
+      <div v-if="store && activeTab === 'edit-store'" class="tab-content">
         <div class="section-header">
           <h2>Edit Store</h2>
         </div>
@@ -318,7 +328,7 @@
         <div v-if="showDeleteConfirmation" class="modal-overlay" @click="cancelDelete">
           <div class="modal-content" @click.stop>
             <h3>Confirm Store Deletion</h3>
-            <p>Are you absolutely sure you want to delete <strong>"{{ store.name }}"</strong>?</p>
+            <p>Are you absolutely sure you want to delete <strong>"{{ store?.name || 'this store' }}"</strong>?</p>
             <p class="modal-warning">This action will permanently delete:</p>
             <ul class="modal-list">
               <li>The store and all its information</li>
@@ -352,7 +362,7 @@
       </div>
 
       <!-- Domain Settings Tab -->
-      <div v-if="activeTab === 'domain'" class="tab-content">
+      <div v-if="store && activeTab === 'domain'" class="tab-content">
         <div class="tab-header">
           <h2>Domain Settings</h2>
         </div>
@@ -372,6 +382,7 @@
                 </p>
                 <p v-else class="domain-note">
                   Connect a custom domain to make your store more professional and easier to remember.
+                  <br><small style="color: #dc3545;">Note: Your Vercel API token must have domain management permissions.</small>
                 </p>
                 
                 <!-- DNS Status Details -->
@@ -445,6 +456,7 @@
                   <li>Domain should not already be configured in Vercel</li>
                   <li>DNS settings will need to be configured after domain is added</li>
                   <li>SSL certificate will be automatically provisioned by Vercel</li>
+                  <li>Vercel API token must have domain management permissions</li>
                 </ul>
               </div>
 
@@ -881,7 +893,7 @@ export default {
     },
 
     formatPrice(price) {
-      const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
+      const symbol = this.getCurrencySymbol(this.store?.currency || 'USD')
       return `${symbol}${parseFloat(price).toFixed(2)}`
     },
 
@@ -1003,19 +1015,6 @@ export default {
           return
         }
 
-        // First, check if domain is available in Vercel
-        const checkResponse = await fetch(`https://api.vercel.com/v1/domains/${domain}`, {
-          method: 'GET',
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
-          }
-        })
-
-        if (checkResponse.ok) {
-          this.showMessage('This domain is already configured in Vercel. Please use a different domain or contact support.', 'error')
-          return
-        }
-
         // Add domain to Vercel
         const vercelResponse = await fetch('https://api.vercel.com/v1/domains', {
           method: 'POST',
@@ -1033,7 +1032,11 @@ export default {
           console.error('Vercel API Error:', errorData)
           
           let errorMessage = 'Failed to add domain'
-          if (errorData.error?.message) {
+          if (vercelResponse.status === 403) {
+            errorMessage = 'API token does not have permission to add domains. Please check your Vercel API token permissions.'
+          } else if (vercelResponse.status === 409) {
+            errorMessage = 'This domain is already configured in Vercel. Please use a different domain or contact support.'
+          } else if (errorData.error?.message) {
             errorMessage = errorData.error.message
           } else if (errorData.message) {
             errorMessage = errorData.message
@@ -1091,21 +1094,7 @@ export default {
       this.showMessage('Checking DNS status...', 'info')
 
       try {
-        // First, check if domain exists in Vercel
-        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
-          headers: {
-            'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
-          }
-        })
-
-        if (!vercelResponse.ok) {
-          this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
-          return
-        }
-
-        const vercelResult = await vercelResponse.json()
-        
-        // Check DNS propagation using a DNS lookup service
+        // Check DNS propagation using a DNS lookup service (this doesn't require Vercel API)
         const dnsCheckResponse = await fetch(`https://dns.google/resolve?name=${this.store.domain}&type=A`)
         const dnsResult = await dnsCheckResponse.json()
         
@@ -1128,10 +1117,32 @@ export default {
           dnsMessage = 'DNS records not found. Please wait for propagation or check your DNS settings.'
         }
 
+        // Try to get Vercel domain status if possible
+        let vercelStatus = 'unknown'
+        try {
+          const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+            headers: {
+              'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
+            }
+          })
+
+          if (vercelResponse.ok) {
+            const vercelResult = await vercelResponse.json()
+            vercelStatus = vercelResult.verification?.status || 'pending'
+          } else if (vercelResponse.status === 403) {
+            vercelStatus = 'permission_denied'
+          } else {
+            vercelStatus = 'not_found'
+          }
+        } catch (vercelError) {
+          console.warn('Could not check Vercel domain status:', vercelError)
+          vercelStatus = 'error'
+        }
+
         // Update store with comprehensive status
         const updateData = {
           domainStatus: dnsStatus,
-          vercelDomainStatus: vercelResult.verification?.status || 'pending',
+          vercelDomainStatus: vercelStatus,
           lastDnsCheck: new Date(),
           dnsRecords: dnsResult.Answer || [],
           dnsMessage: dnsMessage
@@ -1415,6 +1426,15 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #666;
+}
+
+.loading-container {
+  background: white;
+  padding: 4rem 2rem;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  margin-bottom: 2rem;
+  text-align: center;
 }
 
 .categories-grid {

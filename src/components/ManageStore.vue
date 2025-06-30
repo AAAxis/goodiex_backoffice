@@ -360,20 +360,47 @@
         <div class="domain-settings">
           <div class="domain-info">
             <h3>Current Domain</h3>
-            <div class="current-domain">
-              <div class="domain-display">
-                <span class="domain-url">{{ store?.domain || 'No custom domain set' }}</span>
-                <span v-if="store?.domain" :class="['domain-status', store?.domainStatus || 'pending']">
-                  {{ store?.domainStatus || 'Pending' }}
-                </span>
+                          <div class="current-domain">
+                <div class="domain-display">
+                  <span class="domain-url">{{ store?.domain || 'No custom domain set' }}</span>
+                  <span v-if="store?.domain" :class="['domain-status', store?.domainStatus || 'pending']">
+                    {{ store?.domainStatus || 'Pending' }}
+                  </span>
+                </div>
+                <p v-if="store?.domain" class="domain-note">
+                  Your store is accessible at: <strong>{{ store.domain }}</strong>
+                </p>
+                <p v-else class="domain-note">
+                  Connect a custom domain to make your store more professional and easier to remember.
+                </p>
+                
+                <!-- DNS Status Details -->
+                <div v-if="store?.domain && store?.dnsMessage" class="dns-status-details">
+                  <div class="dns-message" :class="store.domainStatus">
+                    <span class="dns-icon">
+                      {{ store.domainStatus === 'active' ? '✅' : store.domainStatus === 'error' ? '❌' : '⏳' }}
+                    </span>
+                    {{ store.dnsMessage }}
+                  </div>
+                  <div v-if="store.lastDnsCheck" class="last-check">
+                    Last checked: {{ formatDate(store.lastDnsCheck) }}
+                  </div>
+                </div>
+                
+                <!-- DNS Records Display -->
+                <div v-if="store?.domain && store?.dnsRecords && store.dnsRecords.length > 0" class="dns-records-display">
+                  <h4>Current DNS Records:</h4>
+                  <div class="dns-records-list">
+                    <div v-for="(record, index) in store.dnsRecords" :key="index" class="dns-record-item">
+                      <span class="record-type">A</span>
+                      <span class="record-value">{{ record.data }}</span>
+                      <span :class="['record-status', record.data === getDnsValue() ? 'correct' : 'incorrect']">
+                        {{ record.data === getDnsValue() ? '✓ Correct' : '✗ Incorrect' }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
               </div>
-              <p v-if="store?.domain" class="domain-note">
-                Your store is accessible at: <strong>{{ store.domain }}</strong>
-              </p>
-              <p v-else class="domain-note">
-                Connect a custom domain to make your store more professional and easier to remember.
-              </p>
-            </div>
           </div>
 
           <div class="domain-form">
@@ -1012,36 +1039,78 @@ export default {
     },
 
     async checkDnsStatus() {
-      if (!this.store?.domain || !this.store?.vercelDomainId) {
+      if (!this.store?.domain) {
+        this.showMessage('No domain configured for this store.', 'error')
         return
       }
 
+      this.domainLoading = true
+      this.showMessage('Checking DNS status...', 'info')
+
       try {
-        const response = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
+        // First, check if domain exists in Vercel
+        const vercelResponse = await fetch(`https://api.vercel.com/v1/domains/${this.store.domain}`, {
           headers: {
             'Authorization': `Bearer ${import.meta.env.VITE_VERCEL_API_TOKEN}`,
           }
         })
 
-        if (response.ok) {
-          const result = await response.json()
-          
-          // Update store with DNS status
-          await db.collection('stores').doc(this.storeId).update({
-            domainStatus: result.verification?.status || 'pending',
-            lastDnsCheck: new Date()
-          })
-          
-          await this.fetchStore()
-          
-          if (result.verification?.status === 'VALID') {
-            this.showMessage('Domain is properly configured and active!', 'success')
-          } else {
-            this.showMessage('Domain is not yet configured. Please update your DNS settings.', 'warning')
-          }
+        if (!vercelResponse.ok) {
+          this.showMessage('Domain not found in Vercel. Please add the domain first.', 'error')
+          return
         }
+
+        const vercelResult = await vercelResponse.json()
+        
+        // Check DNS propagation using a DNS lookup service
+        const dnsCheckResponse = await fetch(`https://dns.google/resolve?name=${this.store.domain}&type=A`)
+        const dnsResult = await dnsCheckResponse.json()
+        
+        let dnsStatus = 'pending'
+        let dnsMessage = ''
+        
+        if (dnsResult.Answer && dnsResult.Answer.length > 0) {
+          const dnsRecords = dnsResult.Answer.map(record => record.data)
+          const expectedIP = this.getDnsValue()
+          
+          if (dnsRecords.includes(expectedIP)) {
+            dnsStatus = 'active'
+            dnsMessage = 'DNS is properly configured and propagated!'
+          } else {
+            dnsStatus = 'error'
+            dnsMessage = `DNS records found but pointing to wrong IP. Expected: ${expectedIP}, Found: ${dnsRecords.join(', ')}`
+          }
+        } else {
+          dnsStatus = 'pending'
+          dnsMessage = 'DNS records not found. Please wait for propagation or check your DNS settings.'
+        }
+
+        // Update store with comprehensive status
+        const updateData = {
+          domainStatus: dnsStatus,
+          vercelDomainStatus: vercelResult.verification?.status || 'pending',
+          lastDnsCheck: new Date(),
+          dnsRecords: dnsResult.Answer || [],
+          dnsMessage: dnsMessage
+        }
+
+        await db.collection('stores').doc(this.storeId).update(updateData)
+        await this.fetchStore()
+        
+        // Show appropriate message based on status
+        if (dnsStatus === 'active') {
+          this.showMessage('✅ Domain is properly configured and active!', 'success')
+        } else if (dnsStatus === 'error') {
+          this.showMessage(`❌ ${dnsMessage}`, 'error')
+        } else {
+          this.showMessage(`⏳ ${dnsMessage}`, 'warning')
+        }
+
       } catch (error) {
         console.error('Error checking DNS status:', error)
+        this.showMessage('Failed to check DNS status. Please try again.', 'error')
+      } finally {
+        this.domainLoading = false
       }
     },
 
@@ -1813,6 +1882,18 @@ export default {
   border: 1px solid #f5c6cb;
 }
 
+.form-message.info {
+  background: #d1ecf1;
+  color: #0c5460;
+  border: 1px solid #bee5eb;
+}
+
+.form-message.warning {
+  background: #fff3cd;
+  color: #856404;
+  border: 1px solid #ffeaa7;
+}
+
 /* Danger Zone Styles */
 .danger-zone {
   margin-top: 3rem;
@@ -2052,6 +2133,102 @@ export default {
 .domain-note {
   color: #6c757d;
   margin: 0;
+}
+
+.dns-status-details {
+  margin-top: 16px;
+  padding: 16px;
+  background: white;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.dns-message {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 500;
+  margin-bottom: 8px;
+}
+
+.dns-message.active {
+  color: #155724;
+}
+
+.dns-message.error {
+  color: #721c24;
+}
+
+.dns-message.pending {
+  color: #856404;
+}
+
+.dns-icon {
+  font-size: 16px;
+}
+
+.last-check {
+  font-size: 12px;
+  color: #6c757d;
+  font-style: italic;
+}
+
+.dns-records-display {
+  margin-top: 16px;
+}
+
+.dns-records-display h4 {
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  color: #495057;
+}
+
+.dns-records-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dns-record-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  font-family: monospace;
+  font-size: 13px;
+}
+
+.record-type {
+  background: #007bff;
+  color: white;
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.record-value {
+  flex: 1;
+  color: #495057;
+}
+
+.record-status {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+
+.record-status.correct {
+  background: #d4edda;
+  color: #155724;
+}
+
+.record-status.incorrect {
+  background: #f8d7da;
+  color: #721c24;
 }
 
 .domain-form {

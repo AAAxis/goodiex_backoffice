@@ -42,12 +42,6 @@
         >
           Edit Store
         </button>
-        <button 
-          :class="['tab-btn', activeTab === 'settings' ? 'active' : '']"
-          @click="activeTab = 'settings'"
-        >
-          Store Settings
-        </button>
       </div>
 
 
@@ -349,40 +343,6 @@
         </div>
 
         <p v-if="message" class="form-message" :class="messageType">{{ message }}</p>
-      </div>
-
-      <!-- Store Settings Tab -->
-      <div v-if="activeTab === 'settings'" class="tab-content">
-        <div class="section-header">
-          <h2>Store Settings</h2>
-        </div>
-
-        <div class="settings-section">
-          <div class="setting-row">
-            <div class="setting-info">
-              <h3>Store Status</h3>
-              <p>{{ store.isActive ? 'Your store is currently active and visible to customers' : 'Your store is currently inactive and hidden from customers' }}</p>
-            </div>
-            <div class="setting-action">
-              <span :class="['status-badge', store.isActive ? 'active' : 'inactive']">
-                {{ store.isActive ? 'Active' : 'Inactive' }}
-              </span>
-              <button class="btn-toggle" @click="toggleStoreStatus">
-                {{ store.isActive ? 'Deactivate Store' : 'Activate Store' }}
-              </button>
-            </div>
-          </div>
-
-          <div class="setting-row">
-            <div class="setting-info">
-              <h3>Store Information</h3>
-              <p>Update your store name, description, currency, and other details</p>
-            </div>
-            <div class="setting-action">
-              <span class="info-text">Use the "Edit Store" tab to modify store details</span>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
@@ -737,20 +697,6 @@ export default {
     formatPrice(price) {
       const symbol = this.getCurrencySymbol(this.store.currency || 'USD')
       return `${symbol}${parseFloat(price).toFixed(2)}`
-    },
-
-    async toggleStoreStatus() {
-      if (confirm(`Are you sure you want to ${this.store.isActive ? 'deactivate' : 'activate'} this store?`)) {
-        try {
-          await db.collection('stores').doc(this.storeId).update({
-            isActive: !this.store.isActive,
-            updatedAt: new Date()
-          })
-          await this.fetchStore()
-        } catch (error) {
-          console.error('Error updating store status:', error)
-        }
-      }
     },
 
     async updateStore() {
@@ -1445,60 +1391,6 @@ export default {
 .item-total {
   font-weight: 600;
   color: #4CAF50;
-}
-
-.settings-section {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.setting-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.5rem;
-  border: 1px solid #e0e0e0;
-  border-radius: 8px;
-  background: #f8f9fa;
-}
-
-.setting-info h3 {
-  margin: 0 0 0.5rem 0;
-  color: #333;
-  font-size: 1.1rem;
-}
-
-.setting-info p {
-  margin: 0;
-  color: #666;
-  font-size: 0.9rem;
-}
-
-.setting-action {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.btn-toggle {
-  background: #ff9800;
-  color: white;
-  border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: background 0.2s;
-}
-
-.btn-toggle:hover {
-  background: #f57c00;
-}
-
-.info-text {
-  color: #666;
-  font-size: 0.9rem;
 }
 
 /* Edit Store Styles */

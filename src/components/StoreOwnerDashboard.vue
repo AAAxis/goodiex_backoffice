@@ -19,6 +19,23 @@
         <div class="stat-card">
           <h3>Total Orders</h3>
           <p class="stat-number">{{ totalOrders }}</p>
+          <div class="order-breakdown">
+            <span class="breakdown-item">Web: {{ totalWebOrders }}</span>
+            <span class="breakdown-item">Mobile: {{ totalMobileOrders }}</span>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <h3>Total Revenue</h3>
+          <div v-if="revenueByCurrency.length === 1" class="stat-number">
+            {{ formatPrice(revenueByCurrency[0].total, revenueByCurrency[0].currency) }}
+          </div>
+          <div v-else class="multiple-currencies">
+            <div v-for="revenue in revenueByCurrency" :key="revenue.currency" class="currency-revenue">
+              <span class="currency-code">{{ revenue.currency }}</span>
+              <span class="revenue-amount">{{ formatPrice(revenue.total, revenue.currency) }}</span>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -47,6 +64,10 @@
                 <div class="stat-mini">
                   <span class="stat-label">Orders:</span>
                   <span class="stat-value">{{ store.totalOrders || 0 }}</span>
+                  <div class="order-breakdown-mini">
+                    <span class="breakdown-item-mini">Web: {{ store.webOrders || 0 }}</span>
+                    <span class="breakdown-item-mini">Mobile: {{ store.mobileOrders || 0 }}</span>
+                  </div>
                 </div>
                 <div class="stat-mini">
                   <span class="stat-label">Revenue:</span>
@@ -74,6 +95,8 @@ export default {
       stores: [],
       loading: true,
       totalOrders: 0,
+      totalWebOrders: 0,
+      totalMobileOrders: 0,
       revenueByCurrency: []
     }
   },
@@ -134,32 +157,58 @@ export default {
     async calculateTotalStats() {
       try {
         let totalOrders = 0
+        let totalWebOrders = 0
+        let totalMobileOrders = 0
         
         for (const store of this.stores) {
-          // Get orders for this specific store
-          const ordersQuery = await db.collection('web-orders')
+          // Get web orders for this specific store
+          const webOrdersQuery = await db.collection('web-orders')
+            .where('storeId', '==', store.id)
+            .where('status', '==', 'completed')
+            .get()
+          
+          // Get mobile orders for this specific store
+          const mobileOrdersQuery = await db.collection('orders')
             .where('storeId', '==', store.id)
             .where('status', '==', 'completed')
             .get()
           
           let storeOrders = 0
           let storeRevenue = 0
+          let storeWebOrders = 0
+          let storeMobileOrders = 0
           
-          ordersQuery.forEach((doc) => {
+          // Calculate web orders revenue
+          webOrdersQuery.forEach((doc) => {
             const orderData = doc.data()
             storeOrders++
+            storeWebOrders++
+            storeRevenue += parseFloat(orderData.total || 0)
+          })
+          
+          // Calculate mobile orders revenue
+          mobileOrdersQuery.forEach((doc) => {
+            const orderData = doc.data()
+            storeOrders++
+            storeMobileOrders++
             storeRevenue += parseFloat(orderData.total || 0)
           })
           
           // Update store object with stats
           store.totalOrders = storeOrders
           store.totalRevenue = storeRevenue
+          store.webOrders = storeWebOrders
+          store.mobileOrders = storeMobileOrders
           
-          // Add to overall totals (only for orders, not revenue from different currencies)
+          // Add to overall totals
           totalOrders += storeOrders
+          totalWebOrders += storeWebOrders
+          totalMobileOrders += storeMobileOrders
         }
         
         this.totalOrders = totalOrders
+        this.totalWebOrders = totalWebOrders
+        this.totalMobileOrders = totalMobileOrders
         
         // Calculate revenue by currency
         this.revenueByCurrency = await this.calculateRevenueByCurrency()
@@ -167,6 +216,8 @@ export default {
       } catch (error) {
         console.error('Error calculating stats:', error)
         this.totalOrders = 0
+        this.totalWebOrders = 0
+        this.totalMobileOrders = 0
       }
     },
 
@@ -343,6 +394,26 @@ export default {
   margin: 0;
 }
 
+.order-breakdown {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.5rem;
+  padding: 0.5rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.breakdown-item {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  background: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 12px;
+  border: 1px solid #e0e0e0;
+}
+
 .multiple-currencies {
   display: flex;
   flex-direction: column;
@@ -493,6 +564,22 @@ export default {
   font-size: 1rem;
   font-weight: bold;
   color: #4CAF50;
+}
+
+.order-breakdown-mini {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.25rem 0;
+}
+
+.breakdown-item-mini {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #666;
+  background: #f0f0f0;
+  padding: 0.125rem 0.5rem;
+  border-radius: 12px;
 }
 
 @media (max-width: 768px) {

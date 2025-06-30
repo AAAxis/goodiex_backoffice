@@ -7,7 +7,7 @@
           <div class="header-charts">
             <div class="chart-container">
               <h4>Revenue by Currency</h4>
-              <canvas ref="revenueChart" width="300" height="200"></canvas>
+              <canvas ref="revenueChart" width="200" height="200"></canvas>
             </div>
             <div class="chart-container">
               <h4>Orders by Platform</h4>
@@ -403,7 +403,8 @@ export default {
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          aspectRatio: 1,
           interaction: {
             intersect: false,
             mode: 'index'
@@ -463,7 +464,8 @@ export default {
         },
         options: {
           responsive: true,
-          maintainAspectRatio: false,
+          maintainAspectRatio: true,
+          aspectRatio: 1,
           interaction: {
             intersect: false,
             mode: 'index'
@@ -546,7 +548,12 @@ export default {
   padding: 1rem;
   border-radius: 8px;
   text-align: center;
-  min-width: 200px;
+  width: 200px;
+  height: 250px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
 }
 
 .chart-container h4 {
@@ -555,6 +562,13 @@ export default {
   font-size: 0.8rem;
   text-transform: uppercase;
   font-weight: 600;
+}
+
+.chart-container canvas {
+  max-width: 100%;
+  max-height: 180px;
+  width: 180px !important;
+  height: 180px !important;
 }
 
 .header-actions {
@@ -806,7 +820,14 @@ export default {
   
   .chart-container {
     min-width: 150px;
+    width: 150px;
+    height: 200px;
     flex: 1;
+  }
+  
+  .chart-container canvas {
+    width: 130px !important;
+    height: 130px !important;
   }
   
   .header-actions {

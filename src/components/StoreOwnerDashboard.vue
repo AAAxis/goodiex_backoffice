@@ -7,7 +7,7 @@
           <div class="header-charts">
             <div class="chart-container">
               <h4>Revenue by Currency</h4>
-              <canvas ref="revenueChart" width="200" height="200"></canvas>
+              <canvas ref="revenueChart" width="300" height="200"></canvas>
             </div>
             <div class="chart-container">
               <h4>Orders by Platform</h4>
@@ -41,12 +41,6 @@
         <div class="stat-card">
           <h3>Average Order Value</h3>
           <p class="stat-number">{{ formatPrice(averageOrderValue, 'USD') }}</p>
-        </div>
-
-        <div class="stat-card">
-          <h3>Top Product</h3>
-          <p v-if="topProduct" class="stat-text">{{ topProduct.name }}</p>
-          <p v-else class="stat-text">No orders yet</p>
         </div>
 
         <div class="stat-card">
@@ -119,7 +113,6 @@ export default {
       totalMobileOrders: 0,
       totalPendingOrders: 0,
       averageOrderValue: 0,
-      topProduct: null,
       revenueByCurrency: [],
       revenueChart: null,
       ordersChart: null
@@ -283,9 +276,6 @@ export default {
         // Calculate average order value
         this.averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
         
-        // Find top product
-        await this.findTopProduct(allOrderItems)
-        
         // Calculate revenue by currency
         this.revenueByCurrency = await this.calculateRevenueByCurrency()
         
@@ -301,7 +291,6 @@ export default {
         this.totalMobileOrders = 0
         this.totalPendingOrders = 0
         this.averageOrderValue = 0
-        this.topProduct = null
       }
     },
 
@@ -400,14 +389,16 @@ export default {
       ]
 
       this.revenueChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'bar',
         data: {
           labels: labels,
           datasets: [{
+            label: 'Revenue',
             data: data,
             backgroundColor: colors.slice(0, labels.length),
-            borderWidth: 2,
-            borderColor: '#fff'
+            borderColor: colors.slice(0, labels.length),
+            borderWidth: 1,
+            borderRadius: 4
           }]
         },
         options: {
@@ -419,21 +410,25 @@ export default {
           },
           plugins: {
             legend: {
-              position: 'bottom',
-              labels: {
-                padding: 10,
-                usePointStyle: true,
-                font: {
-                  size: 11
-                }
-              }
+              display: false
             },
             tooltip: {
               callbacks: {
                 label: (context) => {
-                  const label = context.label || ''
-                  const value = context.parsed
-                  return `${label}: ${this.formatPrice(value, label)}`
+                  const label = context.dataset.label || ''
+                  const value = context.parsed.y
+                  const currency = context.label
+                  return `${label}: ${this.formatPrice(value, currency)}`
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => {
+                  return this.formatPrice(value, 'USD')
                 }
               }
             }
@@ -455,14 +450,15 @@ export default {
       const colors = ['#2196F3', '#4CAF50']
 
       this.ordersChart = new Chart(ctx, {
-        type: 'pie',
+        type: 'doughnut',
         data: {
           labels: labels,
           datasets: [{
             data: data,
             backgroundColor: colors,
             borderWidth: 2,
-            borderColor: '#fff'
+            borderColor: '#fff',
+            cutout: '60%'
           }]
         },
         options: {
@@ -488,53 +484,15 @@ export default {
                 label: (context) => {
                   const label = context.label || ''
                   const value = context.parsed
-                  return `${label}: ${value}`
+                  const total = context.dataset.data.reduce((a, b) => a + b, 0)
+                  const percentage = ((value / total) * 100).toFixed(1)
+                  return `${label}: ${value} (${percentage}%)`
                 }
               }
             }
           }
         }
       })
-    },
-
-    async findTopProduct(allOrderItems) {
-      if (allOrderItems.size === 0) {
-        this.topProduct = null
-        return
-      }
-
-      let topProduct = null
-      let maxSales = 0
-      
-      // Find the product with highest sales
-      for (const [productId, sales] of allOrderItems) {
-        if (sales > maxSales) {
-          maxSales = sales
-          topProduct = {
-            id: productId,
-            name: productId,
-            sales: sales
-          }
-        }
-      }
-      
-      // Try to get the actual product name from any store
-      if (topProduct) {
-        for (const store of this.stores) {
-          try {
-            const productDoc = await db.collection('stores').doc(store.id).collection('products').doc(topProduct.id).get()
-            if (productDoc.exists) {
-              const productData = productDoc.data()
-              topProduct.name = productData.name || productId
-              break
-            }
-          } catch (error) {
-            console.error('Error fetching product name:', error)
-          }
-        }
-      }
-      
-      this.topProduct = topProduct
     },
   }
 }
@@ -666,15 +624,6 @@ export default {
   font-weight: bold;
   color: #4CAF50;
   margin: 0;
-}
-
-.stat-text {
-  font-size: 1rem;
-  font-weight: 600;
-  color: #333;
-  margin: 0;
-  text-align: center;
-  line-height: 1.3;
 }
 
 .multiple-currencies {

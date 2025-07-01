@@ -26,6 +26,7 @@
 <script>
 import axios from 'axios'
 import { getAuth, onAuthStateChanged } from 'firebase/auth'
+import { getFirestore, doc, getDoc } from 'firebase/firestore'
 
 export default {
   name: 'Plans',
@@ -60,14 +61,27 @@ export default {
       subscribingId: '',
       message: '',
       messageType: '',
-      user: null
+      user: null,
+      profileName: ''
     }
   },
   created() {
     const auth = getAuth()
     this.user = auth.currentUser
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       this.user = user
+      if (user) {
+        // Fetch name from Firestore
+        const db = getFirestore()
+        const userDoc = await getDoc(doc(db, 'storeOwners', user.uid))
+        if (userDoc.exists()) {
+          this.profileName = userDoc.data().name || user.displayName || user.email
+        } else {
+          this.profileName = user.displayName || user.email
+        }
+      } else {
+        this.profileName = ''
+      }
     })
   },
   methods: {
@@ -83,10 +97,11 @@ export default {
           this.subscribingId = ''
           return
         }
+        const nameToSend = this.profileName || user.displayName || user.email
         const res = await axios.post('https://pay.theholylabs.com/create-checkout-session', {
           order: plan.id,
           email: user.email,
-          name: user.displayName || user.email,
+          name: nameToSend,
           total: plan.price,
           currency: 'usd',
           isYearly: plan.interval === 'year'

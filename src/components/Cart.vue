@@ -276,7 +276,7 @@ export default {
         }
 
         // Create checkout session with Stripe
-        const response = await fetch('https://api.theholylabs.com/create-checkout-order', {
+        const response = await fetch('https://pay.theholylabs.com/create-payment-order', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -286,7 +286,7 @@ export default {
             email: this.email,
             total: this.cartTotal,
             name: this.name,
-            currency: this.store.currency || 'USD' // Send store currency to backend
+            currency: this.store.currency || 'USD'
           }),
         });
         

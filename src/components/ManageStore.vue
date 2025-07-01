@@ -58,7 +58,7 @@
           :class="['tab-btn', { active: activeTab === 'withdrawals' }]" 
           @click="activeTab = 'withdrawals'"
         >
-          Balance & Withdrawals
+          Withdrawals
         </button>
       </div>
 
@@ -550,7 +550,8 @@
               <p><strong>Currency:</strong> {{ account.currency }}</p>
               <p><strong>Account Type:</strong> {{ account.type }}</p>
               <p><strong>Account Number:</strong> ****{{ account.details?.accountNumber?.slice(-4) }}</p>
-              <p><strong>Routing Number:</strong> {{ account.details?.abartn }}</p>
+              <p><strong>Institution:</strong> {{ account.details?.institution }}</p>
+              <p><strong>Transit:</strong> {{ account.details?.transit }}</p>
             </div>
             <div class="account-actions">
               <button class="btn-small btn-primary" @click="selectAccountForWithdrawal(account)">
@@ -590,11 +591,21 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Routing Number (ABA) *</label>
+                  <label>Institution *</label>
                   <input 
-                    v-model="bankAccountData.aba" 
+                    v-model="bankAccountData.institution" 
                     type="text" 
-                    placeholder="e.g. 021000021" 
+                    placeholder="e.g. TD Bank" 
+                    required 
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Transit Number *</label>
+                  <input 
+                    v-model="bankAccountData.transit" 
+                    type="text" 
+                    placeholder="e.g. 00001" 
                     required 
                   />
                 </div>
@@ -629,7 +640,7 @@
       <!-- Balance & Withdrawals Tab -->
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
-          <h2>Balance & Withdrawals</h2>
+          <h2>Withdrawals</h2>
           <button class="btn-secondary" @click="fetchBalance">
             Refresh Balance
           </button>
@@ -638,16 +649,17 @@
         <!-- Balance Section -->
         <div class="balance-section">
           <h3>Available Balance</h3>
-          <div v-if="balanceLoading" class="loading">Loading balance...</div>
-          <div v-else-if="balance && balance.length > 0" class="balance-cards">
-            <div v-for="bal in balance" :key="bal.currency" class="balance-card">
-              <div class="balance-currency">{{ bal.currency }}</div>
-              <div class="balance-amount">{{ formatPrice(bal.amount.value, bal.currency) }}</div>
-              <div class="balance-type">{{ bal.type }}</div>
+          <div class="balance-cards">
+            <div class="balance-card">
+              <div class="balance-currency">{{ store?.currency || 'USD' }}</div>
+              <div class="balance-amount">{{ formatPrice(totalEarnings) }}</div>
+              <div class="balance-type">FROM ORDERS</div>
             </div>
           </div>
-          <div v-else class="empty-state">
-            <p>No balance information available. Please configure your Wise profile.</p>
+          <div class="balance-breakdown">
+            <p><strong>Total Orders:</strong> {{ completedOrdersCount }}</p>
+            <p><strong>Mobile Orders:</strong> {{ completedMobileOrdersCount }}</p>
+            <p><strong>Web Orders:</strong> {{ completedWebOrdersCount }}</p>
           </div>
         </div>
 
@@ -671,8 +683,8 @@
               <div class="form-group">
                 <label>Currency *</label>
                 <select v-model="withdrawalData.currency" required>
-                  <option v-for="bal in balance" :key="bal.currency" :value="bal.currency">
-                    {{ bal.currency }} ({{ formatPrice(bal.amount.value, bal.currency) }} available)
+                  <option :value="store?.currency || 'USD'">
+                    {{ store?.currency || 'USD' }} ({{ formatPrice(totalEarnings) }} available)
                   </option>
                 </select>
               </div>
@@ -850,14 +862,15 @@ export default {
       bankAccountData: {
         account_holder_name: '',
         currency: 'USD',
-        aba: '',
+        institution: '',
+        transit: '',
         account_number: '',
         type: 'checking'
       },
       withdrawalData: {
         amount: '',
         target_account: '',
-        currency: 'USD'
+        currency: ''
       },
       transfers: [],
       transfersLoading: false,
@@ -880,6 +893,18 @@ export default {
     },
     filteredOrders() {
       return this.orders.filter(order => order.status !== 'pending');
+    },
+    totalEarnings() {
+      return this.storeRevenue + this.mobileStoreRevenue;
+    },
+    completedOrdersCount() {
+      return this.completedWebOrdersCount + this.completedMobileOrdersCount;
+    },
+    completedWebOrdersCount() {
+      return this.orders.filter(order => order.status === 'completed').length;
+    },
+    completedMobileOrdersCount() {
+      return this.mobileOrders.filter(order => order.status === 'completed').length;
     }
   },
   async mounted() {
@@ -917,6 +942,11 @@ export default {
           if (this.store.domain) {
             this.domainData.domain = this.store.domain
             this.domainData.includeWww = this.store.includeWww || false
+          }
+          
+          // Set withdrawal currency to store currency
+          if (!this.withdrawalData.currency) {
+            this.withdrawalData.currency = this.store.currency || 'USD'
           }
         }
       } catch (error) {
@@ -1764,7 +1794,8 @@ export default {
       this.bankAccountData = {
         account_holder_name: '',
         currency: 'USD',
-        aba: '',
+        institution: '',
+        transit: '',
         account_number: '',
         type: 'checking'
       }
@@ -1774,7 +1805,7 @@ export default {
       this.withdrawalData = {
         amount: '',
         target_account: '',
-        currency: 'USD'
+        currency: this.store?.currency || 'USD'
       }
     },
 
@@ -3161,6 +3192,23 @@ export default {
   font-size: 0.8rem;
   color: #6c757d;
   text-transform: uppercase;
+}
+
+.balance-breakdown {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+}
+
+.balance-breakdown p {
+  margin: 0.5rem 0;
+  color: #495057;
+}
+
+.balance-breakdown strong {
+  color: #2c3e50;
 }
 
 .withdrawal-form {

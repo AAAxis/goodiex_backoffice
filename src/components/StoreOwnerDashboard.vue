@@ -159,8 +159,7 @@ export default {
           })
         })
         
-        // Calculate total orders and revenue for all stores
-        await this.calculateTotalStats()
+
         
       } catch (error) {
         console.error('Error fetching stores:', error)
@@ -169,119 +168,7 @@ export default {
       }
     },
 
-    async calculateTotalStats() {
-      try {
-        let totalOrders = 0
-        let totalWebOrders = 0
-        let totalMobileOrders = 0
-        let totalPendingOrders = 0
-        let totalRevenue = 0
-        let allOrderItems = new Map() // Track product sales
-        
-        for (const store of this.stores) {
-          // Get web orders for this specific store
-          const webOrdersQuery = await db.collection('web-orders')
-            .where('storeId', '==', store.id)
-            .get()
-          
-          // Get mobile orders for this specific store
-          const mobileOrdersQuery = await db.collection('orders')
-            .where('storeId', '==', store.id)
-            .get()
-          
-          let storeOrders = 0
-          let storeRevenue = 0
-          let storeWebOrders = 0
-          let storeMobileOrders = 0
-          let storePendingOrders = 0
-          
-          // Calculate web orders revenue and pending orders
-          webOrdersQuery.forEach((doc) => {
-            const orderData = doc.data()
-            storeOrders++
-            storeWebOrders++
-            
-            if (orderData.status === 'completed') {
-              storeRevenue += parseFloat(orderData.total || 0)
-            } else if (orderData.status === 'pending') {
-              storePendingOrders++
-            }
-            
-            // Track product sales from web orders
-            if (orderData.cart && Array.isArray(orderData.cart)) {
-              orderData.cart.forEach(item => {
-                const productId = item.product_id || item.id
-                if (productId) {
-                  const currentCount = allOrderItems.get(productId) || 0
-                  allOrderItems.set(productId, currentCount + (item.quantity || 1))
-                }
-              })
-            }
-          })
-          
-          // Calculate mobile orders revenue and pending orders
-          mobileOrdersQuery.forEach((doc) => {
-            const orderData = doc.data()
-            storeOrders++
-            storeMobileOrders++
-            
-            if (orderData.status === 'completed') {
-              storeRevenue += parseFloat(orderData.total || 0)
-            } else if (orderData.status === 'pending') {
-              storePendingOrders++
-            }
-            
-            // Track product sales from mobile orders
-            if (orderData.items && Array.isArray(orderData.items)) {
-              orderData.items.forEach(item => {
-                const productId = item.product_id || item.id
-                if (productId) {
-                  const currentCount = allOrderItems.get(productId) || 0
-                  allOrderItems.set(productId, currentCount + (item.quantity || 1))
-                }
-              })
-            }
-          })
-          
-          // Update store object with stats
-          store.totalOrders = storeOrders
-          store.totalRevenue = storeRevenue
-          store.webOrders = storeWebOrders
-          store.mobileOrders = storeMobileOrders
-          
-          // Add to overall totals
-          totalOrders += storeOrders
-          totalWebOrders += storeWebOrders
-          totalMobileOrders += storeMobileOrders
-          totalPendingOrders += storePendingOrders
-          totalRevenue += storeRevenue
-        }
-        
-        this.totalOrders = totalOrders
-        this.totalWebOrders = totalWebOrders
-        this.totalMobileOrders = totalMobileOrders
-        this.totalPendingOrders = totalPendingOrders
-        
-        // Calculate average order value
-        this.averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0
-        
-        // Calculate revenue by currency
-        this.revenueByCurrency = await this.calculateRevenueByCurrency()
-        
-        // Update charts
-        this.$nextTick(() => {
-          this.createCharts()
-        })
-        
-      } catch (error) {
-        console.error('Error calculating stats:', error)
-        this.totalOrders = 0
-        this.totalWebOrders = 0
-        this.totalMobileOrders = 0
-        this.totalPendingOrders = 0
-        this.averageOrderValue = 0
-      }
-    },
+
 
     async calculateRevenueByCurrency() {
       const revenueByCurrency = new Map()

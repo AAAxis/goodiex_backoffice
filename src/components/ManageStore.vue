@@ -601,21 +601,21 @@
                 </div>
 
                 <div class="form-group">
-                  <label>Institution *</label>
+                  <label>{{ bankAccountData.currency === 'CAD' ? 'Institution Number *' : 'Bank Name *' }}</label>
                   <input 
                     v-model="bankAccountData.institution" 
                     type="text" 
-                    placeholder="e.g. TD Bank" 
+                    :placeholder="bankAccountData.currency === 'CAD' ? 'e.g. 001 (3 digits)' : 'e.g. Bank of America'" 
                     required 
                   />
                 </div>
 
                 <div class="form-group">
-                  <label>Transit Number *</label>
+                  <label>{{ bankAccountData.currency === 'CAD' ? 'Transit Number *' : 'Routing Number *' }}</label>
                   <input 
                     v-model="bankAccountData.transit" 
                     type="text" 
-                    placeholder="e.g. 00001" 
+                    :placeholder="bankAccountData.currency === 'CAD' ? 'e.g. 00040 (5 digits)' : 'e.g. 123456789 (9 digits)'" 
                     required 
                   />
                 </div>
@@ -625,7 +625,7 @@
                   <input 
                     v-model="bankAccountData.account_number" 
                     type="text" 
-                    placeholder="Enter account number" 
+                    :placeholder="bankAccountData.currency === 'CAD' ? 'e.g. 1234567 (7-12 digits)' : 'e.g. 123456789012 (4-17 digits)'" 
                     required 
                   />
                 </div>

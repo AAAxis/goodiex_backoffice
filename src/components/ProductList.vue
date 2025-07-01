@@ -396,7 +396,7 @@ export default {
   font-weight: 700;
   color: #2d3748;
   margin-bottom: 1rem;
-  text-align: center;
+  margin: 0;
 }
 
 /* App Bar */
@@ -410,23 +410,39 @@ export default {
 }
 
 .cart-icon {
-  font-size: 1.5rem;
-  color: #000;
-  transition: all 0.3s ease;
+  display: inline-block;
+  position: relative;
 }
 
-.cart-icon:hover {
+.cart-link {
+  font-size: 1.5rem;
+  color: #000;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cart-link:hover {
   color: #333;
   transform: scale(1.1);
 }
 
-.cart-icon .badge {
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  padding: 0.1rem 0.25rem;
   font-size: 0.7rem;
-  min-width: 20px;
-  height: 20px;
+  min-width: 16px;
+  height: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  line-height: 1;
 }
 
 /* Responsive Design */
@@ -469,6 +485,12 @@ export default {
   .container h2 {
     font-size: 1.5rem;
     text-align: left;
+  }
+  
+  .row.align-items-center .col {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
   }
 }
 

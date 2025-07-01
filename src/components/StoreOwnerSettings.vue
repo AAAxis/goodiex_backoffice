@@ -65,6 +65,26 @@
         </form>
       </div>
 
+      <!-- Subscription Section -->
+      <div class="settings-section">
+        <h3>Subscription</h3>
+        <div v-if="subscriptionLoading">Loading subscription...</div>
+        <div v-else>
+          <div v-if="subscription && subscription.status === 'active'">
+            <p><strong>Plan:</strong> {{ subscription.plan_id }}</p>
+            <p><strong>Status:</strong> {{ subscription.status }}</p>
+            <button class="update-btn" @click="cancelSubscription" :disabled="cancelling">
+              {{ cancelling ? 'Cancelling...' : 'Cancel Subscription' }}
+            </button>
+          </div>
+          <div v-else>
+            <p>You do not have an active subscription.</p>
+            <router-link to="/plans" class="update-btn">View Plans</router-link>
+          </div>
+        </div>
+        <p v-if="subscriptionMessage" :class="subscriptionMessageType">{{ subscriptionMessage }}</p>
+      </div>
+
       <!-- Delete Account Section -->
       <div class="settings-section danger-zone">
         <div class="danger-content">
@@ -122,6 +142,7 @@
 
 <script>
 import { auth, db } from '../../firebase'
+import axios from 'axios'
 
 export default {
   name: 'StoreOwnerSettings',
@@ -143,7 +164,12 @@ export default {
       showDeleteConfirmation: false,
       deleteConfirmation: '',
       deleting: false,
-      totalStores: 0
+      totalStores: 0,
+      subscription: null,
+      subscriptionLoading: false,
+      subscriptionMessage: '',
+      subscriptionMessageType: '',
+      cancelling: false
     }
   },
 
@@ -154,6 +180,7 @@ export default {
         this.userEmail = user.email
         await this.fetchUserProfile()
         await this.fetchUserStats()
+        await this.fetchSubscription()
       } else {
         this.$router.push('/store-owner/login')
       }
@@ -179,6 +206,19 @@ export default {
       } catch (error) {
         console.error('Error fetching user stats:', error)
         this.totalStores = 0
+      }
+    },
+
+    async fetchSubscription() {
+      this.subscriptionLoading = true
+      this.subscription = null
+      try {
+        const res = await axios.get(`http://localhost:5001/subscriptions/${this.user.uid}`)
+        this.subscription = res.data
+      } catch (error) {
+        this.subscription = null
+      } finally {
+        this.subscriptionLoading = false
       }
     },
 
@@ -238,6 +278,24 @@ export default {
         }
       } finally {
         this.passwordLoading = false
+      }
+    },
+
+    async cancelSubscription() {
+      this.cancelling = true
+      this.subscriptionMessage = ''
+      try {
+        await axios.post('http://localhost:5001/subscriptions/cancel', {
+          user_id: this.user.uid
+        })
+        this.subscriptionMessage = 'Subscription cancelled.'
+        this.subscriptionMessageType = 'success'
+        await this.fetchSubscription()
+      } catch (error) {
+        this.subscriptionMessage = 'Failed to cancel subscription.'
+        this.subscriptionMessageType = 'error'
+      } finally {
+        this.cancelling = false
       }
     },
 

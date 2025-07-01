@@ -8,6 +8,7 @@ import PaymentSuccess from './components/PaymentSuccess.vue';
 import Contact from './components/Contact.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
 import DeleteData from './components/DeleteData.vue';
+import Plans from './components/Plans.vue';
 
 // Store Owner Components
 import StoreOwnerRegister from './components/StoreOwnerRegister.vue';
@@ -132,6 +133,11 @@ const routes = [
     path: '/delete-data',
     name: 'DeleteData',
     component: DeleteData
+  },
+  {
+    path: '/plans',
+    name: 'Plans',
+    component: Plans
   },
 ];
 

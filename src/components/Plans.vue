@@ -104,7 +104,8 @@ export default {
           name: nameToSend,
           total: plan.price,
           currency: 'usd',
-          isYearly: plan.interval === 'year'
+          isYearly: plan.interval === 'year',
+          domain: window.location.origin
         })
         if (res.data && res.data.sessionUrl) {
           window.location.href = res.data.sessionUrl

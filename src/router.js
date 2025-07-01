@@ -5,6 +5,7 @@ import ProductList from './components/ProductList.vue';
 import ProductDetail from './components/ProductDetail.vue';
 import Cart from './components/Cart.vue';
 import PaymentSuccess from './components/PaymentSuccess.vue';
+import SubscriptionSuccess from './components/SubscriptionSuccess.vue';
 import Contact from './components/Contact.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
 import DeleteData from './components/DeleteData.vue';
@@ -78,6 +79,11 @@ const routes = [
     path: '/payment-success',
     name: 'PaymentSuccess',
     component: PaymentSuccess
+  },
+  {
+    path: '/subscription-success',
+    name: 'SubscriptionSuccess',
+    component: SubscriptionSuccess
   },
 
   // Store Owner Routes

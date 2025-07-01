@@ -23,10 +23,6 @@
         </ul>
         
         <div class="d-flex align-items-center">
-          <router-link to="/cart" class="nav-link me-3 position-relative cart-link">
-            <i class="fa fa-shopping-cart"></i>
-            <span v-if="cartItemCount > 0" class="cart-badge">{{ cartItemCount }}</span>
-          </router-link>
           <template v-if="!isLoggedIn">
             <router-link to="/store-owner/register" class="btn btn-outline-light">Register</router-link>
           </template>
@@ -51,7 +47,6 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
-import cartStore from '../cart.js'
 
 export default {
   name: 'Navbar',
@@ -60,10 +55,6 @@ export default {
     const isLoggedIn = ref(false)
     const userName = ref('')
     const isAdmin = ref(false)
-
-    const cartItemCount = computed(() => {
-      return cartStore.itemCount
-    })
 
     onMounted(() => {
       const auth = getAuth()
@@ -91,7 +82,6 @@ export default {
       isLoggedIn,
       userName,
       isAdmin,
-      cartItemCount,
       handleLogout
     }
   }
@@ -122,32 +112,6 @@ export default {
 
 .nav-link:hover {
   color: white !important;
-}
-
-.cart-link {
-  font-size: 1.2rem !important;
-}
-
-.cart-link i {
-  font-size: 1.2rem;
-}
-
-.cart-badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  background-color: #dc3545;
-  color: white;
-  border-radius: 50%;
-  padding: 0.1rem 0.25rem;
-  font-size: 0.55rem;
-  min-width: 1rem;
-  height: 1rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  line-height: 1;
 }
 
 .dropdown-menu {

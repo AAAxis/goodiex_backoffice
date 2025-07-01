@@ -18,13 +18,38 @@ import CreateStore from './components/CreateStore.vue';
 import ManageStore from './components/ManageStore.vue';
 import CreateProduct from './components/CreateProduct.vue';
 
-
+// Import Firestore
+import { db } from '../firebase';
 
 const routes = [
+  // Domain-based routing for root path
   {
     path: '/',
-    name: 'Home',
+    name: 'DomainHome',
     component: Home,
+    async beforeEnter(to, from, next) {
+      const hostname = window.location.hostname;
+      // Only redirect for custom domains (not localhost or main vercel domain)
+      if (
+        hostname !== 'localhost' &&
+        hostname !== '127.0.0.1' &&
+        !hostname.endsWith('.vercel.app')
+      ) {
+        try {
+          const storesRef = db.collection('stores');
+          const querySnapshot = await storesRef.where('domain', '==', hostname).get();
+          if (!querySnapshot.empty) {
+            const storeDoc = querySnapshot.docs[0];
+            const storeId = storeDoc.id;
+            next({ name: 'ShopStore', params: { storeId } });
+            return;
+          }
+        } catch (error) {
+          console.error('Domain lookup error:', error);
+        }
+      }
+      next();
+    }
   },
   {
     path: '/shop',

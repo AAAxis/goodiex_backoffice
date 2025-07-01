@@ -8,21 +8,19 @@
           <i class="fa fa-arrow-left"></i>
         </button>
         <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">{{ storeName || 'Shop' }}</span>
-        <div class="cart-icon ms-2 position-relative" style="display: inline-block;">
-          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #000; font-size: 1.5rem;">
-            <i class="fa fa-shopping-cart"></i>
-          </router-link>
-          <span v-if="cartItemCount" class="position-absolute badge rounded-pill bg-danger" style="font-size:0.7rem; top: -3px; right: -8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;">
-            {{ cartItemCount }}
-          </span>
-        </div>
       </div>
     </nav>
 
     <div style="padding: 2rem;" class="container">
       <div class="row align-items-center mb-4">
-        <div class="col-auto">
+        <div class="col d-flex justify-content-between align-items-center">
           <h2>Products</h2>
+          <div class="cart-icon position-relative">
+            <router-link to="/cart" class="cart-link">
+              <i class="fa fa-shopping-cart"></i>
+              <span v-if="cartItemCount" class="cart-badge">{{ cartItemCount }}</span>
+            </router-link>
+          </div>
         </div>
       </div>
       

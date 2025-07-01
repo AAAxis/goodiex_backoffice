@@ -26,7 +26,7 @@
       
       <!-- Product Grid -->
       <div class="product-grid">
-        <div v-for="product in products" :key="product.id" class="product-card" @click="goToProductDetail(product.id)">
+        <div v-for="product in productsWithFormattedPrice" :key="product.id" class="product-card" @click="goToProductDetail(product.id)">
           <div class="product-image-container">
             <img :src="product.image || product.image_url" :alt="product.name" class="product-image">
             <div class="product-name-overlay">
@@ -35,7 +35,7 @@
           </div>
           <div class="product-info">
             <div class="price-and-button">
-              <div class="product-price">{{ formatPrice(product.price) }}</div>
+              <div class="product-price">{{ product.formattedPrice }}</div>
               <button class="add-to-cart-btn" @click.stop="addToCart(product)">
                 <i class="fa fa-plus"></i>
                 Add to Cart
@@ -75,14 +75,20 @@ export default {
   computed: {
     cartItemCount() {
       return cartStore.itemCount;
+    },
+    productsWithFormattedPrice() {
+      return this.products.map(product => ({
+        ...product,
+        formattedPrice: this.formatPrice(product.price)
+      }));
     }
   },
-  created() {
+  async created() {
     this.initializeFirebase();
     
     // Fetch products for the store
     if (this.storeId) {
-      this.fetchStore();
+      await this.fetchStore(); // Wait for store to load first
       this.fetchProducts();
     } else {
       // If no storeId, redirect to shop page to choose a store
@@ -91,10 +97,10 @@ export default {
   },
   watch: {
     // Watch for route changes to update content accordingly
-    '$route'(to, from) {
+    async '$route'(to, from) {
       if (to.params.storeId !== from.params.storeId) {
         if (to.params.storeId) {
-          this.fetchStore();
+          await this.fetchStore(); // Wait for store to load first
           this.fetchProducts();
         }
       }
@@ -116,17 +122,22 @@ export default {
         firebase.initializeApp(firebaseConfig);
       }
     },
-    fetchStore() {
-      const db = firebase.firestore();
-      db.collection('stores').doc(this.storeId).get()
-        .then(storeDoc => {
-          if (storeDoc.exists) {
-            this.store = storeDoc.data();
-            this.storeName = this.store.name;
-          } else {
-            this.storeName = '';
-          }
-        });
+    async fetchStore() {
+      try {
+        const db = firebase.firestore();
+        const storeDoc = await db.collection('stores').doc(this.storeId).get();
+        if (storeDoc.exists) {
+          this.store = storeDoc.data();
+          this.storeName = this.store.name;
+          console.log('Store loaded with currency:', this.store.currency); // Debug log
+        } else {
+          this.storeName = '';
+          this.store = {}; // Reset store if not found
+        }
+      } catch (error) {
+        console.error('Error fetching store:', error);
+        this.store = {};
+      }
     },
     fetchProducts() {
       const db = firebase.firestore();
@@ -262,7 +273,8 @@ export default {
         'HKD': 'HK$',
         'NZD': 'NZ$',
         'TRY': '₺',
-        'ZAR': 'R'
+        'ZAR': 'R',
+        'ILS': '₪'
       }
       return symbols[currency] || '$'
     }

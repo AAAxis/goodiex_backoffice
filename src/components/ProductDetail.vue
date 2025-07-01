@@ -57,7 +57,7 @@
               <h1 class="product-title">{{ product.name }}</h1>
               
               <div class="product-price-section">
-                <span class="current-price">{{ formatPrice(product.price) }}</span>
+                <span class="current-price">{{ formattedPrice }}</span>
               </div>
               
               <div class="product-availability">
@@ -136,18 +136,22 @@ export default {
   computed: {
     cartItemCount() {
       return cartStore.itemCount;
+    },
+    formattedPrice() {
+      if (!this.product.price) return '$0.00';
+      return this.formatPrice(this.product.price);
     }
   },
-  created() {
+  async created() {
     this.initializeFirebase();
+    await this.fetchStore(); // Load store first to get currency
     this.fetchProduct();
-    this.fetchStore();
   },
   watch: {
-    '$route'(to, from) {
+    async '$route'(to, from) {
       if (to.params.productId !== from.params.productId || to.params.storeId !== from.params.storeId) {
+        await this.fetchStore(); // Load store first to get currency
         this.fetchProduct();
-        this.fetchStore();
       }
     }
   },
@@ -204,9 +208,13 @@ export default {
         if (storeDoc.exists) {
           this.store = storeDoc.data();
           this.storeName = this.store.name;
+          console.log('Store loaded with currency:', this.store.currency); // Debug log
+        } else {
+          this.store = {};
         }
       } catch (error) {
         console.error('Error fetching store:', error);
+        this.store = {};
       }
     },
     
@@ -331,7 +339,8 @@ export default {
         'HKD': 'HK$',
         'NZD': 'NZ$',
         'TRY': '₺',
-        'ZAR': 'R'
+        'ZAR': 'R',
+        'ILS': '₪'
       }
       return symbols[currency] || '$'
     }

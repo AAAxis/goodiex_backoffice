@@ -28,7 +28,7 @@
           :class="['tab-btn', activeTab === 'orders' ? 'active' : '']"
           @click="activeTab = 'orders'"
         >
-          Orders ({{ totalOrders }})
+          Orders ({{ filteredOrders.length }})
         </button>
         <button 
           :class="['tab-btn', activeTab === 'mobile-orders' ? 'active' : '']"
@@ -121,7 +121,7 @@
         <div class="section-header">
           <h2>Store Orders</h2>
           <div class="order-stats">
-            <span class="stat-item">Total: {{ orders.length }}</span>
+            <span class="stat-item">Total: {{ filteredOrders.length }}</span>
             <span class="stat-item">Revenue: {{ formatPrice(storeRevenue) }}</span>
           </div>
         </div>
@@ -145,7 +145,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <tr v-for="order in filteredOrders" :key="order.id">
                 <td class="order-id">{{ order.id.substring(0, 8) }}...</td>
                 <td>
                   <div class="customer-info">
@@ -814,7 +814,6 @@ export default {
       ordersLoading: false,
       mobileOrdersLoading: false,
       totalProducts: 0,
-      totalOrders: 0,
       totalMobileOrders: 0,
       showOrderModal: false,
       selectedOrder: null,
@@ -878,6 +877,9 @@ export default {
       return this.mobileOrders
         .filter(order => order.status === 'completed')
         .reduce((total, order) => total + (parseFloat(order.total) || 0), 0);
+    },
+    filteredOrders() {
+      return this.orders.filter(order => order.status !== 'pending');
     }
   },
   async mounted() {
@@ -979,8 +981,6 @@ export default {
             ...doc.data()
           })
         })
-        
-        this.totalOrders = this.orders.length
         
       } catch (error) {
         console.error('Error fetching orders:', error)
@@ -1784,9 +1784,37 @@ export default {
     },
 
     formatPrice(amount, currency) {
-      if (!amount || !currency) return '$0.00'
-      const symbol = this.getCurrencySymbol(currency)
+      if (!amount) return '$0.00'
+      const currencyToUse = currency || this.store?.currency || 'USD'
+      const symbol = this.getCurrencySymbol(currencyToUse)
       return `${symbol}${parseFloat(amount).toFixed(2)}`
+    },
+
+    getCurrencySymbol(currency) {
+      const symbols = {
+        'USD': '$',
+        'EUR': '€',
+        'GBP': '£',
+        'JPY': '¥',
+        'CAD': 'C$',
+        'AUD': 'A$',
+        'CHF': 'CHF',
+        'CNY': '¥',
+        'SEK': 'kr',
+        'NOK': 'kr',
+        'MXN': '$',
+        'INR': '₹',
+        'BRL': 'R$',
+        'RUB': '₽',
+        'KRW': '₩',
+        'SGD': 'S$',
+        'HKD': 'HK$',
+        'NZD': 'NZ$',
+        'TRY': '₺',
+        'ZAR': 'R',
+        'ILS': '₪'
+      }
+      return symbols[currency] || '$'
     }
   }
 }

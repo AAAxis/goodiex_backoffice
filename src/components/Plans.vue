@@ -1,18 +1,23 @@
 <template>
   <div class="plans-wrapper">
     <h1>Choose Your Plan</h1>
-    <div class="plans-list">
-      <div v-for="plan in plans" :key="plan.id" class="plan-card">
-        <h2>{{ plan.name }}</h2>
-        <p>{{ plan.description }}</p>
-        <div class="plan-price">${{ plan.price }}/{{ plan.interval }}</div>
-        <ul>
-          <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
-        </ul>
-        <button @click="subscribe(plan.id)" :disabled="subscribing">
-          {{ subscribing ? 'Subscribing...' : 'Subscribe' }}
-        </button>
+    <div v-if="user">
+      <div class="plans-list">
+        <div v-for="plan in plans" :key="plan.id" class="plan-card">
+          <h2>{{ plan.name }}</h2>
+          <p>{{ plan.description }}</p>
+          <div class="plan-price">${{ plan.price }}/{{ plan.interval }}</div>
+          <ul>
+            <li v-for="feature in plan.features" :key="feature">{{ feature }}</li>
+          </ul>
+          <button @click="subscribe(plan)" :disabled="subscribingId === plan.id">
+            {{ subscribingId === plan.id ? 'Redirecting...' : 'Subscribe' }}
+          </button>
+        </div>
       </div>
+    </div>
+    <div v-else>
+      <p>Please <router-link to="/store-owner/login">log in</router-link> to subscribe to a plan.</p>
     </div>
     <p v-if="message" :class="messageType">{{ message }}</p>
   </div>
@@ -20,7 +25,7 @@
 
 <script>
 import axios from 'axios'
-import { getAuth } from 'firebase/auth'
+import { getAuth, onAuthStateChanged } from 'firebase/auth'
 
 export default {
   name: 'Plans',
@@ -52,14 +57,22 @@ export default {
           features: ['Unlimited Stores', 'Unlimited Products', '24/7 Support']
         }
       ],
-      subscribing: false,
+      subscribingId: '',
       message: '',
-      messageType: ''
+      messageType: '',
+      user: null
     }
   },
+  created() {
+    const auth = getAuth()
+    this.user = auth.currentUser
+    onAuthStateChanged(auth, (user) => {
+      this.user = user
+    })
+  },
   methods: {
-    async subscribe(planId) {
-      this.subscribing = true
+    async subscribe(plan) {
+      this.subscribingId = plan.id
       this.message = ''
       try {
         const auth = getAuth()
@@ -67,20 +80,28 @@ export default {
         if (!user) {
           this.message = 'You must be logged in to subscribe.'
           this.messageType = 'error'
-          this.subscribing = false
+          this.subscribingId = ''
           return
         }
-        await axios.post('https://pay.theholylabs.com/subscriptions', {
-          user_id: user.uid,
-          plan_id: planId
+        const res = await axios.post('https://pay.theholylabs.com/create-checkout-session', {
+          order: plan.id,
+          email: user.email,
+          name: user.displayName || user.email,
+          total: plan.price,
+          currency: 'usd',
+          isYearly: plan.interval === 'year'
         })
-        this.message = 'Subscription successful!'
-        this.messageType = 'success'
+        if (res.data && res.data.sessionUrl) {
+          window.location.href = res.data.sessionUrl
+        } else {
+          this.message = 'Failed to start payment session.'
+          this.messageType = 'error'
+        }
       } catch (error) {
-        this.message = 'Failed to subscribe. Please try again.'
+        this.message = 'Failed to start payment session.'
         this.messageType = 'error'
       } finally {
-        this.subscribing = false
+        this.subscribingId = ''
       }
     }
   }

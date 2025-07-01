@@ -70,7 +70,7 @@ export default {
           this.subscribing = false
           return
         }
-        await axios.post('http://localhost:5001/subscriptions', {
+        await axios.post('https://pay.theholylabs.com/subscriptions', {
           user_id: user.uid,
           plan_id: planId
         })
@@ -101,6 +101,11 @@ export default {
   gap: 2rem;
   justify-content: center;
   flex-wrap: wrap;
+}
+@media (min-width: 900px) {
+  .plans-list {
+    flex-wrap: nowrap;
+  }
 }
 .plan-card {
   background: #f8f9fa;

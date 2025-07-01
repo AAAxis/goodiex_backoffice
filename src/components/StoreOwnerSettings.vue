@@ -73,8 +73,8 @@
           <div v-if="subscription && subscription.status === 'active'">
             <p><strong>Plan:</strong> {{ subscription.plan_id }}</p>
             <p><strong>Status:</strong> {{ subscription.status }}</p>
-            <button class="update-btn" @click="cancelSubscription" :disabled="cancelling">
-              {{ cancelling ? 'Cancelling...' : 'Cancel Subscription' }}
+            <button class="update-btn" @click="openStripePortal" :disabled="portalLoading">
+              {{ portalLoading ? 'Redirecting...' : 'Manage Subscription' }}
             </button>
           </div>
           <div v-else>
@@ -169,7 +169,9 @@ export default {
       subscriptionLoading: false,
       subscriptionMessage: '',
       subscriptionMessageType: '',
-      cancelling: false
+      cancelling: false,
+      stripeCustomerId: '',
+      portalLoading: false
     }
   },
 
@@ -193,6 +195,7 @@ export default {
         if (userDoc.exists) {
           const userData = userDoc.data()
           this.profileData.name = userData.name || ''
+          this.stripeCustomerId = userData.stripeCustomerId || ''
         }
       } catch (error) {
         console.error('Error fetching user profile:', error)
@@ -356,6 +359,27 @@ export default {
 
     goBack() {
       this.$router.push('/store-owner/dashboard')
+    },
+
+    async openStripePortal() {
+      if (!this.stripeCustomerId) {
+        this.subscriptionMessage = 'No Stripe customer ID found.'
+        this.subscriptionMessageType = 'error'
+        return
+      }
+      this.portalLoading = true
+      this.subscriptionMessage = ''
+      try {
+        const res = await axios.post('https://pay.theholylabs.com/create-customer-portal-session', {
+          customer_id: this.stripeCustomerId
+        })
+        window.location.href = res.data.url
+      } catch (error) {
+        this.subscriptionMessage = 'Failed to open Stripe portal.'
+        this.subscriptionMessageType = 'error'
+      } finally {
+        this.portalLoading = false
+      }
     }
   }
 }

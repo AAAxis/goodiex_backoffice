@@ -532,12 +532,22 @@
       <div v-if="activeTab === 'bank-accounts'" class="tab-content">
         <div class="tab-header">
           <h2>Bank Accounts</h2>
-          <button class="btn-primary" @click="showAddBankAccountForm = true">
+          <button 
+            class="btn-primary" 
+            @click="showAddBankAccountForm = true"
+            :disabled="!selectedProfile"
+          >
             Add Bank Account
           </button>
         </div>
 
-        <div v-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
+        <div v-if="!selectedProfile" class="error-state">
+          <h3>Wise API Not Configured</h3>
+          <p>To use bank accounts and withdrawals, you need to configure your Wise API token.</p>
+          <p>Please check the WISE_WITHDRAWAL_SETUP.md file for setup instructions.</p>
+        </div>
+
+        <div v-else-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
 
         <div v-else-if="bankAccounts.length === 0" class="empty-state">
           <p>No bank accounts configured. Add a bank account to enable withdrawals.</p>
@@ -641,10 +651,22 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
-          <button class="btn-secondary" @click="fetchBalance">
+          <button 
+            class="btn-secondary" 
+            @click="fetchBalance"
+            :disabled="!selectedProfile"
+          >
             Refresh Balance
           </button>
         </div>
+
+        <div v-if="!selectedProfile" class="error-state">
+          <h3>Wise API Not Configured</h3>
+          <p>To use withdrawals, you need to configure your Wise API token.</p>
+          <p>Please check the WISE_WITHDRAWAL_SETUP.md file for setup instructions.</p>
+        </div>
+
+        <template v-else>
 
         <!-- Balance Section -->
         <div class="balance-section">
@@ -740,6 +762,7 @@
             </table>
           </div>
         </div>
+        </template>
       </div>
     </div>
 
@@ -1567,7 +1590,7 @@ export default {
         const data = await response.json()
         
         if (response.ok) {
-          this.wiseProfiles = data.profiles
+          this.wiseProfiles = data.profiles || []
           if (this.wiseProfiles.length > 0) {
             this.selectedProfile = this.wiseProfiles[0]
             await this.fetchBankAccounts()
@@ -1579,7 +1602,15 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching Wise profiles:', error)
-        this.showMessage('Failed to load Wise profile. Please check your API configuration.', 'error')
+        // Don't show error message on component mount, just log it
+        // this.showMessage('Failed to load Wise profile. Please check your API configuration.', 'error')
+        
+        // Set empty defaults to prevent null errors
+        this.wiseProfiles = []
+        this.selectedProfile = null
+        this.bankAccounts = []
+        this.balance = []
+        this.transfers = []
       }
     },
 
@@ -2014,6 +2045,24 @@ export default {
   text-align: center;
   padding: 2rem;
   color: #666;
+}
+
+.error-state {
+  text-align: center;
+  padding: 2rem;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  color: #856404;
+}
+
+.error-state h3 {
+  margin: 0 0 1rem 0;
+  color: #856404;
+}
+
+.error-state p {
+  margin: 0.5rem 0;
 }
 
 .categories-grid {

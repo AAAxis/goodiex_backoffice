@@ -26,10 +26,7 @@
           </div>
         </div>
 
-        <div class="stat-card">
-          <h3>Average Order Value</h3>
-          <p class="stat-number">{{ formatPrice(averageOrderValue, 'USD') }}</p>
-        </div>
+
 
         <div class="stat-card">
           <h3>Orders by Platform</h3>
@@ -159,12 +156,100 @@ export default {
           })
         })
         
-
+        // Calculate total orders and revenue for all stores
+        await this.calculateTotalStats()
         
       } catch (error) {
         console.error('Error fetching stores:', error)
       } finally {
         this.loading = false
+      }
+    },
+
+    async calculateTotalStats() {
+      try {
+        let totalOrders = 0
+        let totalWebOrders = 0
+        let totalMobileOrders = 0
+        let totalPendingOrders = 0
+        let totalRevenue = 0
+        
+        for (const store of this.stores) {
+          // Get web orders for this specific store
+          const webOrdersQuery = await db.collection('web-orders')
+            .where('storeId', '==', store.id)
+            .get()
+          
+          // Get mobile orders for this specific store
+          const mobileOrdersQuery = await db.collection('orders')
+            .where('storeId', '==', store.id)
+            .get()
+          
+          let storeOrders = 0
+          let storeRevenue = 0
+          let storeWebOrders = 0
+          let storeMobileOrders = 0
+          let storePendingOrders = 0
+          
+          // Calculate web orders revenue and pending orders
+          webOrdersQuery.forEach((doc) => {
+            const orderData = doc.data()
+            storeOrders++
+            storeWebOrders++
+            
+            if (orderData.status === 'completed') {
+              storeRevenue += parseFloat(orderData.total || 0)
+            } else if (orderData.status === 'pending') {
+              storePendingOrders++
+            }
+          })
+          
+          // Calculate mobile orders revenue and pending orders
+          mobileOrdersQuery.forEach((doc) => {
+            const orderData = doc.data()
+            storeOrders++
+            storeMobileOrders++
+            
+            if (orderData.status === 'completed') {
+              storeRevenue += parseFloat(orderData.total || 0)
+            } else if (orderData.status === 'pending') {
+              storePendingOrders++
+            }
+          })
+          
+          // Update store object with stats
+          store.totalOrders = storeOrders
+          store.totalRevenue = storeRevenue
+          store.webOrders = storeWebOrders
+          store.mobileOrders = storeMobileOrders
+          
+          // Add to overall totals
+          totalOrders += storeOrders
+          totalWebOrders += storeWebOrders
+          totalMobileOrders += storeMobileOrders
+          totalPendingOrders += storePendingOrders
+          totalRevenue += storeRevenue
+        }
+        
+        this.totalOrders = totalOrders
+        this.totalWebOrders = totalWebOrders
+        this.totalMobileOrders = totalMobileOrders
+        this.totalPendingOrders = totalPendingOrders
+        
+        // Calculate revenue by currency
+        this.revenueByCurrency = await this.calculateRevenueByCurrency()
+        
+        // Update charts
+        this.$nextTick(() => {
+          this.createCharts()
+        })
+        
+      } catch (error) {
+        console.error('Error calculating stats:', error)
+        this.totalOrders = 0
+        this.totalWebOrders = 0
+        this.totalMobileOrders = 0
+        this.totalPendingOrders = 0
       }
     },
 

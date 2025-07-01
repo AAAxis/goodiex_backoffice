@@ -535,19 +535,12 @@
           <button 
             class="btn-primary" 
             @click="showAddBankAccountForm = true"
-            :disabled="!selectedProfile"
           >
             Add Bank Account
           </button>
         </div>
 
-        <div v-if="!selectedProfile" class="error-state">
-          <h3>Wise API Not Configured</h3>
-          <p>To use bank accounts and withdrawals, you need to configure your Wise API token.</p>
-          <p>Please check the WISE_WITHDRAWAL_SETUP.md file for setup instructions.</p>
-        </div>
-
-        <div v-else-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
+        <div v-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
 
         <div v-else-if="bankAccounts.length === 0" class="empty-state">
           <p>No bank accounts configured. Add a bank account to enable withdrawals.</p>
@@ -559,13 +552,16 @@
               <h4>{{ account.accountHolderName }}</h4>
               <p><strong>Currency:</strong> {{ account.currency }}</p>
               <p><strong>Account Type:</strong> {{ account.type }}</p>
-              <p><strong>Account Number:</strong> ****{{ account.details?.accountNumber?.slice(-4) }}</p>
-              <p><strong>Institution:</strong> {{ account.details?.institution }}</p>
-              <p><strong>Transit:</strong> {{ account.details?.transit }}</p>
+                              <p><strong>Account Number:</strong> ****{{ account.account_number?.slice(-4) }}</p>
+                <p><strong>Institution:</strong> {{ account.institution }}</p>
+                <p><strong>Transit:</strong> {{ account.transit }}</p>
             </div>
             <div class="account-actions">
               <button class="btn-small btn-primary" @click="selectAccountForWithdrawal(account)">
                 Use for Withdrawal
+              </button>
+              <button class="btn-small btn-delete" @click="deleteBankAccount(account.id)">
+                Delete
               </button>
             </div>
           </div>
@@ -654,19 +650,12 @@
           <button 
             class="btn-secondary" 
             @click="fetchBalance"
-            :disabled="!selectedProfile"
           >
             Refresh Balance
           </button>
         </div>
 
-        <div v-if="!selectedProfile" class="error-state">
-          <h3>Wise API Not Configured</h3>
-          <p>To use withdrawals, you need to configure your Wise API token.</p>
-          <p>Please check the WISE_WITHDRAWAL_SETUP.md file for setup instructions.</p>
-        </div>
 
-        <template v-else>
 
         <!-- Balance Section -->
         <div class="balance-section">
@@ -716,7 +705,7 @@
                 <select v-model="withdrawalData.target_account" required>
                   <option value="">Select bank account</option>
                   <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
-                    {{ account.accountHolderName }} - {{ account.currency }} (****{{ account.details?.accountNumber?.slice(-4) }})
+                    {{ account.account_holder_name }} - {{ account.currency }} (****{{ account.account_number?.slice(-4) }})
                   </option>
                 </select>
               </div>
@@ -748,21 +737,20 @@
               </thead>
               <tbody>
                 <tr v-for="transfer in transfers" :key="transfer.id">
-                  <td>{{ formatDate(transfer.created) }}</td>
+                  <td>{{ formatDate(transfer.createdAt) }}</td>
                   <td>{{ transfer.reference || transfer.id }}</td>
-                  <td>{{ formatPrice(transfer.targetValue, transfer.targetCurrency) }}</td>
+                  <td>{{ formatPrice(transfer.amount, transfer.currency) }}</td>
                   <td>
-                    <span :class="['transfer-status', transfer.status.toLowerCase()]">
-                      {{ transfer.status }}
+                    <span :class="['transfer-status', (transfer.status || 'processing').toLowerCase()]">
+                      {{ transfer.status || 'Processing' }}
                     </span>
                   </td>
-                  <td>{{ getAccountName(transfer.targetAccount) }}</td>
+                  <td>{{ transfer.bank_account ? transfer.bank_account.account_holder_name : 'Unknown' }}</td>
                 </tr>
               </tbody>
             </table>
           </div>
         </div>
-        </template>
       </div>
     </div>
 
@@ -1579,60 +1567,24 @@ export default {
 
     // Wise API Methods
     async fetchWiseProfiles() {
-      try {
-        const response = await fetch('https://pay.theholylabs.com/wise/profiles', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-        
-        const data = await response.json()
-        
-        if (response.ok) {
-          this.wiseProfiles = data.profiles || []
-          if (this.wiseProfiles.length > 0) {
-            this.selectedProfile = this.wiseProfiles[0]
-            await this.fetchBankAccounts()
-            await this.fetchBalance()
-            await this.fetchTransfers()
-          }
-        } else {
-          throw new Error(data.error || 'Failed to fetch Wise profiles')
-        }
-      } catch (error) {
-        console.error('Error fetching Wise profiles:', error)
-        // Don't show error message on component mount, just log it
-        // this.showMessage('Failed to load Wise profile. Please check your API configuration.', 'error')
-        
-        // Set empty defaults to prevent null errors
-        this.wiseProfiles = []
-        this.selectedProfile = null
-        this.bankAccounts = []
-        this.balance = []
-        this.transfers = []
-      }
+      // No longer needed - we'll fetch bank accounts and transfers directly from Firebase
+      await this.fetchBankAccounts()
+      await this.fetchTransfers()
     },
 
     async fetchBankAccounts() {
-      if (!this.selectedProfile) return
-      
       this.bankAccountsLoading = true
       try {
-        const response = await fetch(`https://pay.theholylabs.com/wise/recipient-accounts/${this.selectedProfile.id}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+        const querySnapshot = await db.collection('stores').doc(this.storeId).collection('bankAccounts').get()
+        this.bankAccounts = []
+        
+        querySnapshot.forEach((doc) => {
+          this.bankAccounts.push({
+            id: doc.id,
+            ...doc.data()
+          })
         })
         
-        const data = await response.json()
-        
-        if (response.ok) {
-          this.bankAccounts = data.accounts
-        } else {
-          throw new Error(data.error || 'Failed to fetch bank accounts')
-        }
       } catch (error) {
         console.error('Error fetching bank accounts:', error)
         this.showMessage('Failed to load bank accounts.', 'error')
@@ -1672,24 +1624,21 @@ export default {
     },
 
     async fetchTransfers() {
-      if (!this.selectedProfile) return
-      
       this.transfersLoading = true
       try {
-        const response = await fetch(`https://pay.theholylabs.com/wise/transfers/${this.selectedProfile.id}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json'
-          }
+        const querySnapshot = await db.collection('stores').doc(this.storeId).collection('withdrawals')
+          .orderBy('createdAt', 'desc')
+          .get()
+        
+        this.transfers = []
+        
+        querySnapshot.forEach((doc) => {
+          this.transfers.push({
+            id: doc.id,
+            ...doc.data()
+          })
         })
         
-        const data = await response.json()
-        
-        if (response.ok) {
-          this.transfers = data.transfers
-        } else {
-          throw new Error(data.error || 'Failed to fetch transfers')
-        }
       } catch (error) {
         console.error('Error fetching transfers:', error)
         this.showMessage('Failed to load transaction history.', 'error')
@@ -1699,34 +1648,21 @@ export default {
     },
 
     async addBankAccount() {
-      if (!this.selectedProfile) {
-        this.showMessage('No Wise profile selected. Please configure your Wise account first.', 'error')
-        return
-      }
-
       this.bankAccountsLoading = true
       try {
-        const response = await fetch('https://pay.theholylabs.com/wise/recipient-accounts', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            profile_id: this.selectedProfile.id,
-            ...this.bankAccountData
-          })
-        })
-        
-        const data = await response.json()
-        
-        if (response.ok) {
-          this.showMessage('Bank account added successfully!', 'success')
-          this.showAddBankAccountForm = false
-          this.resetBankAccountForm()
-          await this.fetchBankAccounts()
-        } else {
-          throw new Error(data.error || 'Failed to add bank account')
+        const bankAccountDoc = {
+          ...this.bankAccountData,
+          createdAt: new Date(),
+          storeId: this.storeId
         }
+
+        await db.collection('stores').doc(this.storeId).collection('bankAccounts').add(bankAccountDoc)
+        
+        this.showMessage('Bank account added successfully!', 'success')
+        this.showAddBankAccountForm = false
+        this.resetBankAccountForm()
+        await this.fetchBankAccounts()
+        
       } catch (error) {
         console.error('Error adding bank account:', error)
         this.showMessage(`Failed to add bank account: ${error.message}`, 'error')
@@ -1736,71 +1672,59 @@ export default {
     },
 
     async createWithdrawal() {
-      if (!this.selectedProfile) {
-        this.showMessage('No Wise profile selected.', 'error')
-        return
-      }
-
       this.withdrawalLoading = true
       try {
-        // Step 1: Create quote
-        const quoteResponse = await fetch('https://pay.theholylabs.com/wise/transfer-quote', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            profile_id: this.selectedProfile.id,
-            source_currency: this.withdrawalData.currency,
-            target_currency: this.withdrawalData.currency,
-            target_amount: parseFloat(this.withdrawalData.amount)
-          })
-        })
-        
-        const quoteData = await quoteResponse.json()
-        
-        if (!quoteResponse.ok) {
-          throw new Error(quoteData.error || 'Failed to create quote')
+        // Get the selected bank account
+        const selectedBankAccount = this.bankAccounts.find(acc => acc.id === this.withdrawalData.target_account)
+        if (!selectedBankAccount) {
+          throw new Error('Selected bank account not found')
         }
 
-        // Step 2: Create transfer
-        const transferResponse = await fetch('https://pay.theholylabs.com/wise/transfer', {
+        // Single API call to create withdrawal with bank account details
+        const response = await fetch('https://pay.theholylabs.com/wise/withdrawal', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            target_account: parseInt(this.withdrawalData.target_account),
-            quote_id: quoteData.quote.id
+            amount: parseFloat(this.withdrawalData.amount),
+            currency: this.withdrawalData.currency,
+            bank_account: {
+              account_holder_name: selectedBankAccount.account_holder_name,
+              currency: selectedBankAccount.currency,
+              institution: selectedBankAccount.institution,
+              transit: selectedBankAccount.transit,
+              account_number: selectedBankAccount.account_number,
+              type: selectedBankAccount.type
+            },
+            store_id: this.storeId,
+            reference: `Withdrawal from ${this.store.name} - ${new Date().toISOString()}`
           })
         })
         
-        const transferData = await transferResponse.json()
+        const data = await response.json()
         
-        if (!transferResponse.ok) {
-          throw new Error(transferData.error || 'Failed to create transfer')
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to create withdrawal')
         }
 
-        // Step 3: Fund transfer
-        const fundResponse = await fetch(`https://pay.theholylabs.com/wise/transfer/${transferData.transfer.id}/fund`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            type: 'BALANCE'
-          })
-        })
-        
-        const fundData = await fundResponse.json()
-        
-        if (!fundResponse.ok) {
-          throw new Error(fundData.error || 'Failed to fund transfer')
+        // Save withdrawal record to Firebase
+        const withdrawalRecord = {
+          amount: parseFloat(this.withdrawalData.amount),
+          currency: this.withdrawalData.currency,
+          bank_account: selectedBankAccount,
+          reference: `Withdrawal from ${this.store.name} - ${new Date().toISOString()}`,
+          status: 'processing',
+          wise_transfer_id: data.transfer?.id,
+          wise_recipient_id: data.recipient?.id,
+          createdAt: new Date(),
+          storeId: this.storeId
         }
+
+        await db.collection('stores').doc(this.storeId).collection('withdrawals').add(withdrawalRecord)
 
         this.showMessage('Withdrawal created successfully!', 'success')
         this.resetWithdrawalForm()
-        await this.fetchBalance()
         await this.fetchTransfers()
         
       } catch (error) {
@@ -1840,9 +1764,22 @@ export default {
       }
     },
 
+    async deleteBankAccount(accountId) {
+      if (confirm('Are you sure you want to delete this bank account?')) {
+        try {
+          await db.collection('stores').doc(this.storeId).collection('bankAccounts').doc(accountId).delete()
+          this.showMessage('Bank account deleted successfully!', 'success')
+          await this.fetchBankAccounts()
+        } catch (error) {
+          console.error('Error deleting bank account:', error)
+          this.showMessage('Failed to delete bank account.', 'error')
+        }
+      }
+    },
+
     getAccountName(accountId) {
       const account = this.bankAccounts.find(acc => acc.id === accountId)
-      return account ? `${account.accountHolderName} (****${account.details?.accountNumber?.slice(-4)})` : 'Unknown Account'
+      return account ? `${account.account_holder_name} (****${account.account_number?.slice(-4)})` : 'Unknown Account'
     },
 
     formatPrice(amount, currency) {

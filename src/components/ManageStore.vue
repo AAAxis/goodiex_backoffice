@@ -535,12 +535,19 @@
           <button 
             class="btn-primary" 
             @click="showAddBankAccountForm = true"
+            :disabled="!wiseConfigured"
           >
             Add Bank Account
           </button>
         </div>
 
-        <div v-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
+        <div v-if="!wiseConfigured" class="error-state">
+          <h3>Wise API Not Configured</h3>
+          <p>To use withdrawals, you need to configure your Wise API token.</p>
+          <p>Please check the WISE_WITHDRAWAL_SETUP.md file for setup instructions.</p>
+        </div>
+
+        <div v-else-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
 
         <div v-else-if="bankAccounts.length === 0" class="empty-state">
           <p>No bank accounts configured. Add a bank account to enable withdrawals.</p>
@@ -865,11 +872,9 @@ export default {
       },
       domainLoading: false,
       showRemoveDomainConfirmation: false,
-      // Wise/Bank account data
-      wiseProfiles: [],
-      selectedProfile: null,
+      // Bank account data
       bankAccounts: [],
-      balance: null,
+      wiseConfigured: false,
       bankAccountData: {
         account_holder_name: '',
         currency: 'USD',
@@ -886,7 +891,6 @@ export default {
       transfers: [],
       transfersLoading: false,
       bankAccountsLoading: false,
-      balanceLoading: false,
       withdrawalLoading: false,
       showAddBankAccountForm: false
     }
@@ -927,7 +931,9 @@ export default {
         await this.fetchProducts()
         await this.fetchOrders()
         await this.fetchMobileOrders()
-        await this.fetchWiseProfiles()
+        await this.fetchBankAccounts()
+        await this.fetchTransfers()
+        await this.checkWiseAuth()
       } else {
         this.$router.push('/store-owner/login')
       }
@@ -1565,13 +1571,6 @@ export default {
       }
     },
 
-    // Wise API Methods
-    async fetchWiseProfiles() {
-      // No longer needed - we'll fetch bank accounts and transfers directly from Firebase
-      await this.fetchBankAccounts()
-      await this.fetchTransfers()
-    },
-
     async fetchBankAccounts() {
       this.bankAccountsLoading = true
       try {
@@ -1594,32 +1593,27 @@ export default {
     },
 
     async fetchBalance() {
-      if (!this.selectedProfile) return
-      
-      this.balanceLoading = true
+      // Balance is now calculated from totalEarnings, no API call needed
+      this.showMessage('Balance updated from order totals.', 'info')
+    },
+
+    async checkWiseAuth() {
       try {
-        const response = await fetch('https://pay.theholylabs.com/wise/balance', {
-          method: 'POST',
+        const response = await fetch('https://pay.theholylabs.com/wise/auth', {
+          method: 'GET',
           headers: {
             'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            profile_id: this.selectedProfile.id
-          })
+          }
         })
         
-        const data = await response.json()
-        
         if (response.ok) {
-          this.balance = data.balances
+          this.wiseConfigured = true
         } else {
-          throw new Error(data.error || 'Failed to fetch balance')
+          this.wiseConfigured = false
         }
       } catch (error) {
-        console.error('Error fetching balance:', error)
-        this.showMessage('Failed to load balance.', 'error')
-      } finally {
-        this.balanceLoading = false
+        console.error('Error checking Wise auth:', error)
+        this.wiseConfigured = false
       }
     },
 
@@ -1674,6 +1668,12 @@ export default {
     async createWithdrawal() {
       this.withdrawalLoading = true
       try {
+        // Check Wise auth before proceeding
+        await this.checkWiseAuth()
+        if (!this.wiseConfigured) {
+          throw new Error('Wise API is not configured. Please check your API token.')
+        }
+
         // Get the selected bank account
         const selectedBankAccount = this.bankAccounts.find(acc => acc.id === this.withdrawalData.target_account)
         if (!selectedBankAccount) {

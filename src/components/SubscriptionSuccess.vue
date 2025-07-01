@@ -89,7 +89,7 @@ export default {
         
         // Get customer name from Firebase user
         const userDoc = await db.collection('storeOwners').doc(this.user.uid).get()
-        if (userDoc.exists()) {
+        if (userDoc.exists) {
           this.customerName = userDoc.data().name || this.user.displayName || this.user.email
         } else {
           this.customerName = this.user.displayName || this.user.email

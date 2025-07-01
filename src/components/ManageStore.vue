@@ -564,9 +564,6 @@
                 <p><strong>Transit:</strong> {{ account.transit }}</p>
             </div>
             <div class="account-actions">
-              <button class="btn-small btn-primary" @click="selectAccountForWithdrawal(account)">
-                Use for Withdrawal
-              </button>
               <button class="btn-small btn-delete" @click="deleteBankAccount(account.id)">
                 Delete
               </button>
@@ -654,12 +651,6 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
-          <button 
-            class="btn-secondary" 
-            @click="fetchBalance"
-          >
-            Refresh Balance
-          </button>
         </div>
 
 
@@ -685,28 +676,12 @@
         <div class="withdrawal-section">
           <h3>Make Withdrawal</h3>
           <form @submit.prevent="createWithdrawal" class="withdrawal-form">
+            <div class="withdrawal-info">
+              <p><strong>Withdrawal Amount:</strong> {{ formatPrice(totalEarnings) }} ({{ store?.currency || 'USD' }})</p>
+              <p class="info-text">This will withdraw your complete available balance.</p>
+            </div>
+            
             <div class="form-row">
-              <div class="form-group">
-                <label>Amount *</label>
-                <input 
-                  v-model="withdrawalData.amount" 
-                  type="number" 
-                  step="0.01"
-                  min="1"
-                  placeholder="Enter amount" 
-                  required 
-                />
-              </div>
-
-              <div class="form-group">
-                <label>Currency *</label>
-                <select v-model="withdrawalData.currency" required>
-                  <option :value="store?.currency || 'USD'">
-                    {{ store?.currency || 'USD' }} ({{ formatPrice(totalEarnings) }} available)
-                  </option>
-                </select>
-              </div>
-
               <div class="form-group">
                 <label>Bank Account *</label>
                 <select v-model="withdrawalData.target_account" required>
@@ -718,8 +693,8 @@
               </div>
             </div>
 
-            <button type="submit" class="btn-primary" :disabled="withdrawalLoading || !withdrawalData.target_account">
-              {{ withdrawalLoading ? 'Processing Withdrawal...' : 'Create Withdrawal' }}
+            <button type="submit" class="btn-primary" :disabled="withdrawalLoading || !withdrawalData.target_account || totalEarnings <= 0">
+              {{ withdrawalLoading ? 'Processing Withdrawal...' : `Withdraw ${formatPrice(totalEarnings)}` }}
             </button>
           </form>
         </div>
@@ -1681,14 +1656,17 @@ export default {
         }
 
         // Single API call to create withdrawal with bank account details
+        const withdrawalAmount = this.totalEarnings
+        const withdrawalCurrency = this.store?.currency || 'USD'
+        
         const response = await fetch('https://pay.theholylabs.com/wise/withdrawal', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            amount: parseFloat(this.withdrawalData.amount),
-            currency: this.withdrawalData.currency,
+            amount: parseFloat(withdrawalAmount),
+            currency: withdrawalCurrency,
             bank_account: {
               account_holder_name: selectedBankAccount.account_holder_name,
               currency: selectedBankAccount.currency,
@@ -1710,8 +1688,8 @@ export default {
 
         // Save withdrawal record to Firebase
         const withdrawalRecord = {
-          amount: parseFloat(this.withdrawalData.amount),
-          currency: this.withdrawalData.currency,
+          amount: parseFloat(withdrawalAmount),
+          currency: withdrawalCurrency,
           bank_account: selectedBankAccount,
           reference: `Withdrawal from ${this.store.name} - ${new Date().toISOString()}`,
           status: 'processing',
@@ -1735,10 +1713,7 @@ export default {
       }
     },
 
-    selectAccountForWithdrawal(account) {
-      this.withdrawalData.target_account = account.id
-      this.activeTab = 'withdrawals'
-    },
+
 
     cancelAddBankAccount() {
       this.showAddBankAccountForm = false
@@ -1758,9 +1733,7 @@ export default {
 
     resetWithdrawalForm() {
       this.withdrawalData = {
-        amount: '',
-        target_account: '',
-        currency: this.store?.currency || 'USD'
+        target_account: ''
       }
     },
 
@@ -3202,6 +3175,23 @@ export default {
   border: 1px solid #e9ecef;
   border-radius: 8px;
   padding: 1.5rem;
+}
+
+.withdrawal-info {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 6px;
+  padding: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.withdrawal-info p {
+  margin: 0.25rem 0;
+}
+
+.withdrawal-info .info-text {
+  color: #666;
+  font-size: 0.9rem;
 }
 
 .form-row {

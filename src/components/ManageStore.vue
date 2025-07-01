@@ -48,6 +48,18 @@
         >
           Domain Settings
         </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'bank-accounts' }]" 
+          @click="activeTab = 'bank-accounts'"
+        >
+          Bank Accounts
+        </button>
+        <button 
+          :class="['tab-btn', { active: activeTab === 'withdrawals' }]" 
+          @click="activeTab = 'withdrawals'"
+        >
+          Balance & Withdrawals
+        </button>
       </div>
 
 
@@ -515,6 +527,208 @@
           </div>
         </div>
       </div>
+
+      <!-- Bank Accounts Tab -->
+      <div v-if="activeTab === 'bank-accounts'" class="tab-content">
+        <div class="tab-header">
+          <h2>Bank Accounts</h2>
+          <button class="btn-primary" @click="showAddBankAccountForm = true">
+            Add Bank Account
+          </button>
+        </div>
+
+        <div v-if="bankAccountsLoading" class="loading">Loading bank accounts...</div>
+
+        <div v-else-if="bankAccounts.length === 0" class="empty-state">
+          <p>No bank accounts configured. Add a bank account to enable withdrawals.</p>
+        </div>
+
+        <div v-else class="bank-accounts-list">
+          <div v-for="account in bankAccounts" :key="account.id" class="bank-account-card">
+            <div class="account-info">
+              <h4>{{ account.accountHolderName }}</h4>
+              <p><strong>Currency:</strong> {{ account.currency }}</p>
+              <p><strong>Account Type:</strong> {{ account.type }}</p>
+              <p><strong>Account Number:</strong> ****{{ account.details?.accountNumber?.slice(-4) }}</p>
+              <p><strong>Routing Number:</strong> {{ account.details?.abartn }}</p>
+            </div>
+            <div class="account-actions">
+              <button class="btn-small btn-primary" @click="selectAccountForWithdrawal(account)">
+                Use for Withdrawal
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Add Bank Account Form Modal -->
+        <div v-if="showAddBankAccountForm" class="modal-overlay" @click="cancelAddBankAccount">
+          <div class="modal-content" @click.stop>
+            <div class="modal-header">
+              <h3>Add Bank Account</h3>
+              <button class="modal-close" @click="cancelAddBankAccount">&times;</button>
+            </div>
+            <div class="modal-body">
+              <form @submit.prevent="addBankAccount" class="bank-account-form">
+                <div class="form-group">
+                  <label>Account Holder Name *</label>
+                  <input 
+                    v-model="bankAccountData.account_holder_name" 
+                    type="text" 
+                    placeholder="Enter account holder name" 
+                    required 
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Currency *</label>
+                  <select v-model="bankAccountData.currency" required>
+                    <option value="USD">USD - US Dollar</option>
+                    <option value="EUR">EUR - Euro</option>
+                    <option value="GBP">GBP - British Pound</option>
+                    <option value="CAD">CAD - Canadian Dollar</option>
+                  </select>
+                </div>
+
+                <div class="form-group">
+                  <label>Routing Number (ABA) *</label>
+                  <input 
+                    v-model="bankAccountData.aba" 
+                    type="text" 
+                    placeholder="e.g. 021000021" 
+                    required 
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Account Number *</label>
+                  <input 
+                    v-model="bankAccountData.account_number" 
+                    type="text" 
+                    placeholder="Enter account number" 
+                    required 
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label>Account Type *</label>
+                  <select v-model="bankAccountData.type" required>
+                    <option value="checking">Checking</option>
+                    <option value="savings">Savings</option>
+                  </select>
+                </div>
+
+                <button type="submit" class="btn-primary" :disabled="bankAccountsLoading">
+                  {{ bankAccountsLoading ? 'Adding Account...' : 'Add Bank Account' }}
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Balance & Withdrawals Tab -->
+      <div v-if="activeTab === 'withdrawals'" class="tab-content">
+        <div class="tab-header">
+          <h2>Balance & Withdrawals</h2>
+          <button class="btn-secondary" @click="fetchBalance">
+            Refresh Balance
+          </button>
+        </div>
+
+        <!-- Balance Section -->
+        <div class="balance-section">
+          <h3>Available Balance</h3>
+          <div v-if="balanceLoading" class="loading">Loading balance...</div>
+          <div v-else-if="balance && balance.length > 0" class="balance-cards">
+            <div v-for="bal in balance" :key="bal.currency" class="balance-card">
+              <div class="balance-currency">{{ bal.currency }}</div>
+              <div class="balance-amount">{{ formatPrice(bal.amount.value, bal.currency) }}</div>
+              <div class="balance-type">{{ bal.type }}</div>
+            </div>
+          </div>
+          <div v-else class="empty-state">
+            <p>No balance information available. Please configure your Wise profile.</p>
+          </div>
+        </div>
+
+        <!-- Withdrawal Section -->
+        <div class="withdrawal-section">
+          <h3>Make Withdrawal</h3>
+          <form @submit.prevent="createWithdrawal" class="withdrawal-form">
+            <div class="form-row">
+              <div class="form-group">
+                <label>Amount *</label>
+                <input 
+                  v-model="withdrawalData.amount" 
+                  type="number" 
+                  step="0.01"
+                  min="1"
+                  placeholder="Enter amount" 
+                  required 
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Currency *</label>
+                <select v-model="withdrawalData.currency" required>
+                  <option v-for="bal in balance" :key="bal.currency" :value="bal.currency">
+                    {{ bal.currency }} ({{ formatPrice(bal.amount.value, bal.currency) }} available)
+                  </option>
+                </select>
+              </div>
+
+              <div class="form-group">
+                <label>Bank Account *</label>
+                <select v-model="withdrawalData.target_account" required>
+                  <option value="">Select bank account</option>
+                  <option v-for="account in bankAccounts" :key="account.id" :value="account.id">
+                    {{ account.accountHolderName }} - {{ account.currency }} (****{{ account.details?.accountNumber?.slice(-4) }})
+                  </option>
+                </select>
+              </div>
+            </div>
+
+            <button type="submit" class="btn-primary" :disabled="withdrawalLoading || !withdrawalData.target_account">
+              {{ withdrawalLoading ? 'Processing Withdrawal...' : 'Create Withdrawal' }}
+            </button>
+          </form>
+        </div>
+
+        <!-- Transactions History -->
+        <div class="transactions-section">
+          <h3>Transaction History</h3>
+          <div v-if="transfersLoading" class="loading">Loading transactions...</div>
+          <div v-else-if="transfers.length === 0" class="empty-state">
+            <p>No transactions yet.</p>
+          </div>
+          <div v-else class="transactions-table">
+            <table>
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Reference</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Target Account</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr v-for="transfer in transfers" :key="transfer.id">
+                  <td>{{ formatDate(transfer.created) }}</td>
+                  <td>{{ transfer.reference || transfer.id }}</td>
+                  <td>{{ formatPrice(transfer.targetValue, transfer.targetCurrency) }}</td>
+                  <td>
+                    <span :class="['transfer-status', transfer.status.toLowerCase()]">
+                      {{ transfer.status }}
+                    </span>
+                  </td>
+                  <td>{{ getAccountName(transfer.targetAccount) }}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- Order Details Modal -->
@@ -628,7 +842,30 @@ export default {
         includeWww: false
       },
       domainLoading: false,
-      showRemoveDomainConfirmation: false
+      showRemoveDomainConfirmation: false,
+      // Wise/Bank account data
+      wiseProfiles: [],
+      selectedProfile: null,
+      bankAccounts: [],
+      balance: null,
+      bankAccountData: {
+        account_holder_name: '',
+        currency: 'USD',
+        aba: '',
+        account_number: '',
+        type: 'checking'
+      },
+      withdrawalData: {
+        amount: '',
+        target_account: '',
+        currency: 'USD'
+      },
+      transfers: [],
+      transfersLoading: false,
+      bankAccountsLoading: false,
+      balanceLoading: false,
+      withdrawalLoading: false,
+      showAddBankAccountForm: false
     }
   },
   computed: {
@@ -652,6 +889,7 @@ export default {
         await this.fetchProducts()
         await this.fetchOrders()
         await this.fetchMobileOrders()
+        await this.fetchWiseProfiles()
       } else {
         this.$router.push('/store-owner/login')
       }
@@ -1284,6 +1522,271 @@ export default {
       } else {
         this.showMessage('Environment variables are configured correctly.', 'success')
       }
+    },
+
+    // Wise API Methods
+    async fetchWiseProfiles() {
+      try {
+        const response = await fetch('https://pay.theholylabs.com/wise/profiles', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok) {
+          this.wiseProfiles = data.profiles
+          if (this.wiseProfiles.length > 0) {
+            this.selectedProfile = this.wiseProfiles[0]
+            await this.fetchBankAccounts()
+            await this.fetchBalance()
+            await this.fetchTransfers()
+          }
+        } else {
+          throw new Error(data.error || 'Failed to fetch Wise profiles')
+        }
+      } catch (error) {
+        console.error('Error fetching Wise profiles:', error)
+        this.showMessage('Failed to load Wise profile. Please check your API configuration.', 'error')
+      }
+    },
+
+    async fetchBankAccounts() {
+      if (!this.selectedProfile) return
+      
+      this.bankAccountsLoading = true
+      try {
+        const response = await fetch(`https://pay.theholylabs.com/wise/recipient-accounts/${this.selectedProfile.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok) {
+          this.bankAccounts = data.accounts
+        } else {
+          throw new Error(data.error || 'Failed to fetch bank accounts')
+        }
+      } catch (error) {
+        console.error('Error fetching bank accounts:', error)
+        this.showMessage('Failed to load bank accounts.', 'error')
+      } finally {
+        this.bankAccountsLoading = false
+      }
+    },
+
+    async fetchBalance() {
+      if (!this.selectedProfile) return
+      
+      this.balanceLoading = true
+      try {
+        const response = await fetch('https://pay.theholylabs.com/wise/balance', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            profile_id: this.selectedProfile.id
+          })
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok) {
+          this.balance = data.balances
+        } else {
+          throw new Error(data.error || 'Failed to fetch balance')
+        }
+      } catch (error) {
+        console.error('Error fetching balance:', error)
+        this.showMessage('Failed to load balance.', 'error')
+      } finally {
+        this.balanceLoading = false
+      }
+    },
+
+    async fetchTransfers() {
+      if (!this.selectedProfile) return
+      
+      this.transfersLoading = true
+      try {
+        const response = await fetch(`https://pay.theholylabs.com/wise/transfers/${this.selectedProfile.id}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok) {
+          this.transfers = data.transfers
+        } else {
+          throw new Error(data.error || 'Failed to fetch transfers')
+        }
+      } catch (error) {
+        console.error('Error fetching transfers:', error)
+        this.showMessage('Failed to load transaction history.', 'error')
+      } finally {
+        this.transfersLoading = false
+      }
+    },
+
+    async addBankAccount() {
+      if (!this.selectedProfile) {
+        this.showMessage('No Wise profile selected. Please configure your Wise account first.', 'error')
+        return
+      }
+
+      this.bankAccountsLoading = true
+      try {
+        const response = await fetch('https://pay.theholylabs.com/wise/recipient-accounts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            profile_id: this.selectedProfile.id,
+            ...this.bankAccountData
+          })
+        })
+        
+        const data = await response.json()
+        
+        if (response.ok) {
+          this.showMessage('Bank account added successfully!', 'success')
+          this.showAddBankAccountForm = false
+          this.resetBankAccountForm()
+          await this.fetchBankAccounts()
+        } else {
+          throw new Error(data.error || 'Failed to add bank account')
+        }
+      } catch (error) {
+        console.error('Error adding bank account:', error)
+        this.showMessage(`Failed to add bank account: ${error.message}`, 'error')
+      } finally {
+        this.bankAccountsLoading = false
+      }
+    },
+
+    async createWithdrawal() {
+      if (!this.selectedProfile) {
+        this.showMessage('No Wise profile selected.', 'error')
+        return
+      }
+
+      this.withdrawalLoading = true
+      try {
+        // Step 1: Create quote
+        const quoteResponse = await fetch('https://pay.theholylabs.com/wise/transfer-quote', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            profile_id: this.selectedProfile.id,
+            source_currency: this.withdrawalData.currency,
+            target_currency: this.withdrawalData.currency,
+            target_amount: parseFloat(this.withdrawalData.amount)
+          })
+        })
+        
+        const quoteData = await quoteResponse.json()
+        
+        if (!quoteResponse.ok) {
+          throw new Error(quoteData.error || 'Failed to create quote')
+        }
+
+        // Step 2: Create transfer
+        const transferResponse = await fetch('https://pay.theholylabs.com/wise/transfer', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            target_account: parseInt(this.withdrawalData.target_account),
+            quote_id: quoteData.quote.id
+          })
+        })
+        
+        const transferData = await transferResponse.json()
+        
+        if (!transferResponse.ok) {
+          throw new Error(transferData.error || 'Failed to create transfer')
+        }
+
+        // Step 3: Fund transfer
+        const fundResponse = await fetch(`https://pay.theholylabs.com/wise/transfer/${transferData.transfer.id}/fund`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            type: 'BALANCE'
+          })
+        })
+        
+        const fundData = await fundResponse.json()
+        
+        if (!fundResponse.ok) {
+          throw new Error(fundData.error || 'Failed to fund transfer')
+        }
+
+        this.showMessage('Withdrawal created successfully!', 'success')
+        this.resetWithdrawalForm()
+        await this.fetchBalance()
+        await this.fetchTransfers()
+        
+      } catch (error) {
+        console.error('Error creating withdrawal:', error)
+        this.showMessage(`Failed to create withdrawal: ${error.message}`, 'error')
+      } finally {
+        this.withdrawalLoading = false
+      }
+    },
+
+    selectAccountForWithdrawal(account) {
+      this.withdrawalData.target_account = account.id
+      this.activeTab = 'withdrawals'
+    },
+
+    cancelAddBankAccount() {
+      this.showAddBankAccountForm = false
+      this.resetBankAccountForm()
+    },
+
+    resetBankAccountForm() {
+      this.bankAccountData = {
+        account_holder_name: '',
+        currency: 'USD',
+        aba: '',
+        account_number: '',
+        type: 'checking'
+      }
+    },
+
+    resetWithdrawalForm() {
+      this.withdrawalData = {
+        amount: '',
+        target_account: '',
+        currency: 'USD'
+      }
+    },
+
+    getAccountName(accountId) {
+      const account = this.bankAccounts.find(acc => acc.id === accountId)
+      return account ? `${account.accountHolderName} (****${account.details?.accountNumber?.slice(-4)})` : 'Unknown Account'
+    },
+
+    formatPrice(amount, currency) {
+      if (!amount || !currency) return '$0.00'
+      const symbol = this.getCurrencySymbol(currency)
+      return `${symbol}${parseFloat(amount).toFixed(2)}`
     }
   }
 }
@@ -2528,6 +3031,214 @@ export default {
   
   .dns-record strong {
     min-width: auto;
+  }
+}
+
+/* Bank Accounts & Withdrawals Styles */
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.tab-header h2 {
+  margin: 0;
+  color: #333;
+}
+
+.bank-accounts-list {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+}
+
+.bank-account-card {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.account-info h4 {
+  margin: 0 0 0.5rem 0;
+  color: #2c3e50;
+}
+
+.account-info p {
+  margin: 0.25rem 0;
+  color: #6c757d;
+  font-size: 0.9rem;
+}
+
+.account-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.bank-account-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.balance-section,
+.withdrawal-section,
+.transactions-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.balance-section h3,
+.withdrawal-section h3,
+.transactions-section h3 {
+  margin: 0 0 1rem 0;
+  color: #2c3e50;
+}
+
+.balance-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.balance-card {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1rem;
+  text-align: center;
+}
+
+.balance-currency {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+}
+
+.balance-amount {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.25rem;
+}
+
+.balance-type {
+  font-size: 0.8rem;
+  color: #6c757d;
+  text-transform: uppercase;
+}
+
+.withdrawal-form {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.transactions-table {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e9ecef;
+}
+
+.transactions-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.transactions-table th,
+.transactions-table td {
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.transactions-table th {
+  background: #f8f9fa;
+  font-weight: 500;
+  color: #495057;
+}
+
+.transfer-status {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.transfer-status.incoming_payment_waiting {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.transfer-status.processing {
+  background: #cce5ff;
+  color: #0066cc;
+}
+
+.transfer-status.funds_converted {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.transfer-status.outgoing_payment_sent {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+.transfer-status.cancelled {
+  background: #ffebee;
+  color: #c62828;
+}
+
+.transfer-status.charged {
+  background: #e8f5e8;
+  color: #2e7d32;
+}
+
+/* Responsive Design for Bank Accounts & Withdrawals */
+@media (max-width: 768px) {
+  .bank-accounts-list {
+    grid-template-columns: 1fr;
+  }
+  
+  .bank-account-card {
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .balance-cards {
+    grid-template-columns: 1fr;
+  }
+  
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+  
+  .tab-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+  
+  .transactions-table {
+    overflow-x: auto;
   }
 }
 </style> 

@@ -655,22 +655,7 @@
 
 
 
-        <!-- Balance Section -->
-        <div class="balance-section">
-          <h3>Available Balance</h3>
-          <div class="balance-cards">
-            <div class="balance-card">
-              <div class="balance-currency">{{ store?.currency || 'USD' }}</div>
-              <div class="balance-amount">{{ formatPrice(totalEarnings) }}</div>
-              <div class="balance-type">FROM ORDERS</div>
-            </div>
-          </div>
-          <div class="balance-breakdown">
-            <p><strong>Total Orders:</strong> {{ completedOrdersCount }}</p>
-            <p><strong>Mobile Orders:</strong> {{ completedMobileOrdersCount }}</p>
-            <p><strong>Web Orders:</strong> {{ completedWebOrdersCount }}</p>
-          </div>
-        </div>
+
 
         <!-- Withdrawal Section -->
         <div class="withdrawal-section">

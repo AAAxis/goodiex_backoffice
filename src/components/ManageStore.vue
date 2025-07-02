@@ -657,13 +657,40 @@
 
 
 
+        <!-- Earnings Summary Section -->
+        <div class="earnings-section">
+          <h3>Earnings Summary</h3>
+          <div class="earnings-cards">
+            <div class="earnings-card">
+              <div class="earnings-label">Total Earnings</div>
+              <div class="earnings-amount">{{ formatPrice(totalEarnings) }}</div>
+              <div class="earnings-detail">From {{ completedOrdersCount }} completed orders</div>
+            </div>
+            <div class="earnings-card">
+              <div class="earnings-label">Already Withdrawn</div>
+              <div class="earnings-amount">{{ formatPrice(totalWithdrawn) }}</div>
+              <div class="earnings-detail">From previous withdrawals</div>
+            </div>
+            <div class="earnings-card available">
+              <div class="earnings-label">Available to Withdraw</div>
+              <div class="earnings-amount">{{ formatPrice(availableBalance) }}</div>
+              <div class="earnings-detail">{{ store?.currency || 'USD' }} ready for withdrawal</div>
+            </div>
+          </div>
+          <div class="earnings-breakdown">
+            <p><strong>Web Orders:</strong> {{ completedWebOrdersCount }} orders - {{ formatPrice(storeRevenue) }}</p>
+            <p><strong>Mobile Orders:</strong> {{ completedMobileOrdersCount }} orders - {{ formatPrice(mobileStoreRevenue) }}</p>
+          </div>
+        </div>
+
         <!-- Withdrawal Section -->
         <div class="withdrawal-section">
           <h3>Make Withdrawal</h3>
           <form @submit.prevent="createWithdrawal" class="withdrawal-form">
             <div class="withdrawal-info">
-              <p><strong>Withdrawal Amount:</strong> {{ formatPrice(totalEarnings) }} ({{ store?.currency || 'USD' }})</p>
-              <p class="info-text">This will withdraw your complete available balance.</p>
+              <p><strong>Withdrawal Amount:</strong> {{ formatPrice(availableBalance) }} ({{ store?.currency || 'USD' }})</p>
+              <p class="info-text" v-if="!hasWithdrawnAll">This will withdraw your complete available balance.</p>
+              <p class="info-text warning" v-else>You have already withdrawn all available funds.</p>
             </div>
             
             <div class="form-row">
@@ -678,8 +705,8 @@
               </div>
             </div>
 
-            <button type="submit" class="btn-primary" :disabled="withdrawalLoading || !withdrawalData.target_account || totalEarnings <= 0">
-              {{ withdrawalLoading ? 'Processing Withdrawal...' : `Withdraw ${formatPrice(totalEarnings)}` }}
+            <button type="submit" class="btn-primary" :disabled="withdrawalLoading || !withdrawalData.target_account || hasWithdrawnAll">
+              {{ withdrawalLoading ? 'Processing Withdrawal...' : hasWithdrawnAll ? 'No Funds Available' : `Withdraw ${formatPrice(availableBalance)}` }}
             </button>
           </form>
         </div>
@@ -872,8 +899,25 @@ export default {
     totalEarnings() {
       return this.storeRevenue + this.mobileStoreRevenue;
     },
+    totalWithdrawn() {
+      return this.transfers
+        .filter(transfer => transfer.status === 'completed' || transfer.status === 'outgoing_payment_sent' || transfer.status === 'charged')
+        .reduce((total, transfer) => total + (parseFloat(transfer.amount) || 0), 0);
+    },
+    availableBalance() {
+      return Math.max(0, this.totalEarnings - this.totalWithdrawn);
+    },
+    hasWithdrawnAll() {
+      return this.availableBalance <= 0;
+    },
     completedOrdersCount() {
-      return this.completedWebOrdersCount + this.completedMobileOrdersCount;
+      return this.filteredOrders.length;
+    },
+    completedWebOrdersCount() {
+      return this.filteredOrders.filter(order => !order.platform || order.platform === 'web').length;
+    },
+    completedMobileOrdersCount() {
+      return this.filteredOrders.filter(order => order.platform === 'mobile').length;
     },
     completedWebOrdersCount() {
       return this.orders.filter(order => order.status === 'completed').length;
@@ -1641,7 +1685,7 @@ export default {
         }
 
         // Single API call to create withdrawal with bank account details
-        const withdrawalAmount = this.totalEarnings
+        const withdrawalAmount = this.availableBalance
         const withdrawalCurrency = this.store?.currency || 'USD'
         
         const response = await fetch('https://pay.theholylabs.com/wise/withdrawal', {
@@ -3089,6 +3133,7 @@ export default {
   gap: 1rem;
 }
 
+.earnings-section,
 .balance-section,
 .withdrawal-section,
 .transactions-section {
@@ -3098,6 +3143,7 @@ export default {
   margin-bottom: 2rem;
 }
 
+.earnings-section h3,
 .balance-section h3,
 .withdrawal-section h3,
 .transactions-section h3 {
@@ -3153,6 +3199,65 @@ export default {
 
 .balance-breakdown strong {
   color: #2c3e50;
+}
+
+.earnings-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.earnings-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+  text-align: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.earnings-card.available {
+  border-color: #4CAF50;
+  background: linear-gradient(135deg, #f8fff8 0%, #e8f5e8 100%);
+}
+
+.earnings-label {
+  font-size: 0.9rem;
+  color: #6c757d;
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.earnings-amount {
+  font-size: 1.8rem;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 0.5rem;
+}
+
+.earnings-card.available .earnings-amount {
+  color: #4CAF50;
+}
+
+.earnings-detail {
+  font-size: 0.8rem;
+  color: #6c757d;
+}
+
+.earnings-breakdown {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: white;
+  border-radius: 8px;
+  border: 1px solid #e9ecef;
+}
+
+.earnings-breakdown p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #495057;
 }
 
 .withdrawal-form {

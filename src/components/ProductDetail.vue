@@ -115,6 +115,41 @@
             </div>
           </div>
         </div>
+
+        <!-- Contact Us Section -->
+        <div v-if="store && (store.phone || store.email || store.address)" class="contact-section mt-5">
+          <h3>Contact Us</h3>
+          <div class="contact-items">
+            <div v-if="store.phone" class="contact-item">
+              <i class="fa fa-phone"></i>
+              <a :href="`tel:${store.phone}`">{{ store.phone }}</a>
+            </div>
+            <div v-if="store.email" class="contact-item">
+              <i class="fa fa-envelope"></i>
+              <a :href="`mailto:${store.email}`">{{ store.email }}</a>
+            </div>
+            <div v-if="store.address" class="contact-item">
+              <i class="fa fa-map-marker-alt"></i>
+              <span>{{ store.address }}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Similar Products Section -->
+        <div v-if="similarProducts.length > 0" class="similar-products-section mt-5">
+          <h3>Similar Products</h3>
+          <div class="similar-products-row">
+            <div v-for="item in similarProducts" :key="item.id" class="similar-product-card">
+              <router-link :to="`/shop/store/${storeId}/product/${item.id}`" class="similar-product-link">
+                <img :src="(item.images && item.images[0]) || item.image || ''" :alt="item.name" class="similar-product-image" />
+                <div class="similar-product-info">
+                  <div class="similar-product-name">{{ item.name }}</div>
+                  <div class="similar-product-price">{{ formatPrice(item.price) }}</div>
+                </div>
+              </router-link>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -148,7 +183,8 @@ export default {
       storeName: '',
       loading: true,
       quantity: 1,
-      selectedImageIndex: 0
+      selectedImageIndex: 0,
+      similarProducts: []
     }
   },
   computed: {
@@ -173,6 +209,7 @@ export default {
     this.initializeFirebase();
     await this.fetchStore(); // Load store first to get currency
     this.fetchProduct();
+    this.fetchSimilarProducts();
   },
   watch: {
     async '$route'(to, from) {
@@ -180,6 +217,7 @@ export default {
         await this.fetchStore(); // Load store first to get currency
         this.fetchProduct();
         this.selectedImageIndex = 0;
+        this.fetchSimilarProducts();
       }
     }
   },
@@ -372,6 +410,28 @@ export default {
         'ILS': '₪'
       }
       return symbols[currency?.toUpperCase()] || '$'
+    },
+
+    async fetchSimilarProducts() {
+      if (!this.storeId || !this.productId) return;
+      try {
+        const db = firebase.firestore();
+        const productsSnap = await db.collection('stores').doc(this.storeId).collection('products').limit(20).get();
+        const all = [];
+        productsSnap.forEach(doc => {
+          if (doc.id !== this.productId) {
+            all.push({ id: doc.id, ...doc.data() });
+          }
+        });
+        // Shuffle and pick up to 4
+        for (let i = all.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [all[i], all[j]] = [all[j], all[i]];
+        }
+        this.similarProducts = all.slice(0, 4);
+      } catch (e) {
+        this.similarProducts = [];
+      }
     }
   }
 };
@@ -724,5 +784,93 @@ export default {
 .gallery-thumb.selected {
   border: 2px solid #2196f3;
   transform: scale(1.08);
+}
+
+/* Contact Us Section */
+.contact-section {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 2rem;
+  margin-top: 2rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+.contact-section h3 {
+  margin-bottom: 1rem;
+  color: #2d3748;
+}
+.contact-items {
+  display: flex;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+.contact-item a {
+  color: #2196f3;
+  text-decoration: none;
+}
+.contact-item a:hover {
+  text-decoration: underline;
+}
+.contact-item i {
+  color: #2196f3;
+  font-size: 1.2rem;
+}
+
+/* Similar Products Section */
+.similar-products-section {
+  margin-top: 2rem;
+}
+.similar-products-row {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+  margin-top: 1rem;
+}
+.similar-product-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+  width: 200px;
+  overflow: hidden;
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+.similar-product-card:hover {
+  box-shadow: 0 4px 16px rgba(33,150,243,0.12);
+  transform: translateY(-2px) scale(1.03);
+}
+.similar-product-link {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-decoration: none;
+  color: inherit;
+  padding: 1rem;
+}
+.similar-product-image {
+  width: 100%;
+  height: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+  background: #f8f9fa;
+}
+.similar-product-info {
+  text-align: center;
+}
+.similar-product-name {
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 0.25rem;
+}
+.similar-product-price {
+  color: #2196f3;
+  font-weight: 500;
+  font-size: 1.1rem;
 }
 </style> 

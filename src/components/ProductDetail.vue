@@ -811,14 +811,17 @@ export default {
   color: #333;
 }
 .contact-item a {
-  color: #2196f3;
+  color: #222;
   text-decoration: none;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 .contact-item a:hover {
-  text-decoration: underline;
+  color: #000;
+  text-decoration: none;
 }
 .contact-item i {
-  color: #2196f3;
+  color: #222;
   font-size: 1.2rem;
 }
 

@@ -4,7 +4,7 @@
   <div>
 
 
-    <div style="padding: 2rem;" class="container">
+    <div style="padding: 2rem; padding-top: 90px;" class="container">
       <div class="row align-items-center mb-4">
         <div class="col d-flex justify-content-between align-items-center">
           <h2>Products</h2>
@@ -566,6 +566,6 @@ export default {
 
 /* Add some padding to account for fixed navbar */
 .container {
-  padding-top: 76px;
+  padding-top: 90px;
 }
 </style>

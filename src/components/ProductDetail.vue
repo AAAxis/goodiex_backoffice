@@ -4,7 +4,7 @@
 
 
 
-    <div class="container" style="padding: 2rem;">
+    <div class="container" style="padding: 2rem; padding-top: 90px;">
       <div class="row align-items-center mb-4">
         <div class="col d-flex justify-content-between align-items-center">
           <h2>Product Details</h2>
@@ -487,7 +487,7 @@ export default {
 }
 
 .container {
-  padding-top: 76px;
+  padding-top: 90px;
 }
 
 .product-detail {

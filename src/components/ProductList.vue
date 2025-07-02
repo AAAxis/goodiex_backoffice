@@ -1,7 +1,8 @@
 <template>
-  <div>
-    <Navbar :storeName="storeName" />
+      <Navbar :storeName="storeName" />
   
+  <div>
+
 
     <div style="padding: 2rem;" class="container">
       <div class="row align-items-center mb-4">

@@ -1,6 +1,7 @@
 <template>
+   <Navbar />
   <div>
-    <Navbar />
+   
     <!-- App Bar -->
  
 

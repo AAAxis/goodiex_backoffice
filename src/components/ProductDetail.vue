@@ -1,6 +1,7 @@
 <template>
+      <Navbar :storeName="storeName" />
   <div>
-    <Navbar :storeName="storeName" />
+
 
 
     <div class="container" style="padding: 2rem;">

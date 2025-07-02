@@ -15,9 +15,13 @@
             <span class="currency-label">Currency:</span>
             <span class="currency-value">{{ store.currency || 'USD' }}</span>
           </div>
-          <div v-if="store.phone" class="store-phone">
-            <span class="currency-label">Phone:</span>
-            <span class="currency-value">{{ store.phone }}</span>
+          <div v-if="store.phone || store.email || store.address" class="store-contact-row">
+            <span v-if="store.phone" class="contact-label">Phone:</span>
+            <span v-if="store.phone" class="contact-value">{{ store.phone }}</span>
+            <span v-if="store.email" class="contact-label">Email:</span>
+            <span v-if="store.email" class="contact-value">{{ store.email }}</span>
+            <span v-if="store.address" class="contact-label">Address:</span>
+            <span v-if="store.address" class="contact-value">{{ store.address }}</span>
           </div>
         </div>
 
@@ -4290,5 +4294,30 @@ export default {
   align-items: center;
   justify-content: center;
   z-index: 10;
+}
+
+.store-contact-row {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.store-contact-row .contact-label {
+  margin-right: 0.25rem;
+  color: #666;
+  font-size: 0.95rem;
+  font-weight: 500;
+}
+
+.store-contact-row .contact-value {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-right: 1rem;
 }
 </style> 

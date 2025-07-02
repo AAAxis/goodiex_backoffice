@@ -10,6 +10,7 @@
       <div class="order-info-section">
         <div class="info-row"><strong>Order ID:</strong> {{ order.id }}</div>
         <div class="info-row"><strong>Customer:</strong> {{ order.name }}</div>
+        <div v-if="order.phone" class="info-row"><strong>Phone:</strong> {{ order.phone }}</div>
         <div class="info-row"><strong>Email:</strong> {{ order.email }}</div>
         <div class="info-row"><strong>Date:</strong> {{ formatDate(order.timestamp) }}</div>
         <div class="info-row"><strong>Status:</strong> <span :class="['order-status', order.status]">{{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}</span></div>

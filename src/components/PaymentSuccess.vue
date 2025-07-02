@@ -8,6 +8,7 @@
       <p class="success-message">
         Thank you {{ customerName }} for your order!
       </p>
+      <div v-if="orderId" class="order-id-display">Order ID: {{ orderId }}</div>
       <div class="order-details order-details-wide">
         <div v-if="orderItems.length > 0" class="order-items-list mt-3">
           <h4 class="mb-2 d-flex align-items-center justify-content-between">
@@ -256,6 +257,14 @@ export default {
   color: #6c757d;
   font-size: 1.1rem;
   margin-bottom: 2rem;
+}
+
+.order-id-display {
+  font-size: 1rem;
+  color: #888;
+  margin-bottom: 1.2rem;
+  text-align: center;
+  word-break: break-all;
 }
 
 .order-details-wide {

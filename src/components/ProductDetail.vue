@@ -324,20 +324,21 @@ export default {
       `;
       toast.style.cssText = `
         position: fixed;
-        top: 80px;
-        right: 20px;
+        bottom: 40px;
+        left: 50%;
+        right: auto;
+        top: auto;
+        transform: translateX(-50%);
         background: white;
         padding: 12px 20px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         z-index: 1000;
-        animation: slideInRight 0.3s ease;
+        animation: slideInUp 0.3s ease;
       `;
-      
       document.body.appendChild(toast);
-      
       setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
+        toast.style.animation = 'slideOutDown 0.3s ease';
         setTimeout(() => {
           document.body.removeChild(toast);
         }, 300);
@@ -358,22 +359,23 @@ export default {
       `;
       toast.style.cssText = `
         position: fixed;
-        top: 80px;
-        right: 20px;
+        bottom: 40px;
+        left: 50%;
+        right: auto;
+        top: auto;
+        transform: translateX(-50%);
         background: white;
         padding: 12px 20px;
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         border-left: 4px solid #ff9800;
         z-index: 1000;
-        animation: slideInRight 0.3s ease;
+        animation: slideInUp 0.3s ease;
         max-width: 300px;
       `;
-      
       document.body.appendChild(toast);
-      
       setTimeout(() => {
-        toast.style.animation = 'slideOutRight 0.3s ease';
+        toast.style.animation = 'slideOutDown 0.3s ease';
         setTimeout(() => {
           document.body.removeChild(toast);
         }, 300);
@@ -686,25 +688,25 @@ export default {
 }
 
 /* Toast Animation Styles */
-@keyframes slideInRight {
+@keyframes slideInUp {
   from {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateY(100%) translateX(-50%);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) translateX(-50%);
   }
 }
 
-@keyframes slideOutRight {
+@keyframes slideOutDown {
   from {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateY(0) translateX(-50%);
   }
   to {
     opacity: 0;
-    transform: translateX(100%);
+    transform: translateY(100%) translateX(-50%);
   }
 }
 

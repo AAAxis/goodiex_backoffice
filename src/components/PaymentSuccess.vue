@@ -192,8 +192,8 @@ export default {
       this.sendingReceipt = true;
       this.receiptSent = false;
       try {
-        // Call backend endpoint to send receipt
-        const response = await fetch('https://pay.theholylabs.com/send-receipt', {
+        // Call backend endpoint to send receipt (new endpoint, include items and deliveryFee)
+        const response = await fetch('https://api.theholylabs.com/api/send-receipt', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -201,7 +201,9 @@ export default {
             email: this.email,
             name: this.customerName,
             total: this.total,
-            currency: this.currency
+            currency: this.currency,
+            orderItems: this.orderItems,
+            deliveryFee: this.deliveryFee
           })
         });
         if (response.ok) {

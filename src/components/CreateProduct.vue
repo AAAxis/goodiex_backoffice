@@ -217,9 +217,10 @@ export default {
         'HKD': 'HK$',
         'NZD': 'NZ$',
         'TRY': '₺',
-        'ZAR': 'R'
+        'ZAR': 'R',
+        'ILS': '₪'
       }
-      return symbols[currency] || '$'
+      return symbols[currency?.toUpperCase()] || '$'
     }
   }
 }

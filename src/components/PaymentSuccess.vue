@@ -87,9 +87,10 @@ export default {
         'HKD': 'HK$',
         'NZD': 'NZ$',
         'TRY': '₺',
-        'ZAR': 'R'
+        'ZAR': 'R',
+        'ILS': '₪'
       }
-      return symbols[currency.toUpperCase()] || '$'
+      return symbols[currency?.toUpperCase()] || '$'
     },
 
     formatPrice(total, currency) {

@@ -342,7 +342,7 @@ export default {
         'ZAR': 'R',
         'ILS': '₪'
       }
-      return symbols[currency] || '$'
+      return symbols[currency?.toUpperCase()] || '$'
     }
   }
 };

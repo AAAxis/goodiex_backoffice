@@ -55,6 +55,7 @@
           Bank Accounts
         </button>
         <button 
+          v-if="hasActiveSubscription"
           :class="['tab-btn', { active: activeTab === 'withdrawals' }]" 
           @click="activeTab = 'withdrawals'"
         >
@@ -645,6 +646,7 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       <!-- Balance & Withdrawals Tab -->
@@ -682,7 +684,19 @@
         <!-- Withdrawal Section -->
         <div class="withdrawal-section">
           <h3>Make Withdrawal</h3>
-          <form @submit.prevent="createWithdrawal" class="withdrawal-form">
+          
+          <!-- Subscription Required Notice for Withdrawals Only -->
+          <div v-if="!hasActiveSubscription" class="subscription-required">
+            <h4>🔒 Subscription Required for Withdrawals</h4>
+            <p>Withdrawals are only available with an active subscription.</p>
+            <div class="subscription-actions">
+              <router-link to="/plans" class="btn-primary">View Plans</router-link>
+              <router-link to="/store-owner/settings" class="btn-secondary">Manage Subscription</router-link>
+            </div>
+          </div>
+
+          <!-- Withdrawal Form (only show if subscription active) -->
+          <form v-else @submit.prevent="createWithdrawal" class="withdrawal-form">
             <div class="withdrawal-info">
               <p><strong>Withdrawal Amount:</strong> {{ formatPrice(availableBalance) }} ({{ store?.currency || 'USD' }})</p>
               <p class="info-text" v-if="!hasWithdrawnAll">This will withdraw your complete available balance.</p>
@@ -742,7 +756,6 @@
           </div>
         </div>
       </div>
-    </div>
 
     <!-- Order Details Modal -->
     <div v-if="showOrderModal" class="modal-overlay" @click="closeOrderModal">
@@ -875,7 +888,12 @@ export default {
       transfersLoading: false,
       bankAccountsLoading: false,
       withdrawalLoading: false,
-      showAddBankAccountForm: false
+      showAddBankAccountForm: false,
+      // Subscription data
+      currentUser: null,
+      userSubscription: null,
+      hasActiveSubscription: false,
+      subscriptionLoading: true
     }
   },
   computed: {
@@ -934,6 +952,8 @@ export default {
     
     auth.onAuthStateChanged(async (user) => {
       if (user) {
+        this.currentUser = user
+        await this.fetchUserSubscription()
         await this.fetchStore()
         await this.fetchProducts()
         await this.fetchOrders()
@@ -975,6 +995,32 @@ export default {
         }
       } catch (error) {
         console.error('Error fetching store:', error)
+      }
+    },
+
+    async fetchUserSubscription() {
+      this.subscriptionLoading = true
+      try {
+        const userDoc = await db.collection('storeOwners').doc(this.currentUser.uid).get()
+        if (userDoc.exists) {
+          const userData = userDoc.data()
+          this.userSubscription = {
+            stripeCustomerId: userData.stripeCustomerId || '',
+            subscriptionStatus: userData.subscriptionStatus || 'inactive',
+            planId: userData.planId || '',
+            subscriptionId: userData.subscriptionId || ''
+          }
+          
+          // Check if user has active subscription
+          this.hasActiveSubscription = userData.subscriptionStatus === 'active'
+        } else {
+          this.hasActiveSubscription = false
+        }
+      } catch (error) {
+        console.error('Error fetching user subscription:', error)
+        this.hasActiveSubscription = false
+      } finally {
+        this.subscriptionLoading = false
       }
     },
 
@@ -3355,6 +3401,64 @@ export default {
 .transfer-status.charged {
   background: #e8f5e8;
   color: #2e7d32;
+}
+
+/* Subscription Required Styles */
+.subscription-required {
+  text-align: center;
+  padding: 3rem 2rem;
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+  border: 2px solid #ffc107;
+  border-radius: 12px;
+  margin: 2rem 0;
+}
+
+.subscription-required h3 {
+  color: #856404;
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+}
+
+.subscription-required p {
+  color: #856404;
+  margin-bottom: 2rem;
+  font-size: 1.1rem;
+}
+
+.subscription-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.subscription-actions .btn-primary,
+.subscription-actions .btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.subscription-actions .btn-primary {
+  background: #4CAF50;
+  color: white;
+  border: none;
+}
+
+.subscription-actions .btn-primary:hover {
+  background: #388e3c;
+}
+
+.subscription-actions .btn-secondary {
+  background: #6c757d;
+  color: white;
+  border: none;
+}
+
+.subscription-actions .btn-secondary:hover {
+  background: #5a6268;
 }
 
 /* Responsive Design for Bank Accounts & Withdrawals */

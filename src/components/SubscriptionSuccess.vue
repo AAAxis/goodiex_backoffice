@@ -117,10 +117,13 @@ export default {
       try {
         await db.collection('storeOwners').doc(this.user.uid).update({
           stripeCustomerId: customerId,
+          subscriptionStatus: 'active',
+          planId: this.subscription?.items?.data?.[0]?.price?.lookup_key || 'basic',
+          subscriptionId: this.subscription?.id,
           subscriptionProcessedAt: new Date(),
           updatedAt: new Date()
         })
-        console.log('Stripe customer ID saved to Firebase:', customerId)
+        console.log('Stripe customer ID and subscription status saved to Firebase:', customerId)
       } catch (error) {
         console.error('Error saving customer ID to Firebase:', error)
         throw new Error('Failed to save subscription details')

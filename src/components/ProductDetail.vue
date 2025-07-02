@@ -1,6 +1,7 @@
 <template>
   <div>
-    <Navbar />
+    <!-- Remove or comment out the Navbar import and component registration -->
+    <!-- import Navbar from './Navbar.vue' -->
     <!-- App Bar -->
     <nav class="navbar navbar-light bg-light mb-3 appbar">
       <div class="container-fluid d-flex align-items-center justify-content-between">
@@ -159,12 +160,12 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import cartStore from '../cart.js';
-import Navbar from './Navbar.vue'
+// import Navbar from './Navbar.vue'
 
 export default {
   name: 'ProductDetail',
   components: {
-    Navbar,
+    // Navbar,
   },
   props: {
     storeId: {

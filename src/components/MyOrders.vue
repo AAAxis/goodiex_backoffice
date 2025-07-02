@@ -33,7 +33,7 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in orders" :key="order.id">
+              <tr v-for="order in orders.filter(o => o.status !== 'pending')" :key="order.id">
                 <td>{{ order.id.substring(0, 8) }}...</td>
                 <td>{{ formatDate(order.timestamp) }}</td>
                 <td>{{ formatPrice(order.total, order.currency || 'USD') }}</td>

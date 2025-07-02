@@ -8,7 +8,6 @@
       <p class="success-message">
         Thank you {{ customerName }} for your order!
       </p>
-      <div v-if="orderId" class="order-id-display">Order ID: {{ orderId }}</div>
       <div class="order-details order-details-wide">
         <div v-if="orderItems.length > 0" class="order-items-list mt-3">
           <h4 class="mb-2 d-flex align-items-center justify-content-between">
@@ -25,6 +24,7 @@
               <span>{{ formatPrice(item.price * (item.quantity || 1), currency) }}</span>
             </li>
           </ul>
+          <div v-if="orderId" class="order-id-display mt-2">Order ID: {{ orderId }}</div>
           <div v-if="deliveryFee && deliveryFee > 0" class="d-flex justify-content-between mt-2">
             <span>Delivery Fee</span>
             <span>{{ formatPrice(deliveryFee, currency) }}</span>

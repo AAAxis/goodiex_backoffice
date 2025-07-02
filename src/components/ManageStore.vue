@@ -15,6 +15,10 @@
             <span class="currency-label">Currency:</span>
             <span class="currency-value">{{ store.currency || 'USD' }}</span>
           </div>
+          <div v-if="store.phone" class="store-phone">
+            <span class="currency-label">Phone:</span>
+            <span class="currency-value">{{ store.phone }}</span>
+          </div>
         </div>
 
       </div>
@@ -175,9 +179,19 @@
                   </span>
                 </td>
                 <td>
-                  <button class="btn-small btn-view" @click="order.platform === 'web' ? viewOrderDetails(order) : viewMobileOrderDetails(order)">
+                  <router-link
+                    class="btn-small btn-view"
+                    :to="{
+                      name: 'OrderDetails',
+                      params: {
+                        storeId: storeId,
+                        orderId: order.id,
+                        platform: order.platform
+                      }
+                    }"
+                  >
                     View Details
-                  </button>
+                  </router-link>
                 </td>
               </tr>
             </tbody>
@@ -779,70 +793,6 @@
           </div>
         </div>
       </div>
-
-    <!-- Order Details Modal -->
-    <div v-if="showOrderModal" class="modal-overlay" @click="closeOrderModal">
-      <div class="modal-content" @click.stop>
-        <div class="modal-header">
-          <h3>Order Details</h3>
-          <button class="modal-close" @click="closeOrderModal">&times;</button>
-        </div>
-        <div class="modal-body">
-          <div v-if="loadingOrderDetails" class="loading">Loading order details...</div>
-          <div v-else>
-            <div class="order-info-section">
-              <div class="info-row">
-                <strong>Order ID:</strong> {{ selectedOrder.id }}
-              </div>
-              <div class="info-row">
-                <strong>Customer:</strong> {{ selectedOrder.name }}
-              </div>
-              <div class="info-row">
-                <strong>Email:</strong> {{ selectedOrder.email }}
-              </div>
-              <div class="info-row">
-                <strong>Date:</strong> {{ formatDate(selectedOrder.timestamp) }}
-              </div>
-              <div class="info-row">
-                <strong>Status:</strong> 
-                <span :class="['order-status', selectedOrder.status]">
-                  {{ selectedOrder.status.charAt(0).toUpperCase() + selectedOrder.status.slice(1) }}
-                </span>
-              </div>
-              <div class="info-row">
-                <strong>Address:</strong> {{ selectedOrder.address || 'N/A' }}
-              </div>
-              <div class="info-row">
-                <strong>Total:</strong> <span class="order-total">{{ formatPrice(selectedOrder.total) }}</span>
-              </div>
-            </div>
-
-            <div class="cart-section">
-              <h4>Order Items</h4>
-              <div v-if="orderCartItems.length === 0" class="empty-cart">
-                <p>No items found in this order.</p>
-              </div>
-              <div v-else class="cart-items">
-                <div v-for="item in orderCartItems" :key="item.id" class="cart-item">
-                  <div class="item-image">
-                    <img v-if="item.product_image_url" :src="item.product_image_url" :alt="item.product_name" />
-                    <div v-else class="no-image">No Image</div>
-                  </div>
-                  <div class="item-details">
-                    <div class="item-name">{{ item.product_name }}</div>
-                    <div class="item-price">{{ formatPrice(item.price) }} × {{ item.quantity }}</div>
-                    <div class="item-total">{{ formatPrice(item.price * item.quantity) }}</div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div class="modal-footer">
-          <button class="btn-secondary" @click="closeOrderModal">Close</button>
-        </div>
-      </div>
-    </div>
 
     <!-- Edit Product Modal -->
     <div v-if="showEditProductModal" class="modal-overlay" @click="closeEditProductModal">
@@ -1490,30 +1440,6 @@ export default {
       return date.toLocaleDateString() + ' ' + date.toLocaleTimeString()
     },
 
-    async viewOrderDetails(order) {
-      this.selectedOrder = order
-      this.showOrderModal = true
-      this.loadingOrderDetails = true
-      this.orderCartItems = []
-
-      try {
-        // Fetch cart items from web-orders collection
-        const cartSnapshot = await db.collection('web-orders').doc(order.id).collection('cart').get()
-        
-        cartSnapshot.forEach((doc) => {
-          this.orderCartItems.push({
-            id: doc.id,
-            ...doc.data()
-          })
-        })
-        
-      } catch (error) {
-        console.error('Error fetching order cart items:', error)
-      } finally {
-        this.loadingOrderDetails = false
-      }
-    },
-
     async fetchMobileOrders() {
       this.mobileOrdersLoading = true
       try {
@@ -1537,43 +1463,6 @@ export default {
         console.error('Error fetching mobile orders:', error)
       } finally {
         this.mobileOrdersLoading = false
-      }
-    },
-
-    async viewMobileOrderDetails(order) {
-      this.selectedOrder = order
-      this.showOrderModal = true
-      this.loadingOrderDetails = true
-      this.orderCartItems = []
-
-      try {
-        // For mobile orders, the cart items might be stored differently
-        // Check if items are stored directly in the order document or in a subcollection
-        if (order.items && Array.isArray(order.items)) {
-          // Items are stored directly in the order document
-          this.orderCartItems = order.items.map((item, index) => ({
-            id: index,
-            product_name: item.name || item.product_name,
-            product_image_url: item.image || item.image_url || item.product_image_url,
-            price: item.price,
-            quantity: item.quantity
-          }))
-        } else {
-          // Try to fetch from subcollection (similar to web orders)
-          const cartSnapshot = await db.collection('orders').doc(order.id).collection('cart').get()
-          
-          cartSnapshot.forEach((doc) => {
-            this.orderCartItems.push({
-              id: doc.id,
-              ...doc.data()
-            })
-          })
-        }
-        
-      } catch (error) {
-        console.error('Error fetching mobile order cart items:', error)
-      } finally {
-        this.loadingOrderDetails = false
       }
     },
 
@@ -2363,6 +2252,25 @@ export default {
 }
 
 .currency-value {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.store-phone {
+  margin-top: 0.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.store-phone .currency-label {
+  margin-right: 0.5rem;
+}
+
+.store-phone .currency-value {
   background: #e3f2fd;
   color: #1976d2;
   padding: 0.25rem 0.75rem;

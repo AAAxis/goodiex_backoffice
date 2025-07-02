@@ -2,12 +2,9 @@
   <div>
     <Navbar />
     <!-- Hero Section -->
-    <div class="hero-video">
-      <div class="video-container">
-        <video autoplay muted loop>
-          <source src="/main.mp4" type="video/mp4">
-          Your browser does not support the video tag.
-        </video>
+    <div class="hero-image">
+      <div class="image-container">
+        <img src="/hero.png" alt="E-commerce Hero" class="hero-bg-image">
         <div class="centered-hero-title">
           <h1>Create Your Online Store Today</h1>
           <p class="hero-subtitle">Start, grow, and scale your business with our e-commerce platform</p>
@@ -90,18 +87,18 @@ export default {
 
 
 <style>
-.hero-video {
+.hero-image {
   height: 100vh;
   margin-top: -76px; /* Adjust this value based on your navbar height */
   padding-top: 76px; /* Add padding to prevent content from going under navbar */
 }
 
-.video-container {
+.image-container {
   position: relative;
   height: 100%;
 }
 
-.video-container video {
+.hero-bg-image {
   position: absolute;
   top: 0;
   left: 0;

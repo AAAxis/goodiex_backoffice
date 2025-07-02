@@ -880,87 +880,34 @@
             </div>
 
             <div class="form-group">
-              <label>Product Image</label>
-              <input 
-                type="file" 
-                accept="image/*" 
-                @change="onProductImageChange"
-                ref="productImageInput"
-              />
-              <div v-if="productImagePreview" class="image-preview">
-                <img :src="productImagePreview" alt="Product preview" />
-              </div>
-              <div v-else-if="editingProduct.image" class="image-preview">
-                <img :src="editingProduct.image" alt="Current product image" />
-                <p class="current-image-label">Current Image</p>
-              </div>
-            </div>
-
-            <div class="form-group">
               <label>Product Images</label>
               <div class="images-section">
-                <!-- Hero Image -->
-                <div class="hero-image-section">
-                  <h4>Main Image (Hero)</h4>
-                  <input 
-                    type="file" 
-                    accept="image/*" 
-                    @change="onHeroImageChange"
-                    ref="heroImageInput"
-                  />
-                  <div v-if="heroImagePreview" class="image-preview hero-preview">
-                    <img :src="heroImagePreview" alt="Hero preview" />
-                    <p class="image-label">New Hero Image</p>
-                  </div>
-                  <div v-else-if="editingProduct.image" class="image-preview hero-preview">
-                    <img :src="editingProduct.image" alt="Current hero image" />
-                    <p class="image-label">Current Hero Image</p>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  @change="onImagesChange"
+                  ref="imagesInput"
+                  multiple
+                  style="display:none;"
+                />
+                <button type="button" class="btn-small btn-secondary" @click="$refs.imagesInput.click()">
+                  Add Images
+                </button>
+                <div class="images-row">
+                  <div v-for="(img, idx) in editingProduct.images" :key="img" class="image-thumb-wrapper">
+                    <img :src="img" class="image-thumb" :class="{ hero: idx === 0 }" :alt="`Product image ${idx+1}`" />
+                    <span v-if="idx === 0" class="hero-badge">Hero</span>
+                    <button type="button" class="btn-remove" @click="removeImage(idx)" title="Remove image">×</button>
                   </div>
                 </div>
-
-                <!-- Additional Images -->
-                <div class="additional-images-section">
-                  <h4>Additional Images</h4>
-                  <div class="add-image-controls">
-                    <input 
-                      type="file" 
-                      accept="image/*" 
-                      @change="onAdditionalImageChange"
-                      ref="additionalImageInput"
-                      multiple
-                    />
-                    <button type="button" class="btn-small btn-secondary" @click="$refs.additionalImageInput.click()">
-                      Add Images
-                    </button>
-                  </div>
-                  
-                  <!-- Current Additional Images -->
-                  <div v-if="editingProduct.additionalImages && editingProduct.additionalImages.length > 0" class="current-additional-images">
-                    <h5>Current Additional Images</h5>
-                    <div class="images-grid">
-                      <div v-for="(imageUrl, index) in editingProduct.additionalImages" :key="`current-${index}`" class="image-item">
-                        <img :src="imageUrl" :alt="`Additional image ${index + 1}`" />
-                        <button type="button" class="btn-remove" @click="removeCurrentAdditionalImage(index)" title="Remove image">
-                          ×
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- New Additional Images Preview -->
-                  <div v-if="newAdditionalImages.length > 0" class="new-additional-images">
-                    <h5>New Images to Add</h5>
-                    <div class="images-grid">
-                      <div v-for="(image, index) in newAdditionalImages" :key="`new-${index}`" class="image-item">
-                        <img :src="image.preview" :alt="`New image ${index + 1}`" />
-                        <button type="button" class="btn-remove" @click="removeNewAdditionalImage(index)" title="Remove image">
-                          ×
-                        </button>
-                      </div>
-                    </div>
+                <div v-if="newImages.length > 0" class="images-row new-images-row">
+                  <div v-for="(img, idx) in newImages" :key="img.preview" class="image-thumb-wrapper">
+                    <img :src="img.preview" class="image-thumb" :alt="`New image ${idx+1}`" />
+                    <button type="button" class="btn-remove" @click="removeNewImage(idx)" title="Remove image">×</button>
                   </div>
                 </div>
               </div>
+              <small>First image is the main (hero) image. You can remove images before saving.</small>
             </div>
 
             <div class="modal-actions">
@@ -1081,12 +1028,10 @@ export default {
       showEditProductModal: false,
       showDeleteProductConfirmation: false,
       editingProduct: null,
-      productImageFile: null,
-      productImagePreview: null,
+      newImages: [],
       productLoading: false,
       heroImagePreview: null,
       heroImageFile: null,
-      newAdditionalImages: []
     }
   },
   computed: {
@@ -1368,97 +1313,59 @@ export default {
     },
 
     editProduct(product) {
-      this.editingProduct = { 
+      this.editingProduct = {
         ...product,
-        additionalImages: product.additionalImages || []
+        images: product.images || (product.image ? [product.image] : [])
       }
-      this.productImagePreview = null
-      this.productImageFile = null
-      this.heroImagePreview = null
-      this.heroImageFile = null
-      this.newAdditionalImages = []
+      this.newImages = []
       this.showEditProductModal = true
     },
 
     closeEditProductModal() {
       this.showEditProductModal = false
       this.editingProduct = null
-      this.productImagePreview = null
-      this.productImageFile = null
-      this.heroImagePreview = null
-      this.heroImageFile = null
-      this.newAdditionalImages = []
+      this.newImages = []
     },
 
-    onProductImageChange(event) {
-      const file = event.target.files[0]
-      if (file) {
-        this.productImageFile = file
-        this.productImagePreview = URL.createObjectURL(file)
-      }
-    },
-
-    onHeroImageChange(event) {
-      const file = event.target.files[0]
-      if (file) {
-        this.heroImageFile = file
-        this.heroImagePreview = URL.createObjectURL(file)
-      }
-    },
-
-    onAdditionalImageChange(event) {
+    onImagesChange(event) {
       const files = Array.from(event.target.files)
-      this.newAdditionalImages = files.map(file => ({
-        file,
-        preview: URL.createObjectURL(file)
-      }))
+      this.newImages = files.map(file => ({ file, preview: URL.createObjectURL(file) }))
     },
 
-    removeCurrentAdditionalImage(index) {
-      this.editingProduct.additionalImages.splice(index, 1)
+    removeImage(idx) {
+      this.editingProduct.images.splice(idx, 1)
     },
 
-    removeNewAdditionalImage(index) {
-      this.newAdditionalImages.splice(index, 1)
+    removeNewImage(idx) {
+      this.newImages.splice(idx, 1)
     },
 
     async updateProduct() {
       this.productLoading = true
       try {
-        let heroImageUrl = this.editingProduct.image
-        
-        // Upload new hero image if one was selected
-        if (this.heroImageFile) {
-          heroImageUrl = await this.uploadHeroImage()
+        // Upload new images if any
+        let newImageUrls = []
+        if (this.newImages.length > 0) {
+          newImageUrls = await this.uploadImages()
         }
-
-        // Upload new additional images
-        let additionalImageUrls = [...(this.editingProduct.additionalImages || [])]
-        if (this.newAdditionalImages.length > 0) {
-          const newImageUrls = await this.uploadAdditionalImages()
-          additionalImageUrls = [...additionalImageUrls, ...newImageUrls]
-        }
-
+        // Merge existing and new
+        const images = [...(this.editingProduct.images || []), ...newImageUrls]
         const updateData = {
           name: this.editingProduct.name,
           description: this.editingProduct.description || '',
           price: parseFloat(this.editingProduct.price),
           stock: parseInt(this.editingProduct.stock),
-          image: heroImageUrl,
-          additionalImages: additionalImageUrls,
+          images,
           updatedAt: new Date()
         }
-
         await db.collection('stores')
           .doc(this.storeId)
           .collection('products')
           .doc(this.editingProduct.id)
           .update(updateData)
-
         this.showMessage('Product updated successfully!', 'success')
         this.closeEditProductModal()
         await this.fetchProducts()
-
       } catch (error) {
         console.error('Error updating product:', error)
         this.showMessage('Failed to update product. Please try again.', 'error')
@@ -1467,19 +1374,19 @@ export default {
       }
     },
 
-    async uploadProductImage() {
-      if (!this.productImageFile) return this.editingProduct.image
-
+    async uploadImages() {
+      if (!this.newImages.length) return []
       try {
         const { storage } = await import('../../firebase')
-        const fileName = `product-images/${Date.now()}_${this.productImageFile.name}`
-        const storageRef = storage.ref().child(fileName)
-        const snapshot = await storageRef.put(this.productImageFile)
-        const downloadURL = await snapshot.ref.getDownloadURL()
-        return downloadURL
-      } catch (error) {
-        console.error('Error uploading product image:', error)
-        throw error
+        const uploadPromises = this.newImages.map(imgObj => {
+          const fileName = `product-images/${this.storeId}/${Date.now()}_${imgObj.file.name}`
+          const storageRef = storage.ref().child(fileName)
+          return storageRef.put(imgObj.file).then(snap => snap.ref.getDownloadURL())
+        })
+        return await Promise.all(uploadPromises)
+      } catch (e) {
+        console.error('Error uploading images:', e)
+        throw e
       }
     },
 
@@ -4311,5 +4218,63 @@ export default {
   margin: 0;
   color: #6c757d;
   font-size: 1rem;
+}
+
+.images-row {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  flex-wrap: wrap;
+}
+
+.image-thumb-wrapper {
+  position: relative;
+  display: inline-block;
+}
+
+.image-thumb {
+  width: 80px;
+  height: 80px;
+  object-fit: cover;
+  border-radius: 4px;
+  border: 2px solid #eee;
+}
+
+.image-thumb.hero {
+  border: 2px solid #4CAF50;
+}
+
+.hero-badge {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  background: #4CAF50;
+  color: white;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.btn-remove {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 1rem;
+  cursor: pointer;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.btn-remove:hover {
+  background: #dc3545;
 }
 </style> 

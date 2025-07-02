@@ -890,20 +890,14 @@
                   multiple
                   style="display:none;"
                 />
-                <button type="button" class="btn-small btn-secondary" @click="$refs.imagesInput.click()">
-                  Add Images
-                </button>
+                <span class="add-image-link" @click="$refs.imagesInput.click()" title="Add Images">
+                  <i class="fa fa-plus"></i> Add Image
+                </span>
                 <div class="images-row">
                   <div v-for="(img, idx) in editingProduct.images" :key="img" class="image-thumb-wrapper">
                     <img :src="img" class="image-thumb" :class="{ hero: idx === 0 }" :alt="`Product image ${idx+1}`" />
                     <span v-if="idx === 0" class="hero-badge">Hero</span>
                     <button type="button" class="btn-remove" @click="removeImage(idx)" title="Remove image">×</button>
-                  </div>
-                </div>
-                <div v-if="newImages.length > 0" class="images-row new-images-row">
-                  <div v-for="(img, idx) in newImages" :key="img.preview" class="image-thumb-wrapper">
-                    <img :src="img.preview" class="image-thumb" :alt="`New image ${idx+1}`" />
-                    <button type="button" class="btn-remove" @click="removeNewImage(idx)" title="Remove image">×</button>
                   </div>
                 </div>
               </div>
@@ -1329,7 +1323,27 @@ export default {
 
     onImagesChange(event) {
       const files = Array.from(event.target.files)
-      this.newImages = files.map(file => ({ file, preview: URL.createObjectURL(file) }))
+      if (!files.length) return
+      this.autoUploadImages(files)
+      // Clear the input so the same file can be selected again if needed
+      this.$refs.imagesInput.value = ''
+    },
+
+    async autoUploadImages(files) {
+      try {
+        const { storage } = await import('../../firebase')
+        for (const file of files) {
+          const fileName = `product-images/${this.storeId}/${Date.now()}_${file.name}`
+          const storageRef = storage.ref().child(fileName)
+          const snapshot = await storageRef.put(file)
+          const url = await snapshot.ref.getDownloadURL()
+          if (!this.editingProduct.images) this.editingProduct.images = []
+          this.editingProduct.images.push(url)
+        }
+      } catch (e) {
+        console.error('Error auto-uploading images:', e)
+        this.showMessage('Failed to upload image. Please try again.', 'error')
+      }
     },
 
     removeImage(idx) {
@@ -4276,5 +4290,26 @@ export default {
 
 .btn-remove:hover {
   background: #dc3545;
+}
+
+.add-image-link {
+  color: #2196f3;
+  cursor: pointer;
+  font-size: 1rem;
+  margin-right: 1rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  padding: 0;
+  outline: none;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.add-image-link:hover {
+  color: #1565c0;
+  text-decoration: underline;
 }
 </style> 

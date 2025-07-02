@@ -1965,9 +1965,9 @@ export default {
     },
 
     formatPrice(amount, currency) {
-      if (!amount) return '$0.00'
       const currencyToUse = currency || this.store?.currency || 'USD'
       const symbol = this.getCurrencySymbol(currencyToUse)
+      if (!amount) return `${symbol}0.00`
       return `${symbol}${parseFloat(amount).toFixed(2)}`
     },
 

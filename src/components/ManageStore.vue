@@ -5,7 +5,9 @@
         <button class="back-btn" @click="goBack">← Back to Dashboard</button>
       </div>
 
-      <div class="store-header">
+      <div v-if="!store" class="loading">Loading store information...</div>
+      
+      <div class="store-header" v-if="store">
         <div class="store-info">
           <h1>{{ store.name }}</h1>
           <p class="store-description">{{ store.description }}</p>
@@ -17,7 +19,7 @@
 
       </div>
 
-      <div class="management-tabs">
+      <div class="management-tabs" v-if="store">
         <button 
           :class="['tab-btn', activeTab === 'products' ? 'active' : '']"
           @click="activeTab = 'products'"
@@ -646,6 +648,7 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
+          <button @click="debugCurrency" class="btn-secondary">Debug Currency</button>
         </div>
 
 
@@ -1344,9 +1347,7 @@ export default {
 
     formatPrice(price) {
       const currency = this.store?.currency || 'USD'
-      console.log('formatPrice - Currency:', currency, 'Store currency:', this.store?.currency, 'Price:', price)
       const symbol = this.getCurrencySymbol(currency)
-      console.log('formatPrice - Symbol:', symbol)
       return `${symbol}${parseFloat(price).toFixed(2)}`
     },
 
@@ -1995,6 +1996,17 @@ export default {
         'ILS': '₪'
       }
       return symbols[currency?.toUpperCase()] || '$'
+    },
+
+    debugCurrency() {
+      console.log('=== CURRENCY DEBUG ===')
+      console.log('Store object:', this.store)
+      console.log('Store currency:', this.store?.currency)
+      console.log('Store data currency:', this.storeData?.currency)
+      console.log('Test ZAR symbol:', this.getCurrencySymbol('ZAR'))
+      console.log('Test ILS symbol:', this.getCurrencySymbol('ILS'))
+      console.log('Current formatPrice result:', this.formatPrice(100))
+      alert(`Store Currency: ${this.store?.currency}\nZAR Symbol: ${this.getCurrencySymbol('ZAR')}\nILS Symbol: ${this.getCurrencySymbol('ILS')}\nFormatPrice(100): ${this.formatPrice(100)}`)
     }
   }
 }

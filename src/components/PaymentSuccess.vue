@@ -9,10 +9,6 @@
         Thank you {{ customerName }} for your order!
       </p>
       <div class="order-details order-details-wide">
-        <h3>Order Details</h3>
-        <p><strong>Order ID:</strong> {{ orderId }}</p>
-        <p><strong>Total:</strong> {{ formatPrice(total, currency) }}</p>
-        <p><strong>Email:</strong> {{ email }}</p>
         <div v-if="orderItems.length > 0" class="order-items-list mt-3">
           <h4 class="mb-2">Items Ordered</h4>
           <ul class="order-items-ul">

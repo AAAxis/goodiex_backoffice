@@ -8,18 +8,22 @@
           <i class="fa fa-arrow-left"></i>
         </button>
         <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">Product Details</span>
-        <div class="cart-icon ms-2 position-relative" style="display: inline-block;">
-          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #000; font-size: 1.5rem;">
-            <i class="fa fa-shopping-cart"></i>
-          </router-link>
-          <span v-if="cartItemCount" class="position-absolute badge rounded-pill bg-danger" style="font-size:0.7rem; top: -3px; right: -8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;">
-            {{ cartItemCount }}
-          </span>
-        </div>
+        <div style="width: 40px;"></div> <!-- Spacer for centering -->
       </div>
     </nav>
 
     <div class="container" style="padding: 2rem;">
+      <div class="row align-items-center mb-4">
+        <div class="col d-flex justify-content-between align-items-center">
+          <h2>Product Details</h2>
+          <div class="cart-icon position-relative">
+            <router-link to="/cart" class="cart-link">
+              <i class="fa fa-shopping-cart"></i>
+              <span v-if="cartItemCount" class="cart-badge">{{ cartItemCount }}</span>
+            </router-link>
+          </div>
+        </div>
+      </div>
       <div v-if="loading" class="text-center py-5">
         <div class="spinner-border" role="status">
           <span class="visually-hidden">Loading...</span>
@@ -359,14 +363,48 @@ export default {
 }
 
 .cart-icon {
-  font-size: 1.5rem;
-  color: #000;
-  transition: all 0.3s ease;
+  display: inline-block;
+  position: relative;
 }
 
-.cart-icon:hover {
+.cart-link {
+  font-size: 1.5rem;
+  color: #000;
+  text-decoration: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+.cart-link:hover {
   color: #333;
   transform: scale(1.1);
+}
+
+.cart-badge {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background-color: #dc3545;
+  color: white;
+  border-radius: 50%;
+  padding: 0.1rem 0.25rem;
+  font-size: 0.7rem;
+  min-width: 16px;
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1;
+}
+
+/* Header Styling */
+.container h2 {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  margin: 0;
 }
 
 .container {

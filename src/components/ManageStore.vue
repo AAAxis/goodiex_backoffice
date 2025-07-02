@@ -49,7 +49,6 @@
           Bank Accounts
         </button>
         <button 
-          v-if="hasActiveSubscription"
           :class="['tab-btn', { active: activeTab === 'withdrawals' }]" 
           @click="activeTab = 'withdrawals'"
         >

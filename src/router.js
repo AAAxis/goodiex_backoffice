@@ -10,6 +10,7 @@ import Contact from './components/Contact.vue';
 import PrivacyPolicy from './components/PrivacyPolicy.vue';
 import DeleteData from './components/DeleteData.vue';
 import Plans from './components/Plans.vue';
+import MyOrders from './components/MyOrders.vue';
 
 // Store Owner Components
 import StoreOwnerRegister from './components/StoreOwnerRegister.vue';
@@ -144,6 +145,11 @@ const routes = [
     path: '/plans',
     name: 'Plans',
     component: Plans
+  },
+  {
+    path: '/orders',
+    name: 'MyOrders',
+    component: MyOrders
   },
 ];
 

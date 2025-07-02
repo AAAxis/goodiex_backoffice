@@ -14,12 +14,6 @@
 
     <div class="container" style="padding: 2rem;">
       <div v-if="cartItems.length">
-        <div class="form-check mb-3">
-          <input class="form-check-input" type="checkbox" id="deliveryCheck" v-model="delivery">
-          <label class="form-check-label" for="deliveryCheck">
-            I want delivery
-          </label>
-        </div>
         <div v-for="(item, index) in cartItems" :key="index" class="cart-item d-flex justify-content-between align-items-stretch p-3 mb-3 border rounded">
           <div class="cart-item-info d-flex align-items-stretch">
             <img class="cart-item-image" :src="item.product.image_url" alt="">
@@ -48,13 +42,6 @@
         <div class="cart-summary mt-4 p-3 bg-light rounded">
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Total: {{ formatPrice(cartTotal, store.currency) }}</h4>
-          </div>
-          <div v-if="delivery && store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between mb-2">
-            <span>Delivery Fee:</span>
-            <span>{{ formatPrice(store.deliveryFee, store.currency) }}</span>
-          </div>
-          <div v-if="!delivery && store.address" class="alert alert-info p-2 mb-2">
-            <i class="fa fa-store me-1"></i> Pickup at store: <strong>{{ store.address }}</strong>
           </div>
           <button class="btn btn-success btn-lg w-100" @click="proceedToCheckout">
             Proceed to Checkout
@@ -117,7 +104,7 @@
               <hr>
               <div class="d-flex justify-content-between fw-bold">
                 <span>Total:</span>
-                <span>{{ formatPrice(cartTotal, store.currency) }}</span>
+                <span>{{ formatPrice(checkoutTotal, store.currency) }}</span>
               </div>
             </div>
           </div>
@@ -161,8 +148,8 @@ export default {
       return cartStore.items;
     },
     cartTotal() {
-      const fee = (this.delivery && this.store.deliveryFee) ? parseFloat(this.store.deliveryFee) : 0;
-      return cartStore.total + (fee > 0 ? fee : 0);
+      // On main cart page, do NOT include delivery fee
+      return cartStore.total;
     },
     isFormValid() {
       if (this.delivery) {
@@ -170,6 +157,11 @@ export default {
       } else {
         return this.email && this.name && this.phone;
       }
+    },
+    checkoutTotal() {
+      // Only for modal: include delivery fee if selected
+      const fee = (this.delivery && this.store.deliveryFee) ? parseFloat(this.store.deliveryFee) : 0;
+      return cartStore.total + (fee > 0 ? fee : 0);
     }
   },
   watch: {
@@ -290,7 +282,7 @@ export default {
         // Create new order with 'pending' status initially
         const orderDoc = await db.collection('web-orders').add({
           status: 'pending', // Changed from 'ordering' to 'pending'
-          total: this.cartTotal,
+          total: this.checkoutTotal(),
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           email: this.email,
           name: this.name,
@@ -324,7 +316,7 @@ export default {
           body: JSON.stringify({
             order: orderID,
             email: this.email,
-            total: this.cartTotal,
+            total: this.checkoutTotal(),
             name: this.name,
             currency: this.store.currency || 'USD'
           }),

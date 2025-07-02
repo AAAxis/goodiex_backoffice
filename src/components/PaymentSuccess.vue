@@ -257,14 +257,15 @@ export default {
 }
 
 .order-details-wide {
-  background: #f8f9fa;
-  padding: 2rem 2.5rem;
-  border-radius: 12px;
-  margin-bottom: 2rem;
+  background: none;
+  padding: 0 0 1.5rem 0;
+  border-radius: 0;
+  margin-bottom: 1.5rem;
   text-align: left;
-  max-width: 900px;
-  margin-left: auto;
-  margin-right: auto;
+  max-width: 100%;
+  margin-left: 0;
+  margin-right: 0;
+  box-shadow: none;
 }
 
 .order-details h3 {
@@ -279,11 +280,11 @@ export default {
 }
 
 .order-items-list {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  margin-top: 0.5rem;
+  box-shadow: none;
 }
 
 .order-items-ul {
@@ -364,5 +365,26 @@ export default {
   background: #6c757d;
   color: white;
   transform: translateY(-2px);
+}
+
+@media (max-width: 600px) {
+  .success-content-wide {
+    padding: 1.2rem 0.5rem;
+    border-radius: 0;
+    box-shadow: none;
+  }
+  .order-details-wide {
+    padding: 0 0 1rem 0;
+    margin-bottom: 1rem;
+  }
+  .order-item-li {
+    font-size: 1rem;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.2rem;
+  }
+  .order-total-row {
+    font-size: 1.05rem;
+  }
 }
 </style>

@@ -1077,14 +1077,27 @@ export default {
           console.log('Stripe subscription data:', data)
           
           if (data.hasActiveSubscription) {
-            // Update Firebase with the correct subscription status
-            await db.collection('storeOwners').doc(this.currentUser.uid).update({
+            // Prepare update data, filtering out undefined values
+            const updateData = {
               subscriptionStatus: 'active',
-              planId: data.planId || '',
-              subscriptionId: data.subscriptionId || '',
-              planName: data.planName || '',
               lastSyncedAt: new Date()
-            })
+            }
+
+            // Only add fields if they have valid values
+            if (data.planId) {
+              updateData.planId = data.planId
+            }
+
+            if (data.subscriptionId) {
+              updateData.subscriptionId = data.subscriptionId
+            }
+
+            if (data.planName) {
+              updateData.planName = data.planName
+            }
+
+            // Update Firebase with the correct subscription status
+            await db.collection('storeOwners').doc(this.currentUser.uid).update(updateData)
             
             // Update local state
             this.hasActiveSubscription = true

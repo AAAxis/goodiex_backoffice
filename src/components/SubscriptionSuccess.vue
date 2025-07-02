@@ -113,14 +113,30 @@ export default {
     
     async saveCustomerIdToFirebase(customerId) {
       try {
-        await db.collection('storeOwners').doc(this.user.uid).update({
+        // Prepare update data, filtering out undefined values
+        const updateData = {
           stripeCustomerId: customerId,
           subscriptionStatus: 'active',
-          planId: this.subscription?.items?.data?.[0]?.price?.lookup_key || 'basic',
-          subscriptionId: this.subscription?.id,
           subscriptionProcessedAt: new Date(),
           updatedAt: new Date()
-        })
+        }
+
+        // Only add fields if they have valid values
+        if (this.subscription?.items?.data?.[0]?.price?.lookup_key) {
+          updateData.planId = this.subscription.items.data[0].price.lookup_key
+        }
+
+        if (this.subscription?.id) {
+          updateData.subscriptionId = this.subscription.id
+        }
+
+        if (this.subscription?.items?.data?.[0]?.price?.nickname) {
+          updateData.planName = this.subscription.items.data[0].price.nickname
+        }
+
+        console.log('Saving subscription data to Firebase:', updateData)
+
+        await db.collection('storeOwners').doc(this.user.uid).update(updateData)
         console.log('Stripe customer ID and subscription status saved to Firebase:', customerId)
       } catch (error) {
         console.error('Error saving customer ID to Firebase:', error)

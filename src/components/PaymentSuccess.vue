@@ -1,6 +1,6 @@
 <template>
   <div class="success-container">
-    <div class="success-card">
+    <div class="success-content-wide">
       <div class="success-icon">
         <i class="fa fa-check-circle"></i>
       </div>
@@ -8,15 +8,11 @@
       <p class="success-message">
         Thank you {{ customerName }} for your order!
       </p>
-      <div class="order-details">
+      <div class="order-details order-details-wide">
         <h3>Order Details</h3>
         <p><strong>Order ID:</strong> {{ orderId }}</p>
         <p><strong>Total:</strong> {{ formatPrice(total, currency) }}</p>
         <p><strong>Email:</strong> {{ email }}</p>
-        <div v-if="orderUpdated" class="order-status">
-          <i class="fa fa-check-circle text-success"></i>
-          <span class="text-success">Order processed successfully</span>
-        </div>
         <div v-if="orderItems.length > 0" class="order-items-list mt-3">
           <h4 class="mb-2">Items Ordered</h4>
           <ul class="order-items-ul">
@@ -36,8 +32,8 @@
         </div>
       </div>
       <div class="success-actions">
-        <router-link to="/" class="btn btn-dark btn-lg">
-          Back to Home
+        <router-link to="/orders" class="btn btn-dark btn-lg">
+          My Orders
         </router-link>
         <button class="btn btn-primary btn-lg" @click="sendReceipt" :disabled="sendingReceipt">
           <span v-if="sendingReceipt"><i class="fa fa-spinner fa-spin"></i> Sending...</span>
@@ -234,14 +230,15 @@ export default {
   padding: 2rem;
 }
 
-.success-card {
+.success-content-wide {
   background: white;
   border-radius: 20px;
-  padding: 3rem;
+  padding: 3rem 4rem;
   text-align: center;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
-  max-width: 500px;
+  max-width: 900px;
   width: 100%;
+  margin: 0 auto;
 }
 
 .success-icon {
@@ -263,12 +260,15 @@ export default {
   margin-bottom: 2rem;
 }
 
-.order-details {
+.order-details-wide {
   background: #f8f9fa;
-  padding: 1.5rem;
+  padding: 2rem 2.5rem;
   border-radius: 12px;
   margin-bottom: 2rem;
   text-align: left;
+  max-width: 900px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .order-details h3 {
@@ -282,19 +282,37 @@ export default {
   color: #495057;
 }
 
-.order-status {
-  margin-top: 1rem;
-  padding: 0.5rem;
-  background: #d4edda;
+.order-items-list {
+  background: #fff;
   border-radius: 8px;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  justify-content: center;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
 }
 
-.text-success {
-  color: #28a745 !important;
+.order-items-ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.order-item-li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1rem;
+}
+
+.order-item-li:last-child {
+  border-bottom: none;
+}
+
+.order-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
 }
 
 .success-actions {
@@ -350,39 +368,5 @@ export default {
   background: #6c757d;
   color: white;
   transform: translateY(-2px);
-}
-
-/* Order items list styles */
-.order-items-list {
-  background: #fff;
-  border-radius: 8px;
-  padding: 1rem;
-  margin-top: 1rem;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-}
-
-.order-items-ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.order-item-li {
-  display: flex;
-  justify-content: space-between;
-  padding: 0.5rem 0;
-  border-bottom: 1px solid #eee;
-  font-size: 1.1rem;
-}
-
-.order-item-li:last-child {
-  border-bottom: none;
-}
-
-.order-total-row {
-  display: flex;
-  justify-content: space-between;
-  font-size: 1.2rem;
-  margin-top: 0.5rem;
 }
 </style>

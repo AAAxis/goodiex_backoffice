@@ -2,22 +2,7 @@
   <div>
     <Navbar />
     <!-- App Bar -->
-    <nav class="navbar navbar-light bg-light mb-3 appbar">
-      <div class="container-fluid d-flex align-items-center justify-content-between">
-        <button class="btn btn-link text-dark p-0 me-2" @click="$router.back()" title="Back">
-          <i class="fa fa-arrow-left"></i>
-        </button>
-        <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">Browse Stores</span>
-        <div class="cart-icon ms-2 position-relative" style="display: inline-block;">
-          <router-link to="/cart" style="cursor:pointer; text-decoration: none; color: #000; font-size: 1.5rem;">
-            <i class="fa fa-shopping-cart"></i>
-          </router-link>
-          <span v-if="cartItemCount" class="position-absolute badge rounded-pill bg-danger" style="font-size:0.7rem; top: -3px; right: -8px; min-width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; z-index: 10;">
-            {{ cartItemCount }}
-          </span>
-        </div>
-      </div>
-    </nav>
+ 
 
     <div class="container" style="padding: 2rem;">
       <div class="row align-items-center mb-4">

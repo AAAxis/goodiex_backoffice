@@ -1,14 +1,7 @@
 <template>
   <div>
-    <!-- App Bar -->
-    <nav class="navbar navbar-light bg-light mb-3 appbar">
-      <div class="container-fluid d-flex align-items-center justify-content-between">
-        <button class="btn btn-link text-dark p-0 me-2" @click="$router.back()" title="Back">
-          <i class="fa fa-arrow-left"></i>
-        </button>
-        <span class="navbar-brand mb-0 h4 flex-grow-1 text-center">{{ storeName || 'Shop' }}</span>
-      </div>
-    </nav>
+    <Navbar />
+  
 
     <div style="padding: 2rem;" class="container">
       <div class="row align-items-center mb-4">
@@ -51,12 +44,12 @@
 import firebase from 'firebase/compat/app';
 import 'firebase/compat/firestore';
 import cartStore from '../cart.js';
-// import Navbar from './Navbar.vue'
+import Navbar from './Navbar.vue'
 
 export default {
   name: 'ProductList',
   components: {
-    // Navbar,
+    Navbar,
   },
   props: {
     storeId: {

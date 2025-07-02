@@ -99,7 +99,15 @@
                   <div v-else class="no-thumb">No Image</div>
                 </td>
                 <td>{{ product.name }}</td>
-                <td>{{ product.description || 'No description' }}</td>
+                <td>
+                  {{
+                    product.description
+                      ? (product.description.split('\n')[0].length > 40
+                          ? product.description.split('\n')[0].slice(0, 40) + '...'
+                          : product.description.split('\n')[0])
+                      : 'No description'
+                  }}
+                </td>
                 <td>{{ formatPrice(product.price) }}</td>
                 <td>
                   <span :class="['availability-badge', (product.stock > 0) ? 'available' : 'unavailable']">

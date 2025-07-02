@@ -3,6 +3,7 @@
     <div class="container">
       <router-link class="navbar-brand" to="/">
         Goodiex
+        <span v-if="storeName" class="shop-name-navbar ms-2">@{{ storeName }}</span>
       </router-link>
       
       <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -53,6 +54,12 @@ import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
 
 export default {
   name: 'Navbar',
+  props: {
+    storeName: {
+      type: String,
+      default: ''
+    }
+  },
   setup() {
     const router = useRouter()
     const isLoggedIn = ref(false)
@@ -149,5 +156,13 @@ export default {
     padding: 1rem;
     margin: 0 -1rem;
   }
+}
+
+.shop-name-navbar {
+  font-size: 1.1rem;
+  color: #81C784;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+  opacity: 0.85;
 }
 </style> 

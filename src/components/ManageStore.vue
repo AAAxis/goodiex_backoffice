@@ -10,11 +10,10 @@
       <div class="store-header" v-if="store">
         <div class="store-info">
           <h1>{{ store.name }}</h1>
-          <p class="store-description">{{ store.description }}</p>
-          <div class="store-currency">
-            <span class="currency-label">Currency:</span>
-            <span class="currency-value">{{ store.currency || 'USD' }}</span>
-          </div>
+          <p class="store-description">
+            {{ store.description && store.description.length > 40 ? store.description.slice(0, 40) + '...' : store.description }}
+          </p>
+      
           <div v-if="store.currency || store.phone || store.email || store.address" class="store-contact-row">
             <span v-if="store.currency" class="contact-value">{{ store.currency }}</span>
             <span v-if="store.phone" class="contact-value">{{ store.phone }}</span>

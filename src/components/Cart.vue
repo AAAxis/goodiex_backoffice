@@ -282,7 +282,7 @@ export default {
         // Create new order with 'pending' status initially
         const orderDoc = await db.collection('web-orders').add({
           status: 'pending', // Changed from 'ordering' to 'pending'
-          total: this.checkoutTotal(),
+          total: this.checkoutTotal,
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           email: this.email,
           name: this.name,
@@ -316,7 +316,7 @@ export default {
           body: JSON.stringify({
             order: orderID,
             email: this.email,
-            total: this.checkoutTotal(),
+            total: this.checkoutTotal,
             name: this.name,
             currency: this.store.currency || 'USD'
           }),

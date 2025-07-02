@@ -899,6 +899,13 @@
                     <span v-if="idx === 0" class="hero-badge">Hero</span>
                     <button type="button" class="btn-remove" @click="removeImage(idx)" title="Remove image">×</button>
                   </div>
+                  <!-- Show spinner for uploading slots -->
+                  <div v-for="idx in uploadingImageIndexes" :key="'uploading-'+idx" class="image-thumb-wrapper uploading-thumb">
+                    <div class="spinner"></div>
+                  </div>
+                </div>
+                <div v-if="uploadingImages" class="uploading-overlay">
+                  <div class="spinner large"></div>
                 </div>
               </div>
               <small>First image is the main (hero) image. You can remove images before saving.</small>
@@ -1022,6 +1029,8 @@ export default {
       showEditProductModal: false,
       showDeleteProductConfirmation: false,
       editingProduct: null,
+      uploadingImages: false,
+      uploadingImageIndexes: [],
       newImages: [],
       productLoading: false,
       heroImagePreview: null,
@@ -1331,18 +1340,23 @@ export default {
 
     async autoUploadImages(files) {
       try {
+        this.uploadingImages = true
         const { storage } = await import('../../firebase')
-        for (const file of files) {
+        for (const [i, file] of files.entries()) {
+          this.uploadingImageIndexes.push(this.editingProduct.images.length + i)
           const fileName = `product-images/${this.storeId}/${Date.now()}_${file.name}`
           const storageRef = storage.ref().child(fileName)
           const snapshot = await storageRef.put(file)
           const url = await snapshot.ref.getDownloadURL()
           if (!this.editingProduct.images) this.editingProduct.images = []
           this.editingProduct.images.push(url)
+          this.uploadingImageIndexes.shift() // Remove the index as soon as upload is done
         }
       } catch (e) {
         console.error('Error auto-uploading images:', e)
         this.showMessage('Failed to upload image. Please try again.', 'error')
+      } finally {
+        this.uploadingImages = false
       }
     },
 
@@ -4311,5 +4325,48 @@ export default {
 .add-image-link:hover {
   color: #1565c0;
   text-decoration: underline;
+}
+
+/* Spinner styles */
+.spinner {
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #2196f3;
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  animation: spin 1s linear infinite;
+  margin: 0 auto;
+}
+.spinner.large {
+  width: 48px;
+  height: 48px;
+  border-width: 4px;
+}
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+.uploading-thumb {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  background: #f8f9fa;
+  border-radius: 4px;
+  border: 2px dashed #eee;
+  margin-right: 0.5rem;
+}
+.uploading-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10;
 }
 </style> 

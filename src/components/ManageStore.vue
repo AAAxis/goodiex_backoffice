@@ -1344,7 +1344,9 @@ export default {
 
     formatPrice(price) {
       const currency = this.store?.currency || 'USD'
+      console.log('formatPrice - Currency:', currency, 'Store currency:', this.store?.currency, 'Price:', price)
       const symbol = this.getCurrencySymbol(currency)
+      console.log('formatPrice - Symbol:', symbol)
       return `${symbol}${parseFloat(price).toFixed(2)}`
     },
 

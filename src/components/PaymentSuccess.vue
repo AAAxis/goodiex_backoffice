@@ -17,11 +17,33 @@
           <i class="fa fa-check-circle text-success"></i>
           <span class="text-success">Order processed successfully</span>
         </div>
+        <div v-if="orderItems.length > 0" class="order-items-list mt-3">
+          <h4 class="mb-2">Items Ordered</h4>
+          <ul class="order-items-ul">
+            <li v-for="(item, idx) in orderItems" :key="idx" class="order-item-li">
+              <span>{{ item.product_name }} <span v-if="item.quantity">x{{ item.quantity }}</span></span>
+              <span>{{ formatPrice(item.price * (item.quantity || 1), currency) }}</span>
+            </li>
+          </ul>
+          <div v-if="deliveryFee && deliveryFee > 0" class="d-flex justify-content-between mt-2">
+            <span>Delivery Fee</span>
+            <span>{{ formatPrice(deliveryFee, currency) }}</span>
+          </div>
+          <div class="order-total-row mt-2">
+            <strong>Total:</strong>
+            <span>{{ formatPrice(total, currency) }}</span>
+          </div>
+        </div>
       </div>
       <div class="success-actions">
         <router-link to="/" class="btn btn-dark btn-lg">
           Back to Home
         </router-link>
+        <button class="btn btn-primary btn-lg" @click="sendReceipt" :disabled="sendingReceipt">
+          <span v-if="sendingReceipt"><i class="fa fa-spinner fa-spin"></i> Sending...</span>
+          <span v-else>Send Receipt</span>
+        </button>
+        <div v-if="receiptSent" class="alert alert-success mt-2">Receipt sent to {{ email }}</div>
       </div>
     </div>
   </div>
@@ -40,7 +62,11 @@ export default {
       total: '',
       customerName: '',
       currency: '',
-      orderUpdated: false
+      orderUpdated: false,
+      orderItems: [],
+      deliveryFee: 0,
+      sendingReceipt: false,
+      receiptSent: false
     }
   },
   async created() {
@@ -63,6 +89,7 @@ export default {
     // Update order status to 'completed' if we have an order ID
     if (this.orderId) {
       await this.updateOrderStatus();
+      await this.fetchOrderItems();
     }
   },
   methods: {
@@ -131,6 +158,66 @@ export default {
         console.error('Error updating order status:', error);
         // Don't show error to user as the payment was successful
         // This is just for backend tracking
+      }
+    },
+
+    async fetchOrderItems() {
+      try {
+        const firebaseConfig = {
+          apiKey: "AIzaSyASwq11lvLT6YfaGwp7W_dCBICDzVsBbSM",
+          authDomain: "bankapp-9798a.firebaseapp.com",
+          projectId: "bankapp-9798a",
+          storageBucket: "bankapp-9798a.appspot.com",
+          messagingSenderId: "868698601721",
+          appId: "1:868698601721:web:e061dcefcb437f53854a28",
+          measurementId: "G-WY7R44DDM4"
+        };
+        if (!firebase.apps.length) {
+          firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore();
+        // Fetch order doc for deliveryFee
+        const orderDoc = await db.collection('web-orders').doc(this.orderId).get();
+        if (orderDoc.exists) {
+          const orderData = orderDoc.data();
+          this.deliveryFee = orderData.deliveryFee || 0;
+        }
+        // Fetch cart items
+        const cartSnap = await db.collection('web-orders').doc(this.orderId).collection('cart').get();
+        this.orderItems = [];
+        cartSnap.forEach(doc => {
+          this.orderItems.push(doc.data());
+        });
+      } catch (e) {
+        this.orderItems = [];
+      }
+    },
+
+    async sendReceipt() {
+      this.sendingReceipt = true;
+      this.receiptSent = false;
+      try {
+        // Call backend endpoint to send receipt
+        const response = await fetch('https://pay.theholylabs.com/send-receipt', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: this.orderId,
+            email: this.email,
+            name: this.customerName,
+            total: this.total,
+            currency: this.currency
+          })
+        });
+        if (response.ok) {
+          this.receiptSent = true;
+        } else {
+          this.receiptSent = false;
+        }
+      } catch (e) {
+        this.receiptSent = false;
+      } finally {
+        this.sendingReceipt = false;
       }
     }
   }
@@ -263,5 +350,39 @@ export default {
   background: #6c757d;
   color: white;
   transform: translateY(-2px);
+}
+
+/* Order items list styles */
+.order-items-list {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-top: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.order-items-ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.order-item-li {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #eee;
+  font-size: 1.1rem;
+}
+
+.order-item-li:last-child {
+  border-bottom: none;
+}
+
+.order-total-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 1.2rem;
+  margin-top: 0.5rem;
 }
 </style>

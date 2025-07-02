@@ -11,7 +11,7 @@
         <div class="store-info">
           <h1>{{ store.name }}</h1>
           <p class="store-description">
-            {{ store.description && store.description.length > 40 ? store.description.slice(0, 40) + '...' : store.description }}
+            {{ store.description }}
           </p>
       
           <div v-if="store.currency || store.phone || store.email || store.address" class="store-contact-row">
@@ -26,6 +26,9 @@
             >
               Edit Store
             </router-link>
+            <span v-if="store.isActive !== undefined" :class="['status-chip', store.isActive ? 'active' : 'inactive']">
+              {{ store.isActive ? 'Active' : 'Inactive' }}
+            </span>
           </div>
         </div>
 
@@ -500,7 +503,6 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
-          <button @click="debugCurrency" class="btn-secondary">Debug Currency</button>
         </div>
 
 
@@ -4150,5 +4152,22 @@ export default {
 .edit-store-chip:hover {
   background: #ffe082;
   color: #fffde7;
+}
+
+.status-chip {
+  border-radius: 20px;
+  padding: 0.25rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-right: 1rem;
+  margin-left: 0.5rem;
+  display: inline-block;
+  color: #fff;
+}
+.status-chip.active {
+  background: #4CAF50;
+}
+.status-chip.inactive {
+  background: #f44336;
 }
 </style> 

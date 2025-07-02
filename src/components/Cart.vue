@@ -14,6 +14,12 @@
 
     <div class="container" style="padding: 2rem;">
       <div v-if="cartItems.length">
+        <div class="form-check mb-3">
+          <input class="form-check-input" type="checkbox" id="deliveryCheck" v-model="delivery">
+          <label class="form-check-label" for="deliveryCheck">
+            I want delivery
+          </label>
+        </div>
         <div v-for="(item, index) in cartItems" :key="index" class="cart-item d-flex justify-content-between align-items-stretch p-3 mb-3 border rounded">
           <div class="cart-item-info d-flex align-items-stretch">
             <img class="cart-item-image" :src="item.product.image_url" alt="">
@@ -43,9 +49,12 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Total: {{ formatPrice(cartTotal, store.currency) }}</h4>
           </div>
-          <div v-if="store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between mb-2">
+          <div v-if="delivery && store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between mb-2">
             <span>Delivery Fee:</span>
             <span>{{ formatPrice(store.deliveryFee, store.currency) }}</span>
+          </div>
+          <div v-if="!delivery && store.address" class="alert alert-info p-2 mb-2">
+            <i class="fa fa-store me-1"></i> Pickup at store: <strong>{{ store.address }}</strong>
           </div>
           <button class="btn btn-success btn-lg w-100" @click="proceedToCheckout">
             Proceed to Checkout
@@ -70,6 +79,12 @@
             <button type="button" class="btn-close" @click="closeCheckoutModal"></button>
           </div>
           <div class="modal-body">
+            <div class="form-check mb-3">
+              <input class="form-check-input" type="checkbox" id="deliveryCheckModal" v-model="delivery">
+              <label class="form-check-label" for="deliveryCheckModal">
+                I want delivery
+              </label>
+            </div>
             <div class="form-group mb-3">
               <label for="email" class="form-label">Email *</label>
               <input type="email" id="email" v-model="email" required class="form-control">
@@ -82,9 +97,12 @@
               <label for="phone" class="form-label">Contact Phone *</label>
               <input type="tel" id="phone" v-model="phone" required class="form-control" placeholder="e.g. +1234567890">
             </div>
-            <div class="form-group mb-3">
+            <div v-if="delivery" class="form-group mb-3">
               <label for="address" class="form-label">Delivery Instructions *</label>
               <textarea id="address" v-model="address" required class="form-control" rows="3"></textarea>
+            </div>
+            <div v-else-if="store.address" class="alert alert-info p-2 mb-3">
+              <i class="fa fa-store me-1"></i> Pickup at store: <strong>{{ store.address }}</strong>
             </div>
             <div class="cart-summary p-3 bg-light rounded">
               <h6>Order Summary:</h6>
@@ -92,7 +110,7 @@
                 <span>{{ item.product.name }} x{{ item.quantity }}</span>
                 <span>{{ formatPrice(item.product.price * item.quantity, store.currency) }}</span>
               </div>
-              <div v-if="store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between">
+              <div v-if="delivery && store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between">
                 <span>Delivery Fee</span>
                 <span>{{ formatPrice(store.deliveryFee, store.currency) }}</span>
               </div>
@@ -134,7 +152,8 @@ export default {
       address: '',
       currentOrderID: null,
       store: {}, // Single store information
-      cartStore // Add reference to cartStore for template access
+      cartStore, // Add reference to cartStore for template access
+      delivery: true
     }
   },
   computed: {
@@ -142,11 +161,15 @@ export default {
       return cartStore.items;
     },
     cartTotal() {
-      const fee = this.store.deliveryFee ? parseFloat(this.store.deliveryFee) : 0;
+      const fee = (this.delivery && this.store.deliveryFee) ? parseFloat(this.store.deliveryFee) : 0;
       return cartStore.total + (fee > 0 ? fee : 0);
     },
     isFormValid() {
-      return this.email && this.name && this.phone && this.address;
+      if (this.delivery) {
+        return this.email && this.name && this.phone && this.address;
+      } else {
+        return this.email && this.name && this.phone;
+      }
     }
   },
   watch: {
@@ -272,9 +295,10 @@ export default {
           email: this.email,
           name: this.name,
           phone: this.phone,
-          address: this.address,
+          address: this.delivery ? this.address : '',
           storeId: cartStore.currentStoreId, // Add store ID to link order to specific store
-          deliveryFee: this.store.deliveryFee ? parseFloat(this.store.deliveryFee) : 0
+          deliveryFee: this.delivery && this.store.deliveryFee ? parseFloat(this.store.deliveryFee) : 0,
+          delivery: this.delivery
         });
         
         const orderID = orderDoc.id;

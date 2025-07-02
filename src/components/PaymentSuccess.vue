@@ -85,6 +85,24 @@ export default {
     if (this.orderId) {
       await this.updateOrderStatus();
       await this.fetchOrderItems();
+      // Trigger Telegram notification (non-blocking)
+      try {
+        await fetch('https://api.theholylabs.com/api/send-telegram-order-notification', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: this.orderId,
+            email: this.email,
+            customerName: this.customerName,
+            total: this.total,
+            currency: this.currency,
+            orderItems: this.orderItems,
+            deliveryFee: this.deliveryFee
+          })
+        });
+      } catch (e) {
+        // Ignore errors, do not block UI
+      }
     }
   },
   methods: {

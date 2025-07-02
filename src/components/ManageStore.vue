@@ -28,13 +28,7 @@
           :class="['tab-btn', activeTab === 'orders' ? 'active' : '']"
           @click="activeTab = 'orders'"
         >
-          Orders ({{ filteredOrders.length }})
-        </button>
-        <button 
-          :class="['tab-btn', activeTab === 'mobile-orders' ? 'active' : '']"
-          @click="activeTab = 'mobile-orders'"
-        >
-          Mobile Orders ({{ totalMobileOrders }})
+          All Orders ({{ allOrdersCount }})
         </button>
         <button 
           :class="['tab-btn', activeTab === 'edit-store' ? 'active' : '']"
@@ -120,17 +114,29 @@
       <!-- Orders Tab -->
       <div v-if="activeTab === 'orders'" class="tab-content">
         <div class="section-header">
-          <h2>Store Orders</h2>
-          <div class="order-stats">
-            <span class="stat-item">Total: {{ filteredOrders.length }}</span>
-            <span class="stat-item">Revenue: {{ formatPrice(storeRevenue) }}</span>
+          <h2>All Orders</h2>
+          <div class="header-controls">
+            <div class="order-filter">
+              <label for="order-filter">Filter by Platform:</label>
+              <select id="order-filter" v-model="orderFilter" class="filter-select">
+                <option value="all">All Orders</option>
+                <option value="web">Web Orders</option>
+                <option value="mobile">Mobile Orders</option>
+              </select>
+            </div>
+            <div class="order-stats">
+              <span class="stat-item">Total: {{ filteredAllOrders.length }}</span>
+              <span class="stat-item">Revenue: {{ formatPrice(totalAllOrdersRevenue) }}</span>
+            </div>
           </div>
         </div>
 
-        <div v-if="ordersLoading" class="loading">Loading orders...</div>
+        <div v-if="ordersLoading || mobileOrdersLoading" class="loading">Loading orders...</div>
         
-        <div v-else-if="orders.length === 0" class="empty-state">
-          <p>No orders yet for this store.</p>
+        <div v-else-if="filteredAllOrders.length === 0" class="empty-state">
+          <p v-if="orderFilter === 'all'">No orders yet for this store.</p>
+          <p v-else-if="orderFilter === 'web'">No web orders yet for this store.</p>
+          <p v-else>No mobile orders yet for this store.</p>
         </div>
 
         <div v-else class="orders-table">
@@ -138,6 +144,7 @@
             <thead>
               <tr>
                 <th>Order ID</th>
+                <th>Platform</th>
                 <th>Customer</th>
                 <th>Date</th>
                 <th>Total</th>
@@ -146,8 +153,13 @@
               </tr>
             </thead>
             <tbody>
-              <tr v-for="order in filteredOrders" :key="order.id">
+              <tr v-for="order in filteredAllOrders" :key="`${order.platform}-${order.id}`">
                 <td class="order-id">{{ order.id.substring(0, 8) }}...</td>
+                <td>
+                  <span :class="['platform-badge', order.platform]">
+                    {{ order.platform === 'web' ? 'Web' : 'Mobile' }}
+                  </span>
+                </td>
                 <td>
                   <div class="customer-info">
                     <div class="customer-name">{{ order.name }}</div>
@@ -162,7 +174,9 @@
                   </span>
                 </td>
                 <td>
-                  <button class="btn-small btn-view" @click="viewOrderDetails(order)">View Details</button>
+                  <button class="btn-small btn-view" @click="order.platform === 'web' ? viewOrderDetails(order) : viewMobileOrderDetails(order)">
+                    View Details
+                  </button>
                 </td>
               </tr>
             </tbody>
@@ -170,58 +184,7 @@
         </div>
       </div>
 
-      <!-- Mobile Orders Tab -->
-      <div v-if="activeTab === 'mobile-orders'" class="tab-content">
-        <div class="section-header">
-          <h2>Mobile Orders</h2>
-          <div class="order-stats">
-            <span class="stat-item">Total: {{ mobileOrders.length }}</span>
-            <span class="stat-item">Revenue: {{ formatPrice(mobileStoreRevenue) }}</span>
-          </div>
-        </div>
 
-        <div v-if="mobileOrdersLoading" class="loading">Loading mobile orders...</div>
-        
-        <div v-else-if="mobileOrders.length === 0" class="empty-state">
-          <p>No mobile orders yet for this store.</p>
-        </div>
-
-        <div v-else class="mobile-orders-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Order ID</th>
-                <th>Customer</th>
-                <th>Date</th>
-                <th>Total</th>
-                <th>Status</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="order in mobileOrders" :key="order.id">
-                <td class="order-id">{{ order.id.substring(0, 8) }}...</td>
-                <td>
-                  <div class="customer-info">
-                    <div class="customer-name">{{ order.name }}</div>
-                    <div class="customer-email">{{ order.email }}</div>
-                  </div>
-                </td>
-                <td>{{ formatDate(order.timestamp) }}</td>
-                <td class="order-total">{{ formatPrice(order.total) }}</td>
-                <td>
-                  <span :class="['order-status', order.status]">
-                    {{ order.status.charAt(0).toUpperCase() + order.status.slice(1) }}
-                  </span>
-                </td>
-                <td>
-                  <button class="btn-small btn-view" @click="viewMobileOrderDetails(order)">View Details</button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
 
       <!-- Edit Store Tab -->
       <div v-if="activeTab === 'edit-store'" class="tab-content">
@@ -893,7 +856,9 @@ export default {
       currentUser: null,
       userSubscription: null,
       hasActiveSubscription: false,
-      subscriptionLoading: true
+      subscriptionLoading: true,
+      // Orders filter
+      orderFilter: 'all' // 'all', 'web', 'mobile'
     }
   },
   computed: {
@@ -945,6 +910,45 @@ export default {
     },
     completedMobileOrdersCount() {
       return this.mobileOrders.filter(order => order.status === 'completed').length;
+    },
+    // Combined orders functionality
+    allOrders() {
+      // Combine web and mobile orders with platform identifier
+      const webOrders = this.orders.map(order => ({
+        ...order,
+        platform: 'web'
+      }));
+      const mobileOrders = this.mobileOrders.map(order => ({
+        ...order,
+        platform: 'mobile'
+      }));
+      
+      // Combine and sort by timestamp (newest first)
+      return [...webOrders, ...mobileOrders].sort((a, b) => {
+        const timeA = a.timestamp?.toDate ? a.timestamp.toDate() : new Date(a.timestamp);
+        const timeB = b.timestamp?.toDate ? b.timestamp.toDate() : new Date(b.timestamp);
+        return timeB - timeA;
+      });
+    },
+    filteredAllOrders() {
+      // Filter out pending orders first
+      const nonPendingOrders = this.allOrders.filter(order => order.status !== 'pending');
+      
+      // Then apply platform filter
+      if (this.orderFilter === 'web') {
+        return nonPendingOrders.filter(order => order.platform === 'web');
+      } else if (this.orderFilter === 'mobile') {
+        return nonPendingOrders.filter(order => order.platform === 'mobile');
+      }
+      return nonPendingOrders;
+    },
+    allOrdersCount() {
+      return this.filteredAllOrders.length;
+    },
+    totalAllOrdersRevenue() {
+      return this.filteredAllOrders
+        .filter(order => order.status === 'completed')
+        .reduce((total, order) => total + (parseFloat(order.total) || 0), 0);
     }
   },
   async mounted() {
@@ -2196,9 +2200,60 @@ export default {
   color: #c62828;
 }
 
+.header-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 2rem;
+  flex-wrap: wrap;
+}
+
+.order-filter {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.order-filter label {
+  font-weight: 500;
+  color: #333;
+}
+
+.filter-select {
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: white;
+  font-size: 0.9rem;
+  min-width: 120px;
+}
+
+.filter-select:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
 .order-stats {
   display: flex;
   gap: 1rem;
+}
+
+.platform-badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: uppercase;
+}
+
+.platform-badge.web {
+  background: #e3f2fd;
+  color: #1976d2;
+}
+
+.platform-badge.mobile {
+  background: #f3e5f5;
+  color: #7b1fa2;
 }
 
 .stat-item {
@@ -3461,8 +3516,23 @@ export default {
   background: #5a6268;
 }
 
-/* Responsive Design for Bank Accounts & Withdrawals */
+/* Responsive Design */
 @media (max-width: 768px) {
+  .header-controls {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .order-filter {
+    width: 100%;
+  }
+  
+  .filter-select {
+    flex: 1;
+    min-width: auto;
+  }
+  
   .bank-accounts-list {
     grid-template-columns: 1fr;
   }
@@ -3486,7 +3556,8 @@ export default {
     align-items: flex-start;
   }
   
-  .transactions-table {
+  .transactions-table,
+  .orders-table {
     overflow-x: auto;
   }
 }

@@ -75,6 +75,10 @@
               <input type="text" id="name" v-model="name" required class="form-control">
             </div>
             <div class="form-group mb-3">
+              <label for="phone" class="form-label">Contact Phone *</label>
+              <input type="tel" id="phone" v-model="phone" required class="form-control" placeholder="e.g. +1234567890">
+            </div>
+            <div class="form-group mb-3">
               <label for="address" class="form-label">Delivery Instructions *</label>
               <textarea id="address" v-model="address" required class="form-control" rows="3"></textarea>
             </div>
@@ -118,6 +122,7 @@ export default {
     return {
       email: '',
       name: '',
+      phone: '',
       address: '',
       currentOrderID: null,
       store: {}, // Single store information
@@ -132,7 +137,7 @@ export default {
       return cartStore.total;
     },
     isFormValid() {
-      return this.email && this.name && this.address;
+      return this.email && this.name && this.phone && this.address;
     }
   },
   watch: {
@@ -257,6 +262,7 @@ export default {
           timestamp: firebase.firestore.FieldValue.serverTimestamp(),
           email: this.email,
           name: this.name,
+          phone: this.phone,
           address: this.address,
           storeId: cartStore.currentStoreId // Add store ID to link order to specific store
         });

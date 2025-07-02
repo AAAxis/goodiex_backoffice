@@ -58,19 +58,10 @@
                 <i class="fa fa-box"></i>
                 {{ store.totalProducts || 0 }} Products
               </span>
-            </div>
-            <div class="store-contacts">
-              <div v-if="store.phone" class="contact-item" @click.stop="callPhone(store.phone)" title="Call Store">
-                <i class="fa fa-phone"></i>
-                <span>{{ store.phone }}</span>
-              </div>
-              <div v-if="store.email" class="contact-item" @click.stop="copyEmail(store.email)" title="Copy Email">
-                <i class="fa fa-envelope"></i>
-                <span>{{ store.email }}</span>
-              </div>
-              <div v-if="store.address" class="contact-item" @click.stop="openMap(store.address)" title="Open in Maps">
-                <i class="fa fa-map-marker-alt"></i>
-                <span>{{ store.address }}</span>
+              <div class="contact-icons">
+                <i v-if="store.phone" class="fa fa-phone contact-icon" @click.stop="callPhone(store.phone)" title="Call Store"></i>
+                <i v-if="store.email" class="fa fa-envelope contact-icon" @click.stop="copyEmail(store.email)" title="Copy Email"></i>
+                <i v-if="store.address" class="fa fa-map-marker-alt contact-icon" @click.stop="openMap(store.address)" title="Open in Maps"></i>
               </div>
             </div>
           </div>
@@ -379,76 +370,41 @@ export default {
   color: #000;
 }
 
-.store-contacts {
-  margin-top: 1rem;
+.contact-icons {
   display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.contact-item {
-  display: flex;
+  gap: 0.75rem;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem;
-  border-radius: 6px;
-  background: #f8f9fa;
-  transition: all 0.2s ease;
-  cursor: pointer;
-  font-size: 0.85rem;
-  color: #495057;
 }
 
-.contact-item:hover {
-  background: #e9ecef;
-  transform: translateX(2px);
-}
-
-.contact-item i {
+.contact-icon {
+  font-size: 1.1rem;
   color: #6c757d;
-  width: 16px;
-  text-align: center;
-  flex-shrink: 0;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  padding: 0.25rem;
+  border-radius: 50%;
 }
 
-.contact-item span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.contact-item:hover i {
-  color: #495057;
+.contact-icon:hover {
+  transform: scale(1.2);
 }
 
 /* Phone contact styling */
-.contact-item:has(.fa-phone):hover {
-  background: #d4edda;
-  color: #155724;
-}
-
-.contact-item:has(.fa-phone):hover i {
+.contact-icon.fa-phone:hover {
   color: #28a745;
+  background: rgba(40, 167, 69, 0.1);
 }
 
 /* Email contact styling */
-.contact-item:has(.fa-envelope):hover {
-  background: #d1ecf1;
-  color: #0c5460;
-}
-
-.contact-item:has(.fa-envelope):hover i {
+.contact-icon.fa-envelope:hover {
   color: #17a2b8;
+  background: rgba(23, 162, 184, 0.1);
 }
 
 /* Address contact styling */
-.contact-item:has(.fa-map-marker-alt):hover {
-  background: #fff3cd;
-  color: #856404;
-}
-
-.contact-item:has(.fa-map-marker-alt):hover i {
+.contact-icon.fa-map-marker-alt:hover {
   color: #ffc107;
+  background: rgba(255, 193, 7, 0.1);
 }
 
 h2 {
@@ -476,13 +432,12 @@ h2 {
     font-size: 1.5rem;
   }
   
-  .contact-item {
-    font-size: 0.8rem;
-    padding: 0.4rem;
+  .contact-icons {
+    gap: 0.5rem;
   }
   
-  .contact-item span {
-    font-size: 0.75rem;
+  .contact-icon {
+    font-size: 1rem;
   }
 }
 

@@ -896,6 +896,73 @@
               </div>
             </div>
 
+            <div class="form-group">
+              <label>Product Images</label>
+              <div class="images-section">
+                <!-- Hero Image -->
+                <div class="hero-image-section">
+                  <h4>Main Image (Hero)</h4>
+                  <input 
+                    type="file" 
+                    accept="image/*" 
+                    @change="onHeroImageChange"
+                    ref="heroImageInput"
+                  />
+                  <div v-if="heroImagePreview" class="image-preview hero-preview">
+                    <img :src="heroImagePreview" alt="Hero preview" />
+                    <p class="image-label">New Hero Image</p>
+                  </div>
+                  <div v-else-if="editingProduct.image" class="image-preview hero-preview">
+                    <img :src="editingProduct.image" alt="Current hero image" />
+                    <p class="image-label">Current Hero Image</p>
+                  </div>
+                </div>
+
+                <!-- Additional Images -->
+                <div class="additional-images-section">
+                  <h4>Additional Images</h4>
+                  <div class="add-image-controls">
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      @change="onAdditionalImageChange"
+                      ref="additionalImageInput"
+                      multiple
+                    />
+                    <button type="button" class="btn-small btn-secondary" @click="$refs.additionalImageInput.click()">
+                      Add Images
+                    </button>
+                  </div>
+                  
+                  <!-- Current Additional Images -->
+                  <div v-if="editingProduct.additionalImages && editingProduct.additionalImages.length > 0" class="current-additional-images">
+                    <h5>Current Additional Images</h5>
+                    <div class="images-grid">
+                      <div v-for="(imageUrl, index) in editingProduct.additionalImages" :key="`current-${index}`" class="image-item">
+                        <img :src="imageUrl" :alt="`Additional image ${index + 1}`" />
+                        <button type="button" class="btn-remove" @click="removeCurrentAdditionalImage(index)" title="Remove image">
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- New Additional Images Preview -->
+                  <div v-if="newAdditionalImages.length > 0" class="new-additional-images">
+                    <h5>New Images to Add</h5>
+                    <div class="images-grid">
+                      <div v-for="(image, index) in newAdditionalImages" :key="`new-${index}`" class="image-item">
+                        <img :src="image.preview" :alt="`New image ${index + 1}`" />
+                        <button type="button" class="btn-remove" @click="removeNewAdditionalImage(index)" title="Remove image">
+                          ×
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             <div class="modal-actions">
               <button type="button" class="btn-secondary" @click="closeEditProductModal">Cancel</button>
               <button type="submit" class="btn-primary" :disabled="productLoading">
@@ -1016,7 +1083,10 @@ export default {
       editingProduct: null,
       productImageFile: null,
       productImagePreview: null,
-      productLoading: false
+      productLoading: false,
+      heroImagePreview: null,
+      heroImageFile: null,
+      newAdditionalImages: []
     }
   },
   computed: {
@@ -1298,9 +1368,15 @@ export default {
     },
 
     editProduct(product) {
-      this.editingProduct = { ...product }
+      this.editingProduct = { 
+        ...product,
+        additionalImages: product.additionalImages || []
+      }
       this.productImagePreview = null
       this.productImageFile = null
+      this.heroImagePreview = null
+      this.heroImageFile = null
+      this.newAdditionalImages = []
       this.showEditProductModal = true
     },
 
@@ -1309,6 +1385,9 @@ export default {
       this.editingProduct = null
       this.productImagePreview = null
       this.productImageFile = null
+      this.heroImagePreview = null
+      this.heroImageFile = null
+      this.newAdditionalImages = []
     },
 
     onProductImageChange(event) {
@@ -1319,14 +1398,45 @@ export default {
       }
     },
 
+    onHeroImageChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.heroImageFile = file
+        this.heroImagePreview = URL.createObjectURL(file)
+      }
+    },
+
+    onAdditionalImageChange(event) {
+      const files = Array.from(event.target.files)
+      this.newAdditionalImages = files.map(file => ({
+        file,
+        preview: URL.createObjectURL(file)
+      }))
+    },
+
+    removeCurrentAdditionalImage(index) {
+      this.editingProduct.additionalImages.splice(index, 1)
+    },
+
+    removeNewAdditionalImage(index) {
+      this.newAdditionalImages.splice(index, 1)
+    },
+
     async updateProduct() {
       this.productLoading = true
       try {
-        let imageUrl = this.editingProduct.image
+        let heroImageUrl = this.editingProduct.image
         
-        // Upload new image if one was selected
-        if (this.productImageFile) {
-          imageUrl = await this.uploadProductImage()
+        // Upload new hero image if one was selected
+        if (this.heroImageFile) {
+          heroImageUrl = await this.uploadHeroImage()
+        }
+
+        // Upload new additional images
+        let additionalImageUrls = [...(this.editingProduct.additionalImages || [])]
+        if (this.newAdditionalImages.length > 0) {
+          const newImageUrls = await this.uploadAdditionalImages()
+          additionalImageUrls = [...additionalImageUrls, ...newImageUrls]
         }
 
         const updateData = {
@@ -1334,7 +1444,8 @@ export default {
           description: this.editingProduct.description || '',
           price: parseFloat(this.editingProduct.price),
           stock: parseInt(this.editingProduct.stock),
-          image: imageUrl,
+          image: heroImageUrl,
+          additionalImages: additionalImageUrls,
           updatedAt: new Date()
         }
 
@@ -2214,6 +2325,28 @@ export default {
       console.log('Test ILS symbol:', this.getCurrencySymbol('ILS'))
       console.log('Current formatPrice result:', this.formatPrice(100))
       alert(`Store Currency: ${this.store?.currency}\nZAR Symbol: ${this.getCurrencySymbol('ZAR')}\nILS Symbol: ${this.getCurrencySymbol('ILS')}\nFormatPrice(100): ${this.formatPrice(100)}`)
+    },
+
+    onHeroImageChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.heroImagePreview = URL.createObjectURL(file)
+      }
+    },
+
+    onAdditionalImageChange(event) {
+      const files = event.target.files
+      this.newAdditionalImages = Array.from(files).map(file => ({
+        preview: URL.createObjectURL(file)
+      }))
+    },
+
+    removeCurrentAdditionalImage(index) {
+      this.editingProduct.additionalImages.splice(index, 1)
+    },
+
+    removeNewAdditionalImage(index) {
+      this.newAdditionalImages.splice(index, 1)
     }
   }
 }
@@ -4095,5 +4228,88 @@ export default {
 .product-form .modal-actions .btn-delete:disabled {
   background: #ccc;
   cursor: not-allowed;
+}
+
+.images-section {
+  display: flex;
+  gap: 1rem;
+}
+
+.hero-image-section,
+.additional-images-section {
+  flex: 1;
+}
+
+.add-image-controls {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.images-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.image-item {
+  position: relative;
+}
+
+.image-item img {
+  width: 100px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.image-label {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(0, 0, 0, 0.5);
+  color: white;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0 0 4px 4px;
+}
+
+.btn-remove {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: none;
+  border: none;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  padding: 0.25rem;
+}
+
+.btn-remove:hover {
+  color: #dc3545;
+}
+
+.hero-preview,
+.new-additional-images {
+  text-align: center;
+  padding: 1rem;
+  border: 1px dashed #ccc;
+  border-radius: 8px;
+  background: #f8f9fa;
+}
+
+.hero-preview img,
+.new-additional-images img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+}
+
+.new-additional-images h5 {
+  margin: 0;
+  color: #6c757d;
+  font-size: 1rem;
 }
 </style> 

@@ -103,7 +103,7 @@
                 </td>
                 <td>
                   <div class="table-actions">
-                    <button class="btn-small btn-delete" @click="deleteProduct(product.id)">Delete</button>
+                    <button class="btn-small btn-edit" @click="editProduct(product)">Edit</button>
                   </div>
                 </td>
               </tr>
@@ -827,6 +827,112 @@
         </div>
       </div>
     </div>
+
+    <!-- Edit Product Modal -->
+    <div v-if="showEditProductModal" class="modal-overlay" @click="closeEditProductModal">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Edit Product</h3>
+          <button class="modal-close" @click="closeEditProductModal">&times;</button>
+        </div>
+        <div class="modal-body">
+          <form @submit.prevent="updateProduct" class="product-form" v-if="editingProduct">
+            <div class="form-group">
+              <label>Product Name *</label>
+              <input 
+                v-model="editingProduct.name" 
+                type="text" 
+                placeholder="Enter product name" 
+                required 
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Description</label>
+              <textarea 
+                v-model="editingProduct.description" 
+                placeholder="Product description"
+                rows="3"
+              ></textarea>
+            </div>
+
+            <div class="form-group">
+              <label>Price *</label>
+              <input 
+                v-model="editingProduct.price" 
+                type="number" 
+                step="0.01" 
+                min="0"
+                placeholder="0.00" 
+                required 
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Stock Quantity *</label>
+              <input 
+                v-model="editingProduct.stock" 
+                type="number" 
+                min="0"
+                placeholder="0" 
+                required 
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Product Image</label>
+              <input 
+                type="file" 
+                accept="image/*" 
+                @change="onProductImageChange"
+                ref="productImageInput"
+              />
+              <div v-if="productImagePreview" class="image-preview">
+                <img :src="productImagePreview" alt="Product preview" />
+              </div>
+              <div v-else-if="editingProduct.image" class="image-preview">
+                <img :src="editingProduct.image" alt="Current product image" />
+                <p class="current-image-label">Current Image</p>
+              </div>
+            </div>
+
+            <div class="modal-actions">
+              <button type="button" class="btn-secondary" @click="closeEditProductModal">Cancel</button>
+              <button type="submit" class="btn-primary" :disabled="productLoading">
+                {{ productLoading ? 'Updating...' : 'Update Product' }}
+              </button>
+              <button type="button" class="btn-delete" @click="confirmDeleteProduct" :disabled="productLoading">
+                Delete Product
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Product Confirmation Modal -->
+    <div v-if="showDeleteProductConfirmation" class="modal-overlay" @click="cancelDeleteProduct">
+      <div class="modal-content" @click.stop>
+        <div class="modal-header">
+          <h3>Delete Product</h3>
+          <button class="modal-close" @click="cancelDeleteProduct">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p>Are you sure you want to delete <strong>"{{ editingProduct?.name }}"</strong>?</p>
+          <p class="modal-warning">This action cannot be undone.</p>
+          <div class="modal-actions">
+            <button class="btn-secondary" @click="cancelDeleteProduct">Cancel</button>
+            <button 
+              class="btn-delete" 
+              @click="deleteProduct"
+              :disabled="productLoading"
+            >
+              {{ productLoading ? 'Deleting...' : 'Delete Product' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -903,7 +1009,14 @@ export default {
       hasActiveSubscription: false,
       subscriptionLoading: true,
       // Orders filter
-      orderFilter: 'all' // 'all', 'web', 'mobile'
+      orderFilter: 'all', // 'all', 'web', 'mobile'
+      // Edit product modal
+      showEditProductModal: false,
+      showDeleteProductConfirmation: false,
+      editingProduct: null,
+      productImageFile: null,
+      productImagePreview: null,
+      productLoading: false
     }
   },
   computed: {
@@ -1184,14 +1297,108 @@ export default {
       this.$router.push(`/store-owner/manage-store/${this.storeId}/create-product`)
     },
 
-    async deleteProduct(productId) {
-      if (confirm('Are you sure you want to delete this product?')) {
-        try {
-          await db.collection('stores').doc(this.storeId).collection('products').doc(productId).delete()
-          await this.fetchProducts()
-        } catch (error) {
-          console.error('Error deleting product:', error)
+    editProduct(product) {
+      this.editingProduct = { ...product }
+      this.productImagePreview = null
+      this.productImageFile = null
+      this.showEditProductModal = true
+    },
+
+    closeEditProductModal() {
+      this.showEditProductModal = false
+      this.editingProduct = null
+      this.productImagePreview = null
+      this.productImageFile = null
+    },
+
+    onProductImageChange(event) {
+      const file = event.target.files[0]
+      if (file) {
+        this.productImageFile = file
+        this.productImagePreview = URL.createObjectURL(file)
+      }
+    },
+
+    async updateProduct() {
+      this.productLoading = true
+      try {
+        let imageUrl = this.editingProduct.image
+        
+        // Upload new image if one was selected
+        if (this.productImageFile) {
+          imageUrl = await this.uploadProductImage()
         }
+
+        const updateData = {
+          name: this.editingProduct.name,
+          description: this.editingProduct.description || '',
+          price: parseFloat(this.editingProduct.price),
+          stock: parseInt(this.editingProduct.stock),
+          image: imageUrl,
+          updatedAt: new Date()
+        }
+
+        await db.collection('stores')
+          .doc(this.storeId)
+          .collection('products')
+          .doc(this.editingProduct.id)
+          .update(updateData)
+
+        this.showMessage('Product updated successfully!', 'success')
+        this.closeEditProductModal()
+        await this.fetchProducts()
+
+      } catch (error) {
+        console.error('Error updating product:', error)
+        this.showMessage('Failed to update product. Please try again.', 'error')
+      } finally {
+        this.productLoading = false
+      }
+    },
+
+    async uploadProductImage() {
+      if (!this.productImageFile) return this.editingProduct.image
+
+      try {
+        const { storage } = await import('../../firebase')
+        const fileName = `product-images/${Date.now()}_${this.productImageFile.name}`
+        const storageRef = storage.ref().child(fileName)
+        const snapshot = await storageRef.put(this.productImageFile)
+        const downloadURL = await snapshot.ref.getDownloadURL()
+        return downloadURL
+      } catch (error) {
+        console.error('Error uploading product image:', error)
+        throw error
+      }
+    },
+
+    confirmDeleteProduct() {
+      this.showDeleteProductConfirmation = true
+    },
+
+    cancelDeleteProduct() {
+      this.showDeleteProductConfirmation = false
+    },
+
+    async deleteProduct() {
+      this.productLoading = true
+      try {
+        await db.collection('stores')
+          .doc(this.storeId)
+          .collection('products')
+          .doc(this.editingProduct.id)
+          .delete()
+
+        this.showMessage('Product deleted successfully!', 'success')
+        this.cancelDeleteProduct()
+        this.closeEditProductModal()
+        await this.fetchProducts()
+
+      } catch (error) {
+        console.error('Error deleting product:', error)
+        this.showMessage('Failed to delete product. Please try again.', 'error')
+      } finally {
+        this.productLoading = false
       }
     },
 
@@ -2273,6 +2480,15 @@ export default {
 
 .btn-delete:hover {
   background: #d32f2f;
+}
+
+.btn-edit {
+  background: #2196f3;
+  color: white;
+}
+
+.btn-edit:hover {
+  background: #1976d2;
 }
 
 .products-table {
@@ -3765,5 +3981,119 @@ export default {
   .orders-table {
     overflow-x: auto;
   }
+}
+
+/* Product Form Styles */
+.product-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.product-form .form-group {
+  display: flex;
+  flex-direction: column;
+}
+
+.product-form .form-group label {
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  color: #333;
+}
+
+.product-form .form-group input,
+.product-form .form-group textarea {
+  padding: 0.75rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 1rem;
+  transition: border-color 0.2s;
+}
+
+.product-form .form-group input:focus,
+.product-form .form-group textarea:focus {
+  outline: none;
+  border-color: #4CAF50;
+}
+
+.product-form .form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+.product-form .image-preview {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.product-form .image-preview img {
+  max-width: 200px;
+  max-height: 200px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid #ddd;
+}
+
+.product-form .current-image-label {
+  margin-top: 0.5rem;
+  color: #666;
+  font-size: 0.9rem;
+  font-style: italic;
+}
+
+.product-form .modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  margin-top: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e0e0e0;
+}
+
+.product-form .modal-actions button {
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.product-form .modal-actions .btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.product-form .modal-actions .btn-secondary:hover {
+  background: #5a6268;
+}
+
+.product-form .modal-actions .btn-primary {
+  background: #4CAF50;
+  color: white;
+}
+
+.product-form .modal-actions .btn-primary:hover:not(:disabled) {
+  background: #388e3c;
+}
+
+.product-form .modal-actions .btn-primary:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+.product-form .modal-actions .btn-delete {
+  background: #dc3545;
+  color: white;
+}
+
+.product-form .modal-actions .btn-delete:hover:not(:disabled) {
+  background: #c82333;
+}
+
+.product-form .modal-actions .btn-delete:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 </style> 

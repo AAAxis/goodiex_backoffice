@@ -1,5 +1,5 @@
 <template>
-      <Navbar :storeName="storeName" />
+     <Navbar />
   
   <div>
 

@@ -42,7 +42,20 @@
         <div class="row">
           <div class="col-md-6">
             <div class="product-image-section">
-              <img v-if="product.image" :src="product.image" :alt="product.name" class="main-product-image">
+              <div v-if="galleryImages.length > 0" class="gallery-wrapper">
+                <img :src="galleryImages[selectedImageIndex]" :alt="product.name" class="main-product-image" />
+                <div v-if="galleryImages.length > 1" class="gallery-thumbnails">
+                  <img
+                    v-for="(img, idx) in galleryImages"
+                    :key="img"
+                    :src="img"
+                    :alt="`Thumbnail ${idx+1}`"
+                    class="gallery-thumb"
+                    :class="{ selected: idx === selectedImageIndex }"
+                    @click="selectedImageIndex = idx"
+                  />
+                </div>
+              </div>
               <div v-else class="no-image-placeholder">
                 <i class="fa fa-image fa-4x text-muted"></i>
                 <p class="text-muted mt-2">No image available</p>
@@ -134,10 +147,20 @@ export default {
       store: {},
       storeName: '',
       loading: true,
-      quantity: 1
+      quantity: 1,
+      selectedImageIndex: 0
     }
   },
   computed: {
+    galleryImages() {
+      if (Array.isArray(this.product.images) && this.product.images.length > 0) {
+        return this.product.images
+      } else if (this.product.image) {
+        return [this.product.image]
+      } else {
+        return []
+      }
+    },
     cartItemCount() {
       return cartStore.itemCount;
     },
@@ -156,6 +179,7 @@ export default {
       if (to.params.productId !== from.params.productId || to.params.storeId !== from.params.storeId) {
         await this.fetchStore(); // Load store first to get currency
         this.fetchProduct();
+        this.selectedImageIndex = 0;
       }
     }
   },
@@ -194,6 +218,7 @@ export default {
           if (this.product.image && !this.product.image_url) {
             this.product.image_url = this.product.image;
           }
+          this.selectedImageIndex = 0;
         } else {
           this.product = {};
         }
@@ -669,5 +694,35 @@ export default {
   .product-title {
     font-size: 1.5rem;
   }
+}
+
+/* Gallery styles */
+.gallery-wrapper {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gallery-thumbnails {
+  display: flex;
+  gap: 0.5rem;
+  margin-top: 1rem;
+  justify-content: center;
+}
+
+.gallery-thumb {
+  width: 64px;
+  height: 64px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 2px solid #eee;
+  cursor: pointer;
+  transition: border 0.2s, transform 0.2s;
+}
+
+.gallery-thumb.selected {
+  border: 2px solid #2196f3;
+  transform: scale(1.08);
 }
 </style> 

@@ -616,6 +616,12 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
+          <button 
+            @click="fetchUserSubscription" 
+            :disabled="subscriptionLoading"
+            class="btn-refresh">
+            {{ subscriptionLoading ? 'Checking...' : 'Refresh Subscription Status' }}
+          </button>
         </div>
 
 
@@ -651,10 +657,28 @@
           <!-- Subscription Required Notice for Withdrawals Only -->
           <div v-if="!hasActiveSubscription" class="subscription-required">
             <h4>🔒 Subscription Required for Withdrawals</h4>
+            
+            <!-- Show subscription details -->
+            <div class="subscription-details">
+              <p><strong>Current Status:</strong> {{ userSubscription?.subscriptionStatus || 'No subscription' }}</p>
+              <p v-if="userSubscription?.stripeCustomerId"><strong>Customer ID:</strong> {{ userSubscription.stripeCustomerId }}</p>
+              <p v-if="userSubscription?.planId"><strong>Plan:</strong> {{ userSubscription.planId }}</p>
+            </div>
+            
             <p>Withdrawals are only available with an active subscription.</p>
+            <p v-if="userSubscription?.stripeCustomerId" class="sync-note">
+              If you have an active subscription but it's not showing here, try syncing your subscription status.
+            </p>
+            
             <div class="subscription-actions">
               <router-link to="/plans" class="btn-primary">View Plans</router-link>
               <router-link to="/store-owner/settings" class="btn-secondary">Manage Subscription</router-link>
+              <button v-if="userSubscription?.stripeCustomerId" 
+                      @click="syncSubscriptionWithStripe(userSubscription.stripeCustomerId)"
+                      :disabled="subscriptionLoading"
+                      class="btn-sync">
+                {{ subscriptionLoading ? 'Syncing...' : 'Sync Subscription Status' }}
+              </button>
             </div>
           </div>
 
@@ -1017,12 +1041,79 @@ export default {
           
           // Check if user has active subscription
           this.hasActiveSubscription = userData.subscriptionStatus === 'active'
+          
+          // If we have a customer ID but no active subscription, try to sync with Stripe
+          if (userData.stripeCustomerId && !this.hasActiveSubscription) {
+            console.log('Subscription not active in Firebase, checking Stripe...')
+            await this.syncSubscriptionWithStripe(userData.stripeCustomerId)
+          }
         } else {
           this.hasActiveSubscription = false
         }
       } catch (error) {
         console.error('Error fetching user subscription:', error)
         this.hasActiveSubscription = false
+      } finally {
+        this.subscriptionLoading = false
+      }
+    },
+
+    async syncSubscriptionWithStripe(customerId) {
+      this.subscriptionLoading = true
+      try {
+        console.log('Syncing subscription status with Stripe for customer:', customerId)
+        
+        const response = await fetch('https://pay.theholylabs.com/check-subscription-status', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customer_id: customerId
+          })
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
+          console.log('Stripe subscription data:', data)
+          
+          if (data.hasActiveSubscription) {
+            // Update Firebase with the correct subscription status
+            await db.collection('storeOwners').doc(this.currentUser.uid).update({
+              subscriptionStatus: 'active',
+              planId: data.planId || '',
+              subscriptionId: data.subscriptionId || '',
+              planName: data.planName || '',
+              lastSyncedAt: new Date()
+            })
+            
+            // Update local state
+            this.hasActiveSubscription = true
+            this.userSubscription.subscriptionStatus = 'active'
+            this.userSubscription.planId = data.planId || ''
+            this.userSubscription.subscriptionId = data.subscriptionId || ''
+            
+            this.showMessage('✅ Subscription status updated! You can now make withdrawals.', 'success')
+            console.log('Subscription status synced successfully!')
+          } else {
+            // Update Firebase to reflect no active subscription
+            await db.collection('storeOwners').doc(this.currentUser.uid).update({
+              subscriptionStatus: 'inactive',
+              lastSyncedAt: new Date()
+            })
+            
+            this.hasActiveSubscription = false
+            this.userSubscription.subscriptionStatus = 'inactive'
+            this.showMessage('No active subscription found in Stripe. Please subscribe to enable withdrawals.', 'warning')
+          }
+        } else {
+          const errorData = await response.json()
+          console.warn('Failed to sync with Stripe:', errorData)
+          this.showMessage(`Failed to sync subscription: ${errorData.error || response.statusText}`, 'error')
+        }
+      } catch (error) {
+        console.error('Error syncing subscription with Stripe:', error)
+        this.showMessage('Error syncing subscription status. Please try again.', 'error')
       } finally {
         this.subscriptionLoading = false
       }
@@ -3514,6 +3605,73 @@ export default {
 
 .subscription-actions .btn-secondary:hover {
   background: #5a6268;
+}
+
+.subscription-details {
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 6px;
+  margin: 1rem 0;
+  text-align: left;
+}
+
+.subscription-details p {
+  margin: 0.5rem 0;
+  font-size: 0.9rem;
+  color: #495057;
+}
+
+.sync-note {
+  font-style: italic;
+  color: #6c757d !important;
+  font-size: 0.85rem !important;
+}
+
+.btn-sync {
+  background: #17a2b8;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-weight: 500;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.btn-sync:hover:not(:disabled) {
+  background: #138496;
+}
+
+.btn-sync:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
+}
+
+.tab-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+.btn-refresh {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn-refresh:hover:not(:disabled) {
+  background: #218838;
+}
+
+.btn-refresh:disabled {
+  background: #6c757d;
+  cursor: not-allowed;
 }
 
 /* Responsive Design */

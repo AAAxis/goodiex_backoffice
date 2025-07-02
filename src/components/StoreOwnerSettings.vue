@@ -319,19 +319,38 @@ export default {
 
     async openStripePortal() {
       if (!this.stripeCustomerId) {
-        this.subscriptionMessage = 'No Stripe customer ID found.'
+        this.subscriptionMessage = 'No Stripe customer ID found. Please contact support.'
         this.subscriptionMessageType = 'error'
         return
       }
       this.portalLoading = true
       this.subscriptionMessage = ''
       try {
+        console.log('Creating customer portal session for:', this.stripeCustomerId)
         const res = await axios.post('https://pay.theholylabs.com/create-customer-portal-session', {
-          customer_id: this.stripeCustomerId
+          customer_id: this.stripeCustomerId,
+          return_url: window.location.origin + '/store-owner/settings'
         })
-        window.location.href = res.data.url
+        
+        if (res.data && res.data.url) {
+          window.location.href = res.data.url
+        } else {
+          console.error('Invalid response from portal API:', res.data)
+          this.subscriptionMessage = 'Invalid response from payment system. Please try again.'
+          this.subscriptionMessageType = 'error'
+        }
       } catch (error) {
-        this.subscriptionMessage = 'Failed to open Stripe portal.'
+        console.error('Customer portal error:', error.response?.data || error.message)
+        
+        if (error.response?.status === 500) {
+          this.subscriptionMessage = 'Payment system temporarily unavailable. Please try again in a few minutes.'
+        } else if (error.response?.status === 404) {
+          this.subscriptionMessage = 'Customer portal service not found. Please contact support.'
+        } else if (error.response?.data?.message) {
+          this.subscriptionMessage = `Error: ${error.response.data.message}`
+        } else {
+          this.subscriptionMessage = 'Failed to open subscription management. Please contact support if this persists.'
+        }
         this.subscriptionMessageType = 'error'
       } finally {
         this.portalLoading = false

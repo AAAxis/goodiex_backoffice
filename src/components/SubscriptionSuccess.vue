@@ -28,9 +28,7 @@
         <router-link to="/store-owner/dashboard" class="btn btn-primary btn-lg">
           Go to Dashboard
         </router-link>
-        <router-link to="/store-owner/settings" class="btn btn-outline-secondary btn-lg">
-          Manage Subscription
-        </router-link>
+
       </div>
     </div>
   </div>

@@ -615,12 +615,6 @@
       <div v-if="activeTab === 'withdrawals'" class="tab-content">
         <div class="tab-header">
           <h2>Withdrawals</h2>
-          <button 
-            @click="fetchUserSubscription" 
-            :disabled="subscriptionLoading"
-            class="btn-refresh">
-            {{ subscriptionLoading ? 'Checking...' : 'Refresh Subscription Status' }}
-          </button>
         </div>
 
 
@@ -671,13 +665,6 @@
             
             <div class="subscription-actions">
               <router-link to="/plans" class="btn-primary">View Plans</router-link>
-              <router-link to="/store-owner/settings" class="btn-secondary">Manage Subscription</router-link>
-              <button v-if="userSubscription?.stripeCustomerId" 
-                      @click="syncSubscriptionWithStripe(userSubscription.stripeCustomerId)"
-                      :disabled="subscriptionLoading"
-                      class="btn-sync">
-                {{ subscriptionLoading ? 'Syncing...' : 'Sync Subscription Status' }}
-              </button>
             </div>
           </div>
 

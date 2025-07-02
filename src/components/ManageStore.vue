@@ -677,10 +677,6 @@
               <div class="earnings-detail">{{ store?.currency || 'USD' }} ready for withdrawal</div>
             </div>
           </div>
-          <div class="earnings-breakdown">
-            <p><strong>Web Orders:</strong> {{ completedWebOrdersCount }} orders - {{ formatPrice(storeRevenue) }}</p>
-            <p><strong>Mobile Orders:</strong> {{ completedMobileOrdersCount }} orders - {{ formatPrice(mobileStoreRevenue) }}</p>
-          </div>
         </div>
 
         <!-- Withdrawal Section -->

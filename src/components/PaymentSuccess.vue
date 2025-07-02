@@ -32,7 +32,7 @@
         </div>
       </div>
       <div class="success-actions">
-        <router-link to="/orders" class="btn btn-dark btn-lg">
+        <router-link :to="`/orders?email=${encodeURIComponent(email)}`" class="btn btn-dark btn-lg">
           My Orders
         </router-link>
         <button class="btn btn-primary btn-lg" @click="sendReceipt" :disabled="sendingReceipt">

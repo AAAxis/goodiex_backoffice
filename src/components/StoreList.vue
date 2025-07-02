@@ -58,10 +58,20 @@
                 <i class="fa fa-box"></i>
                 {{ store.totalProducts || 0 }} Products
               </span>
-              <span class="store-detail">
-                <i class="fa fa-star"></i>
-                Active Store
-              </span>
+            </div>
+            <div class="store-contacts">
+              <div v-if="store.phone" class="contact-item" @click.stop="callPhone(store.phone)" title="Call Store">
+                <i class="fa fa-phone"></i>
+                <span>{{ store.phone }}</span>
+              </div>
+              <div v-if="store.email" class="contact-item" @click.stop="copyEmail(store.email)" title="Copy Email">
+                <i class="fa fa-envelope"></i>
+                <span>{{ store.email }}</span>
+              </div>
+              <div v-if="store.address" class="contact-item" @click.stop="openMap(store.address)" title="Open in Maps">
+                <i class="fa fa-map-marker-alt"></i>
+                <span>{{ store.address }}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -145,6 +155,100 @@ export default {
     
     visitStore(storeId) {
       this.$router.push({ name: 'ShopStore', params: { storeId } });
+    },
+
+    callPhone(phone) {
+      if (phone) {
+        // Clean phone number for tel: link
+        const cleanPhone = phone.replace(/[^\d+]/g, '');
+        window.open(`tel:${cleanPhone}`, '_self');
+      }
+    },
+
+    async copyEmail(email) {
+      if (email) {
+        try {
+          await navigator.clipboard.writeText(email);
+          this.showToast(`Email copied: ${email}`, 'success');
+        } catch (error) {
+          // Fallback for older browsers
+          this.fallbackCopyEmail(email);
+        }
+      }
+    },
+
+    fallbackCopyEmail(email) {
+      const textArea = document.createElement('textarea');
+      textArea.value = email;
+      document.body.appendChild(textArea);
+      textArea.select();
+      try {
+        document.execCommand('copy');
+        this.showToast(`Email copied: ${email}`, 'success');
+      } catch (error) {
+        console.error('Failed to copy email:', error);
+        this.showToast('Failed to copy email', 'error');
+      }
+      document.body.removeChild(textArea);
+    },
+
+    openMap(address) {
+      if (address) {
+        // Encode address for URL
+        const encodedAddress = encodeURIComponent(address);
+        
+        // Detect device and open appropriate maps app
+        const isMobile = /Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+          // Try to open native maps app first, fallback to Google Maps web
+          const mapsUrl = `https://maps.google.com/maps?q=${encodedAddress}`;
+          window.open(mapsUrl, '_blank');
+        } else {
+          // Desktop - open Google Maps in new tab
+          const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodedAddress}`;
+          window.open(mapsUrl, '_blank');
+        }
+      }
+    },
+
+    showToast(message, type = 'info') {
+      const toast = document.createElement('div');
+      toast.className = `toast-notification ${type}`;
+      toast.innerHTML = `
+        <div class="toast-content">
+          <i class="fa ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'}"></i>
+          <span>${message}</span>
+        </div>
+      `;
+      
+      // Toast styles
+      toast.style.cssText = `
+        position: fixed;
+        top: 80px;
+        right: 20px;
+        background: ${type === 'success' ? '#d4edda' : type === 'error' ? '#f8d7da' : '#d1ecf1'};
+        color: ${type === 'success' ? '#155724' : type === 'error' ? '#721c24' : '#0c5460'};
+        border: 1px solid ${type === 'success' ? '#c3e6cb' : type === 'error' ? '#f5c6cb' : '#bee5eb'};
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        z-index: 1000;
+        animation: slideInRight 0.3s ease;
+        max-width: 300px;
+      `;
+      
+      document.body.appendChild(toast);
+      
+      // Remove toast after 3 seconds
+      setTimeout(() => {
+        toast.style.animation = 'slideOutRight 0.3s ease';
+        setTimeout(() => {
+          if (document.body.contains(toast)) {
+            document.body.removeChild(toast);
+          }
+        }, 300);
+      }, 3000);
     }
   }
 };
@@ -275,6 +379,78 @@ export default {
   color: #000;
 }
 
+.store-contacts {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.contact-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem;
+  border-radius: 6px;
+  background: #f8f9fa;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  font-size: 0.85rem;
+  color: #495057;
+}
+
+.contact-item:hover {
+  background: #e9ecef;
+  transform: translateX(2px);
+}
+
+.contact-item i {
+  color: #6c757d;
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
+
+.contact-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.contact-item:hover i {
+  color: #495057;
+}
+
+/* Phone contact styling */
+.contact-item:has(.fa-phone):hover {
+  background: #d4edda;
+  color: #155724;
+}
+
+.contact-item:has(.fa-phone):hover i {
+  color: #28a745;
+}
+
+/* Email contact styling */
+.contact-item:has(.fa-envelope):hover {
+  background: #d1ecf1;
+  color: #0c5460;
+}
+
+.contact-item:has(.fa-envelope):hover i {
+  color: #17a2b8;
+}
+
+/* Address contact styling */
+.contact-item:has(.fa-map-marker-alt):hover {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.contact-item:has(.fa-map-marker-alt):hover i {
+  color: #ffc107;
+}
+
 h2 {
   font-size: 2rem;
   font-weight: 700;
@@ -299,6 +475,15 @@ h2 {
   h2 {
     font-size: 1.5rem;
   }
+  
+  .contact-item {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+  
+  .contact-item span {
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -310,5 +495,38 @@ h2 {
 
 .container {
   padding-top: 76px;
+}
+
+/* Toast Animation Styles */
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideOutRight {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.toast-content i {
+  font-size: 1rem;
 }
 </style> 

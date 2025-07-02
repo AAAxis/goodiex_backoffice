@@ -5,7 +5,9 @@
     <!-- App Bar -->
  
 
-    <div class="container" style="padding: 2rem;">
+  
+    <div class="container" style="padding: 2rem; padding-top: 90px;">
+    
       <div class="row align-items-center mb-4">
         <div class="col-auto">
           <h2>Available Stores</h2>

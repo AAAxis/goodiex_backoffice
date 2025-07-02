@@ -901,7 +901,14 @@ export default {
     },
     totalWithdrawn() {
       return this.transfers
-        .filter(transfer => transfer.status === 'completed' || transfer.status === 'outgoing_payment_sent' || transfer.status === 'charged')
+        .filter(transfer => 
+          transfer.status === 'completed' || 
+          transfer.status === 'outgoing_payment_sent' || 
+          transfer.status === 'charged' ||
+          transfer.status === 'processing' ||
+          transfer.status === 'incoming_payment_waiting' ||
+          transfer.status === 'funds_converted'
+        )
         .reduce((total, transfer) => total + (parseFloat(transfer.amount) || 0), 0);
     },
     availableBalance() {

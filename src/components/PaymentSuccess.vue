@@ -10,7 +10,14 @@
       </p>
       <div class="order-details order-details-wide">
         <div v-if="orderItems.length > 0" class="order-items-list mt-3">
-          <h4 class="mb-2">Items Ordered</h4>
+          <h4 class="mb-2 d-flex align-items-center justify-content-between">
+            <span>Items Ordered</span>
+            <span v-if="!receiptSent" class="send-receipt-link" @click="sendReceipt" :style="sendingReceipt ? 'pointer-events:none;opacity:0.6;' : ''">
+              <span v-if="sendingReceipt"><i class="fa fa-spinner fa-spin"></i> Sending...</span>
+              <span v-else>Send Receipt</span>
+            </span>
+            <span v-if="receiptSent" class="send-receipt-link sent">Receipt sent</span>
+          </h4>
           <ul class="order-items-ul">
             <li v-for="(item, idx) in orderItems" :key="idx" class="order-item-li">
               <span>{{ item.product_name }} <span v-if="item.quantity">x{{ item.quantity }}</span></span>
@@ -31,11 +38,6 @@
         <router-link :to="`/orders?email=${encodeURIComponent(email)}`" class="btn btn-dark btn-lg">
           My Orders
         </router-link>
-        <button class="btn btn-primary btn-lg" @click="sendReceipt" :disabled="sendingReceipt">
-          <span v-if="sendingReceipt"><i class="fa fa-spinner fa-spin"></i> Sending...</span>
-          <span v-else>Send Receipt</span>
-        </button>
-        <div v-if="receiptSent" class="alert alert-success mt-2">Receipt sent to {{ email }}</div>
       </div>
     </div>
   </div>
@@ -386,5 +388,23 @@ export default {
   .order-total-row {
     font-size: 1.05rem;
   }
+}
+
+.send-receipt-link {
+  color: #1976d2;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 1rem;
+  margin-left: 1rem;
+  transition: color 0.2s;
+}
+.send-receipt-link:hover {
+  color: #0d47a1;
+  text-decoration: underline;
+}
+.send-receipt-link.sent {
+  color: #388e3c;
+  cursor: default;
+  text-decoration: none;
 }
 </style>

@@ -890,18 +890,14 @@
                   multiple
                   style="display:none;"
                 />
-                <span class="add-image-link" @click="$refs.imagesInput.click()" title="Add Images">
-                  <i class="fa fa-plus"></i> Add Image
-                </span>
+                <button type="button" class="add-image-ghost-btn" @click="$refs.imagesInput.click()" title="Add Image">
+                  <i class="fa fa-plus"></i>
+                </button>
                 <div class="images-row">
                   <div v-for="(img, idx) in editingProduct.images" :key="img" class="image-thumb-wrapper">
                     <img :src="img" class="image-thumb" :class="{ hero: idx === 0 }" :alt="`Product image ${idx+1}`" />
                     <span v-if="idx === 0" class="hero-badge">Hero</span>
                     <button type="button" class="btn-remove" @click="removeImage(idx)" title="Remove image">×</button>
-                  </div>
-                  <!-- Show spinner for uploading slots -->
-                  <div v-for="idx in uploadingImageIndexes" :key="'uploading-'+idx" class="image-thumb-wrapper uploading-thumb">
-                    <div class="spinner"></div>
                   </div>
                 </div>
                 <div v-if="uploadingImages" class="uploading-overlay">
@@ -1342,15 +1338,13 @@ export default {
       try {
         this.uploadingImages = true
         const { storage } = await import('../../firebase')
-        for (const [i, file] of files.entries()) {
-          this.uploadingImageIndexes.push(this.editingProduct.images.length + i)
+        for (const file of files) {
           const fileName = `product-images/${this.storeId}/${Date.now()}_${file.name}`
           const storageRef = storage.ref().child(fileName)
           const snapshot = await storageRef.put(file)
           const url = await snapshot.ref.getDownloadURL()
           if (!this.editingProduct.images) this.editingProduct.images = []
           this.editingProduct.images.push(url)
-          this.uploadingImageIndexes.shift() // Remove the index as soon as upload is done
         }
       } catch (e) {
         console.error('Error auto-uploading images:', e)
@@ -4306,25 +4300,27 @@ export default {
   background: #dc3545;
 }
 
-.add-image-link {
-  color: #2196f3;
-  cursor: pointer;
-  font-size: 1rem;
-  margin-right: 1rem;
+.add-image-ghost-btn {
+  width: 40px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
+  justify-content: center;
+  border: 1.5px dashed #bbb;
   background: none;
-  border: none;
-  padding: 0;
+  color: #2196f3;
+  border-radius: 8px;
+  font-size: 1.3rem;
+  cursor: pointer;
+  margin-right: 0.5rem;
+  transition: border-color 0.2s, color 0.2s, background 0.2s;
   outline: none;
-  text-decoration: underline;
-  transition: color 0.2s;
 }
 
-.add-image-link:hover {
+.add-image-ghost-btn:hover {
+  border-color: #2196f3;
   color: #1565c0;
-  text-decoration: underline;
+  background: #f4faff;
 }
 
 /* Spinner styles */

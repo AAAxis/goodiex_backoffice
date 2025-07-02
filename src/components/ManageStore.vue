@@ -19,6 +19,13 @@
             <span v-if="store.phone" class="contact-value">{{ store.phone }}</span>
             <span v-if="store.email" class="contact-value">{{ store.email }}</span>
             <span v-if="store.address" class="contact-value">{{ store.address }}</span>
+            <router-link
+              v-if="store.id"
+              :to="`/store-owner/manage-store/${store.id}/edit`"
+              class="edit-store-chip"
+            >
+              Edit Store
+            </router-link>
           </div>
         </div>
 
@@ -36,12 +43,6 @@
           @click="activeTab = 'orders'"
         >
           All Orders ({{ allOrdersCount }})
-        </button>
-        <button 
-          :class="['tab-btn', activeTab === 'edit-store' ? 'active' : '']"
-          @click="activeTab = 'edit-store'"
-        >
-          Edit Store
         </button>
         <button 
           :class="['tab-btn', { active: activeTab === 'domain' }]" 
@@ -209,194 +210,6 @@
       </div>
 
 
-
-      <!-- Edit Store Tab -->
-      <div v-if="activeTab === 'edit-store'" class="tab-content">
-        <div class="section-header">
-          <h2>Edit Store</h2>
-        </div>
-
-        <form @submit.prevent="updateStore" class="store-form" v-if="store">
-          <div class="form-group">
-            <label>Store Name *</label>
-            <input 
-              v-model="storeData.name" 
-              type="text" 
-              placeholder="Enter store name" 
-              required 
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Description</label>
-            <textarea 
-              v-model="storeData.description" 
-              placeholder="Store description"
-              rows="3"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Currency *</label>
-            <select 
-              v-model="storeData.currency" 
-              required 
-            >
-              <option value="">Select Currency</option>
-              <option value="USD">USD - US Dollar ($)</option>
-              <option value="EUR">EUR - Euro (€)</option>
-              <option value="GBP">GBP - British Pound (£)</option>
-              <option value="JPY">JPY - Japanese Yen (¥)</option>
-              <option value="CAD">CAD - Canadian Dollar (C$)</option>
-              <option value="AUD">AUD - Australian Dollar (A$)</option>
-              <option value="CHF">CHF - Swiss Franc (CHF)</option>
-              <option value="CNY">CNY - Chinese Yuan (¥)</option>
-              <option value="SEK">SEK - Swedish Krona (kr)</option>
-              <option value="NOK">NOK - Norwegian Krone (kr)</option>
-              <option value="MXN">MXN - Mexican Peso ($)</option>
-              <option value="INR">INR - Indian Rupee (₹)</option>
-              <option value="BRL">BRL - Brazilian Real (R$)</option>
-              <option value="RUB">RUB - Russian Ruble (₽)</option>
-              <option value="KRW">KRW - South Korean Won (₩)</option>
-              <option value="SGD">SGD - Singapore Dollar (S$)</option>
-              <option value="HKD">HKD - Hong Kong Dollar (HK$)</option>
-              <option value="NZD">NZD - New Zealand Dollar (NZ$)</option>
-              <option value="TRY">TRY - Turkish Lira (₺)</option>
-              <option value="ZAR">ZAR - South African Rand (R)</option>
-              <option value="ILS">ILS - Israeli Shekel (₪)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Email *</label>
-            <input 
-              v-model="storeData.email" 
-              type="email" 
-              placeholder="Contact email" 
-              required 
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Phone</label>
-            <input 
-              v-model="storeData.phone" 
-              type="tel" 
-              placeholder="Phone number" 
-            />
-          </div>
-
-          <div class="form-group">
-            <label>Address</label>
-            <textarea 
-              v-model="storeData.address" 
-              placeholder="Store address"
-              rows="2"
-            ></textarea>
-          </div>
-
-          <div class="form-group">
-            <label>Delivery Fee</label>
-            <div style="display: flex; align-items: center; gap: 0.5rem;">
-              <span>{{ getCurrencySymbol(storeData.currency || 'USD') }}</span>
-              <input
-                v-model.number="storeData.deliveryFee"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                style="max-width: 120px;"
-              />
-            </div>
-            <small>Flat delivery/shipping fee added to each order at checkout.</small>
-          </div>
-
-          <div class="form-group">
-            <label>Store Image</label>
-            <input 
-              type="file" 
-              accept="image/*" 
-              @change="onImageChange"
-              ref="imageInput"
-            />
-            <div v-if="imagePreview" class="image-preview">
-              <img :src="imagePreview" alt="Store preview" />
-            </div>
-            <div v-else-if="currentImage" class="image-preview">
-              <img :src="currentImage" alt="Current store image" />
-              <p class="current-image-label">Current Image</p>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="checkbox-label">
-              <input 
-                type="checkbox" 
-                v-model="storeData.isActive"
-              />
-              <span class="checkmark"></span>
-              Active (store will be visible to customers)
-            </label>
-          </div>
-
-          <button type="submit" class="update-btn" :disabled="loading">
-            {{ loading ? 'Updating Store...' : 'Update Store' }}
-          </button>
-        </form>
-
-        <!-- Danger Zone -->
-        <div v-if="store" class="danger-zone">
-          <div class="danger-content">
-            <div class="danger-warning">
-              <h4>Delete Store</h4>
-              <p>Once you delete a store, there is no going back.</p>
-            </div>
-            <button 
-              class="delete-btn" 
-              @click="showDeleteConfirmation = true"
-              :disabled="loading"
-            >
-              Delete Store Permanently
-            </button>
-          </div>
-        </div>
-
-        <!-- Delete Confirmation Modal -->
-        <div v-if="showDeleteConfirmation" class="modal-overlay" @click="cancelDelete">
-          <div class="modal-content" @click.stop>
-            <h3>Confirm Store Deletion</h3>
-            <p>Are you absolutely sure you want to delete <strong>"{{ store.name }}"</strong>?</p>
-            <p class="modal-warning">This action will permanently delete:</p>
-            <ul class="modal-list">
-              <li>The store and all its information</li>
-              <li>{{ totalProducts }} products</li>
-              <li>{{ totalOrders }} orders</li>
-              <li>All associated data</li>
-            </ul>
-            <div class="confirmation-input">
-              <label>Type <strong>DELETE</strong> to confirm:</label>
-              <input 
-                v-model="deleteConfirmation" 
-                type="text" 
-                placeholder="Type DELETE here"
-                class="delete-input"
-              />
-            </div>
-            <div class="modal-actions">
-              <button class="cancel-btn" @click="cancelDelete">Cancel</button>
-              <button 
-                class="confirm-delete-btn" 
-                @click="deleteStore"
-                :disabled="deleteConfirmation !== 'DELETE' || deleting"
-              >
-                {{ deleting ? 'Deleting...' : 'Delete Store Forever' }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <p v-if="message" class="form-message" :class="messageType">{{ message }}</p>
-      </div>
 
       <!-- Domain Settings Tab -->
       <div v-if="activeTab === 'domain'" class="tab-content">
@@ -4318,5 +4131,24 @@ export default {
   font-weight: 600;
   margin-right: 1rem;
   display: inline-block;
+}
+
+.edit-store-chip {
+  background: #fffde7;
+  color: #f9a825;
+  border-radius: 20px;
+  padding: 0.25rem 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-right: 1rem;
+  margin-left: 0.5rem;
+  text-decoration: none;
+  border: 1px solid #ffe082;
+  transition: background 0.2s, color 0.2s;
+  display: inline-block;
+}
+.edit-store-chip:hover {
+  background: #ffe082;
+  color: #fffde7;
 }
 </style> 

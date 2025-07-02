@@ -21,6 +21,7 @@ import CreateStore from './components/CreateStore.vue';
 import ManageStore from './components/ManageStore.vue';
 import CreateProduct from './components/CreateProduct.vue';
 import OrderDetails from './components/OrderDetails.vue';
+import EditStore from './components/EditStore.vue';
 
 // Import Firestore
 import { db } from '../firebase';
@@ -130,6 +131,12 @@ const routes = [
     path: '/store-owner/manage-store/:storeId/order/:orderId',
     name: 'OrderDetails',
     component: OrderDetails,
+    props: true
+  },
+  {
+    path: '/store-owner/manage-store/:storeId/edit',
+    name: 'EditStore',
+    component: EditStore,
     props: true
   },
 

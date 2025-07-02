@@ -15,6 +15,9 @@
           </p>
       
           <div v-if="store.currency || store.phone || store.email || store.address" class="store-contact-row">
+            <span v-if="store.isActive !== undefined" class="contact-value status-chip">
+              {{ store.isActive ? 'Active' : 'Inactive' }}
+            </span>
             <span v-if="store.currency" class="contact-value">{{ store.currency }}</span>
             <span v-if="store.phone" class="contact-value">{{ store.phone }}</span>
             <span v-if="store.email" class="contact-value">{{ store.email }}</span>
@@ -26,9 +29,6 @@
             >
               Edit Store
             </router-link>
-            <span v-if="store.isActive !== undefined" :class="['status-chip', store.isActive ? 'active' : 'inactive']">
-              {{ store.isActive ? 'Active' : 'Inactive' }}
-            </span>
           </div>
         </div>
 
@@ -4155,18 +4155,14 @@ export default {
 }
 
 .status-chip {
-  border-radius: 20px;
-  padding: 0.25rem 0.9rem;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-right: 1rem;
-  margin-left: 0.5rem;
-  display: inline-block;
-  color: #fff;
+  background: #e3f2fd;
+  color: #1976d2;
 }
+
 .status-chip.active {
   background: #4CAF50;
 }
+
 .status-chip.inactive {
   background: #f44336;
 }

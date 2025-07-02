@@ -273,6 +273,22 @@
           </div>
 
           <div class="form-group">
+            <label>Delivery Fee</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <span>{{ getCurrencySymbol(storeData.currency || 'USD') }}</span>
+              <input
+                v-model.number="storeData.deliveryFee"
+                type="number"
+                min="0"
+                step="0.01"
+                placeholder="0.00"
+                style="max-width: 120px;"
+              />
+            </div>
+            <small>Flat delivery/shipping fee added to each order at checkout.</small>
+          </div>
+
+          <div class="form-group">
             <label>Store Image</label>
             <input 
               type="file" 
@@ -980,7 +996,8 @@ export default {
         email: '',
         phone: '',
         address: '',
-        isActive: true
+        isActive: true,
+        deliveryFee: 0
       },
       imageFile: null,
       imagePreview: null,
@@ -1155,7 +1172,8 @@ export default {
             email: this.store.email,
             phone: this.store.phone,
             address: this.store.address,
-            isActive: this.store.isActive
+            isActive: this.store.isActive,
+            deliveryFee: this.store.deliveryFee || 0
           }
           this.currentImage = this.store.image
           

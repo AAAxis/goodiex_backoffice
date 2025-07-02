@@ -43,6 +43,10 @@
           <div class="d-flex justify-content-between align-items-center mb-3">
             <h4 class="mb-0">Total: {{ formatPrice(cartTotal, store.currency) }}</h4>
           </div>
+          <div v-if="store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between mb-2">
+            <span>Delivery Fee:</span>
+            <span>{{ formatPrice(store.deliveryFee, store.currency) }}</span>
+          </div>
           <button class="btn btn-success btn-lg w-100" @click="proceedToCheckout">
             Proceed to Checkout
           </button>
@@ -87,6 +91,10 @@
               <div v-for="item in cartItems" :key="item.product.id" class="d-flex justify-content-between">
                 <span>{{ item.product.name }} x{{ item.quantity }}</span>
                 <span>{{ formatPrice(item.product.price * item.quantity, store.currency) }}</span>
+              </div>
+              <div v-if="store.deliveryFee && store.deliveryFee > 0" class="d-flex justify-content-between">
+                <span>Delivery Fee</span>
+                <span>{{ formatPrice(store.deliveryFee, store.currency) }}</span>
               </div>
               <hr>
               <div class="d-flex justify-content-between fw-bold">
@@ -134,7 +142,8 @@ export default {
       return cartStore.items;
     },
     cartTotal() {
-      return cartStore.total;
+      const fee = this.store.deliveryFee ? parseFloat(this.store.deliveryFee) : 0;
+      return cartStore.total + (fee > 0 ? fee : 0);
     },
     isFormValid() {
       return this.email && this.name && this.phone && this.address;
@@ -264,7 +273,8 @@ export default {
           name: this.name,
           phone: this.phone,
           address: this.address,
-          storeId: cartStore.currentStoreId // Add store ID to link order to specific store
+          storeId: cartStore.currentStoreId, // Add store ID to link order to specific store
+          deliveryFee: this.store.deliveryFee ? parseFloat(this.store.deliveryFee) : 0
         });
         
         const orderID = orderDoc.id;
